@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
     <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -32,21 +33,21 @@
         
         @keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, 50px); } }
 
-        /* FIXED: New Input Field Styling */
+        /* Input Field Styling */
         .input-field {
             width: 100%;
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 0.75rem; /* rounded-xl */
-            padding: 1rem 1.25rem; /* Increased padding for height */
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
             color: white;
             font-size: 0.95rem;
             transition: all 0.3s ease;
             outline: none;
         }
         .input-field:focus {
-            border-color: #6366f1; /* Indigo-500 */
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15); /* Glow effect */
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
             background: rgba(0, 0, 0, 0.6);
         }
         .input-field::placeholder { color: #64748b; }
@@ -344,35 +345,11 @@
     </div>
 
     <script>
-        // --- SUPABASE CONFIGURATION ---
-        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        // Note: Ensure this key is the 'anon' public key from Supabase Dashboard
-        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // Run price update on load to handle pre-checked items
-            updatePrice();
-        });
-
-        // FIXED: Character Counter Logic
-        const ideasInput = document.getElementById('ideasInput');
-        const charCount = document.getElementById('charCount');
-        ideasInput.addEventListener('input', () => {
-            charCount.innerText = `${ideasInput.value.length}/300`;
-            if(ideasInput.value.length >= 300) charCount.classList.add('text-red-500');
-            else charCount.classList.remove('text-red-500');
-        });
-
-        // FIXED: File Upload Display Logic
-        function updateFileName(input) {
-            const display = document.getElementById('fileNameDisplay');
-            if(input.files && input.files[0]) {
-                display.innerHTML = `<span class="text-cyan-400 font-bold"><i class="fas fa-check-circle"></i> ${input.files[0].name}</span>`;
-            }
-        }
-
-        // FIXED: Live Pricing Logic (Robust Version)
+        /* ----------------------------------------------------
+           1. CORE FUNCTIONS (Crash Proof - Define FIRST) 
+           ---------------------------------------------------- */
+        
+        // --- Live Pricing Logic ---
         function updatePrice() {
             try {
                 // Get selected package
@@ -390,12 +367,16 @@
                 const total = basePrice + addonsPrice;
 
                 // Update DOM
-                document.getElementById('summaryPrice').innerText = '₹' + total;
-                document.getElementById('payAmount').innerText = '₹' + total;
-                document.getElementById('summaryPackage').innerText = selectedPackage.value;
+                const priceEl = document.getElementById('summaryPrice');
+                const amountEl = document.getElementById('payAmount');
+                const pkgEl = document.getElementById('summaryPackage');
+                const qrImg = document.getElementById('qrImage');
+
+                if(priceEl) priceEl.innerText = '₹' + total;
+                if(amountEl) amountEl.innerText = '₹' + total;
+                if(pkgEl) pkgEl.innerText = selectedPackage.value;
                 
                 // Update QR Code
-                const qrImg = document.getElementById('qrImage');
                 if(qrImg) {
                     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=99logo&am=${total}`;
                 }
@@ -404,18 +385,28 @@
             }
         }
 
-        // Event Listeners for Price
-        // Note: 'onchange="updatePrice()"' is also added to HTML elements as backup
+        // --- File Upload Logic ---
+        function updateFileName(input) {
+            const display = document.getElementById('fileNameDisplay');
+            if(input.files && input.files[0]) {
+                display.innerHTML = `<span class="text-cyan-400 font-bold"><i class="fas fa-check-circle"></i> ${input.files[0].name}</span>`;
+            }
+        }
 
-        // Modal Logic with Validation
+        // --- Modal & Validation Logic ---
         function openPayment() {
+            // Check if Supabase loaded
+            if (typeof window.supabase === 'undefined') {
+                alert("System Error: Database could not load. Please refresh the page or disable AdBlock.");
+                return;
+            }
+
             const form = document.getElementById('orderForm');
             if(form.checkValidity()) {
                 document.getElementById('paymentModal').classList.add('active');
             } else {
-                // Explicitly warn the user
-                alert("Please fill in all required fields (Name, Mobile, Email, Password, Brand Name, Niche) before proceeding.");
-                form.reportValidity(); // Shows the browser bubble
+                alert("Please fill in all required fields marked with *");
+                form.reportValidity();
             }
         }
 
@@ -423,7 +414,41 @@
             document.getElementById('paymentModal').classList.remove('active');
         }
 
-        // --- STRONG DATABASE SYSTEM (Connected to Supabase) ---
+        /* ----------------------------------------------------
+           2. EVENT LISTENERS (Run on Load)
+           ---------------------------------------------------- */
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Price
+            updatePrice();
+            
+            // Character Counter
+            const ideasInput = document.getElementById('ideasInput');
+            const charCount = document.getElementById('charCount');
+            if(ideasInput && charCount) {
+                ideasInput.addEventListener('input', () => {
+                    charCount.innerText = `${ideasInput.value.length}/300`;
+                    if(ideasInput.value.length >= 300) charCount.classList.add('text-red-500');
+                    else charCount.classList.remove('text-red-500');
+                });
+            }
+        });
+
+        /* ----------------------------------------------------
+           3. DATABASE LOGIC (Supabase)
+           ---------------------------------------------------- */
+        
+        // Configuration
+        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
+        
+        // Safe Client Creation
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        } catch(e) {
+            console.error("Supabase Init Error:", e);
+        }
+
         async function confirmOrder() {
             const txId = document.getElementById('userTxId').value;
             if(!txId) { 
@@ -441,11 +466,11 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
 
-            // 1. Prepare Data
+            // Data Preparation
             const orderId = "#" + Math.floor(100 + Math.random() * 900);
             
             const userData = {
-                email: data.userEmail,
+                email: data.userEmail.toLowerCase(), // Ensure lowercase for login match
                 password: data.userPass,
                 name: data.clientName,
                 role: 'client'
@@ -459,7 +484,7 @@
                 timestamp: Date.now(),
                 clientName: data.clientName,
                 contact: data.contact,
-                userEmail: data.userEmail,
+                userEmail: data.userEmail.toLowerCase(),
                 userPass: data.userPass,
                 brandName: data.brandName,
                 tagline: data.tagline,
@@ -472,20 +497,24 @@
                 packageType: data.packageType
             };
 
-            // 2. Save User (Ignore error if exists)
-            // Note: RLS must be DISABLED in Supabase for this to work without auth
-            await supabase.from('users').insert([userData]);
+            // Database Operations
+            try {
+                // 1. Save User (RLS Disabled allows this)
+                await supabase.from('users').insert([userData]);
 
-            // 3. Save Order
-            const { error: orderError } = await supabase.from('orders').insert([orderData]);
+                // 2. Save Order
+                const { error: orderError } = await supabase.from('orders').insert([orderData]);
 
-            if (orderError) {
-                alert("Error saving order: " + orderError.message + "\n\nTip: Did you disable RLS in Supabase?");
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            } else {
+                if (orderError) throw orderError;
+
                 alert("Order Placed Successfully! Your order will be visible in the dashboard after Admin confirms your payment.");
                 window.location.href = "login.html"; 
+
+            } catch (err) {
+                alert("Error saving order: " + err.message);
+                console.error(err);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
     </script>
