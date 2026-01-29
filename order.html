@@ -358,7 +358,7 @@
 
                 const basePrice = parseInt(selectedPackage.getAttribute('data-price')) || 0;
                 
-                // Get addons
+                // Get addons (Fixed Logic)
                 let addonsPrice = 0;
                 document.querySelectorAll('input[name="addon"]:checked').forEach(addon => {
                     addonsPrice += parseInt(addon.value) || 0;
@@ -395,18 +395,14 @@
 
         // --- Modal & Validation Logic ---
         function openPayment() {
-            // Check if Supabase loaded
-            if (typeof window.supabase === 'undefined') {
-                alert("System Error: Database could not load. Please refresh the page or disable AdBlock.");
-                return;
-            }
-
+            // FIX: Removed Supabase check here to ensure modal opens even if script is slow
             const form = document.getElementById('orderForm');
             if(form.checkValidity()) {
+                updatePrice(); // Ensure price is correct before showing modal
                 document.getElementById('paymentModal').classList.add('active');
             } else {
                 alert("Please fill in all required fields marked with *");
-                form.reportValidity();
+                form.reportValidity(); // FIX: Visually show what is missing
             }
         }
 
@@ -450,6 +446,12 @@
         }
 
         async function confirmOrder() {
+            // FIX: Check Supabase Here
+            if (typeof window.supabase === 'undefined' || !supabase) {
+                alert("System Error: Database not loaded. Please disable AdBlock or refresh.");
+                return;
+            }
+
             const txId = document.getElementById('userTxId').value;
             if(!txId) { 
                 alert("Please enter Transaction ID"); 
