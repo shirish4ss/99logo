@@ -1,6 +1,6 @@
 // ================= CONFIGURATION =================
 const UPI_ID = "yourname@okaxis"; 
-const ADMIN_EMAIL = "admin@99logo.com"; // FIXED: Updated to match DB
+const ADMIN_EMAIL = "admin@99logo.com"; // FIXED: Updated email
 const ADMIN_PASS = "admin123";
 const WORK_START_HOUR = 10; // 10 AM
 const WORK_END_HOUR = 18;   // 6 PM
@@ -15,23 +15,22 @@ function generateId(orders) {
     return '#' + (lastId + 1);
 }
 
-// ================= LOGIN LOGIC =================
+// ================= LOGIN LOGIC (FIXED) =================
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
     loginForm.addEventListener('submit', function(e) {
-        // Note: login.html often handles this via inline script for Supabase
-        // This is a fallback for local testing
-        const email = document.getElementById('email').value.trim(); 
+        // e.preventDefault(); // Removed to allow login.html script to run if present
+        // This is kept for backward compatibility if login.html doesn't have the new script
+        const email = document.getElementById('email').value.trim(); // Trim spaces
         const pass = document.getElementById('password').value.trim();
 
         // 1. Check Admin
         if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
-            e.preventDefault(); // Stop form if Admin match
-            localStorage.setItem('currentUser', JSON.stringify({ role: 'admin', email: email, name: 'Admin' }));
+            e.preventDefault();
+            localStorage.setItem('currentUser', JSON.stringify({ role: 'admin', email: email }));
             window.location.href = 'dashboard.html';
             return;
         } 
-        // Client login is handled by Supabase in login.html usually
     });
 }
 
@@ -39,61 +38,50 @@ if (loginForm) {
 const orderForm = document.getElementById('orderForm');
 if (orderForm) {
     orderForm.addEventListener('submit', (e) => {
-        // We prevent default here to handle logic, then allow payment modal
-        e.preventDefault();
+        // We allow the inline script in order.html to handle the database submission
+        // This part mainly handles the session storage for the modal if needed
+        
+        // FIX: Removed preventDefault here so the inline script in order.html can run
+        // But we need to ensure we calculate price correctly for SessionStorage
         
         const fd = new FormData(orderForm);
         const data = Object.fromEntries(fd.entries());
         
-        // --- FIX START: Logic changed from Dropdown to Radio Buttons ---
-        const pkgSelect = document.querySelector('input[name="packageType"]:checked');
+        // --- FIXED: Logic changed from Dropdown to Radio Buttons ---
+        const selectedPkg = document.querySelector('input[name="packageType"]:checked');
+        data.packageType = selectedPkg ? selectedPkg.value : 'Standard';
         
-        // Safety check to prevent crash if nothing selected
-        if (!pkgSelect) {
-            alert("Please select a package");
-            return;
-        }
-
-        data.packageType = pkgSelect.value;
-        const basePrice = parseInt(pkgSelect.getAttribute('data-price')) || 0;
+        const basePrice = selectedPkg ? parseInt(selectedPkg.getAttribute('data-price')) : 150;
         
-        // Add-on Calculation
+        // Addons
         let addonPrice = 0;
         document.querySelectorAll('input[name="addon"]:checked').forEach(addon => {
             addonPrice += parseInt(addon.value) || 0;
         });
-
+        
         data.totalPrice = basePrice + addonPrice;
-        // --- FIX END ---
-
+        // ------------------------------------------------------------
+        
         data.dateOfInquiry = new Date().toISOString();
         data.status = 'Pending';
-        data.paymentStatus = 'Unpaid'; 
+        data.paymentStatus = 'Unpaid'; // Default
         data.revisionsLeft = 2; 
 
         // Save to Session for Payment Modal
         sessionStorage.setItem('tempOrder', JSON.stringify(data));
         
-        // Show Payment Modal
-        const payAmt = document.getElementById('payAmount');
-        const qrImg = document.getElementById('qrImage');
-        const modal = document.getElementById('paymentModal');
-
-        if(payAmt) payAmt.innerText = `₹${data.totalPrice}`;
-        if(qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${UPI_ID}&pn=PixelPerfect&am=${data.totalPrice}`;
-        if(modal) modal.classList.add('active');
+        // Modal logic is handled by openPayment() in order.html
     });
 }
 
 function closeModal() {
-    const modal = document.getElementById('paymentModal');
-    if(modal) modal.classList.remove('active');
+    document.getElementById('paymentModal').classList.remove('active');
 }
 
 function confirmOrder() {
-    const txInput = document.getElementById('userTxId');
-    const tx = txInput ? txInput.value : '';
-    
+    // This function is often overridden by the inline script in order.html for Supabase
+    // Keeping it for backup
+    const tx = document.getElementById('userTxId').value;
     if(!tx) return alert("Please enter Transaction ID");
     
     const data = JSON.parse(sessionStorage.getItem('tempOrder'));
@@ -103,7 +91,7 @@ function confirmOrder() {
     
     data.id = generateId(orders);
     data.transactionId = tx;
-    data.paymentStatus = 'Paid'; 
+    data.paymentStatus = 'Paid'; // Assuming user paid
     
     orders.push(data);
     localStorage.setItem('pixelOrders', JSON.stringify(orders));
@@ -122,9 +110,9 @@ function loadDashboard() {
         return;
     }
     
-    // Safety check for elements
-    const userDisplay = document.getElementById('userDisplay');
-    if(userDisplay) userDisplay.innerText = user.email;
+    // Safety check for userDisplay
+    const ud = document.getElementById('userDisplay');
+    if(ud) ud.innerText = user.email;
     
     const orders = JSON.parse(localStorage.getItem('pixelOrders')) || [];
     
@@ -202,9 +190,14 @@ function getTimeData(isoDate) {
     const hours = Math.floor(msLeft / (1000 * 60 * 60));
     const mins = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
     
+    // Calculate total duration for progress bar percentage
+    const totalDurationMs = TAT_HOURS * 60 * 60 * 1000; // This is abstract duration
+    // Actually, visual progress is better calculated by: 100 - (TimeLeft / TotalTime * 100)
+    
     let percent = 100;
     if (msLeft > 0) {
         percent = 100 - ((msLeft / (48 * 3600 * 1000)) * 100); 
+        // Note: Divisor is approximate for visual bar, not exact calendar time
     }
 
     return {
@@ -218,49 +211,40 @@ function getTimeData(isoDate) {
 
 // --- ADMIN RENDER ---
 function renderAdmin(orders) {
+    // Stats
     const earnings = orders.filter(o => o.paymentStatus === 'Paid').reduce((sum, o) => sum + parseInt(o.totalPrice || 0), 0);
-    
-    const elEarnings = document.getElementById('totalEarnings');
-    const elTotal = document.getElementById('stat-total');
-    const elUnpaid = document.getElementById('stat-unpaid');
-    const elPending = document.getElementById('stat-pending');
+    document.getElementById('totalEarnings').innerText = `₹${earnings}`;
+    document.getElementById('stat-total').innerText = orders.length;
+    document.getElementById('stat-unpaid').innerText = orders.filter(o => o.paymentStatus === 'Unpaid').length;
+    document.getElementById('stat-pending').innerText = orders.filter(o => o.status === 'In Progress').length;
 
-    if(elEarnings) elEarnings.innerText = `₹${earnings}`;
-    if(elTotal) elTotal.innerText = orders.length;
-    if(elUnpaid) elUnpaid.innerText = orders.filter(o => o.paymentStatus === 'Unpaid').length;
-    if(elPending) elPending.innerText = orders.filter(o => o.status === 'In Progress').length;
-
+    // Priority List
     const activeOrders = orders.filter(o => o.status !== 'Completed');
     activeOrders.sort((a, b) => getDeadline(a.dateOfInquiry) - getDeadline(b.dateOfInquiry));
 
-    const pList = document.getElementById('priorityList');
-    if(pList) {
-        pList.innerHTML = activeOrders.map(o => {
-            const t = getTimeData(o.dateOfInquiry);
-            const urgentClass = t.isUrgent ? 'border-red-500 bg-red-900/10' : 'border-indigo-500';
-            return `
-            <div class="glass p-3 rounded-lg border-l-4 ${urgentClass} mb-2 cursor-pointer hover:bg-white/5" onclick="viewOrder('${o.id}')">
-                <div class="flex justify-between items-center">
-                    <span class="font-bold text-sm">${o.id}</span>
-                    <span class="text-xs text-gray-400">${t.text}</span>
-                </div>
-                <div class="text-xs text-gray-300 mt-1">${o.brandName}</div>
-            </div>`;
-        }).join('');
-    }
+    document.getElementById('priorityList').innerHTML = activeOrders.map(o => {
+        const t = getTimeData(o.dateOfInquiry);
+        const urgentClass = t.isUrgent ? 'border-red-500 bg-red-900/10' : 'border-indigo-500';
+        return `
+        <div class="glass p-3 rounded-lg border-l-4 ${urgentClass} mb-2 cursor-pointer hover:bg-white/5" onclick="viewOrder('${o.id}')">
+            <div class="flex justify-between items-center">
+                <span class="font-bold text-sm">${o.id}</span>
+                <span class="text-xs text-gray-400">${t.text}</span>
+            </div>
+            <div class="text-xs text-gray-300 mt-1">${o.brandName}</div>
+        </div>`;
+    }).join('');
 
-    const tBody = document.getElementById('ordersTableBody');
-    if(tBody) {
-        tBody.innerHTML = orders.slice().reverse().map(o => `
-            <tr class="border-b border-gray-800 hover:bg-white/5 cursor-pointer" onclick="viewOrder('${o.id}')">
-                <td class="px-4 py-3 text-indigo-400 font-bold">${o.id}</td>
-                <td class="px-4 py-3 text-white">${o.clientName}</td>
-                <td class="px-4 py-3 text-xs text-gray-400">${getTimeData(o.dateOfInquiry).deadlineObj.toLocaleDateString()}</td>
-                <td class="px-4 py-3"><span class="px-2 py-1 bg-gray-700 rounded text-xs">${o.status}</span></td>
-                <td class="px-4 py-3 text-xs text-indigo-400 hover:underline">View</td>
-            </tr>
-        `).join('');
-    }
+    // Table
+    document.getElementById('ordersTableBody').innerHTML = orders.slice().reverse().map(o => `
+        <tr class="border-b border-gray-800 hover:bg-white/5 cursor-pointer" onclick="viewOrder('${o.id}')">
+            <td class="px-4 py-3 text-indigo-400 font-bold">${o.id}</td>
+            <td class="px-4 py-3 text-white">${o.clientName}</td>
+            <td class="px-4 py-3 text-xs text-gray-400">${getTimeData(o.dateOfInquiry).deadlineObj.toLocaleDateString()}</td>
+            <td class="px-4 py-3"><span class="px-2 py-1 bg-gray-700 rounded text-xs">${o.status}</span></td>
+            <td class="px-4 py-3 text-xs text-indigo-400 hover:underline">View</td>
+        </tr>
+    `).join('');
 }
 
 // --- VIEW ORDER MODAL ---
@@ -279,13 +263,10 @@ function viewOrder(id) {
     document.getElementById('vNotes').innerText = o.designNotes || o.ideas || '';
     document.getElementById('vPayStatus').innerText = o.paymentStatus;
     document.getElementById('vTx').innerText = o.transactionId;
-    
-    const vRef = document.getElementById('vRefLink');
-    if(vRef) vRef.href = o.refLink || '#';
-    
-    const vWa = document.getElementById('vWa');
-    if(vWa) vWa.href = `https://wa.me/${o.contact}?text=Hello ${o.clientName}, regarding your Order ${o.id}...`;
+    document.getElementById('vRefLink').href = o.refLink || '#';
+    document.getElementById('vWa').href = `https://wa.me/${o.contact}?text=Hello ${o.clientName}, regarding your Order ${o.id}...`;
 
+    // Set Form Values
     document.getElementById('updateStatusSelect').value = o.status;
     document.getElementById('checkPng').checked = o.pngSent || false;
     document.getElementById('checkSource').checked = o.sourceSent || false;
@@ -327,41 +308,39 @@ function renderClient(orders, email) {
     const myOrders = orders.filter(o => o.userEmail === email);
     const container = document.getElementById('clientOrdersContainer');
     
-    if(container) {
-        container.innerHTML = myOrders.map((o, idx) => {
-            const t = getTimeData(o.dateOfInquiry);
-            const globalIdx = orders.findIndex(x => x.id === o.id);
+    container.innerHTML = myOrders.map((o, idx) => {
+        const t = getTimeData(o.dateOfInquiry);
+        const globalIdx = orders.findIndex(x => x.id === o.id);
 
-            let btn = '';
-            if(o.status === 'Pending') {
-                btn = `<button onclick="clientEdit(${globalIdx})" class="w-full mt-2 bg-gray-700 py-2 rounded text-sm hover:bg-gray-600">Edit Brief (Resets Timer)</button>`;
-            } else if(o.status === 'Completed' && o.revisionsLeft > 0) {
-                btn = `<button onclick="requestRev(${globalIdx})" class="w-full mt-2 bg-yellow-600 py-2 rounded text-sm font-bold">Request Revision (${o.revisionsLeft} Left)</button>`;
-            } else if(o.status === 'Completed') {
-                btn = `<button class="w-full mt-2 bg-green-600 py-2 rounded text-sm font-bold">Download Files</button>`;
-            } else {
-                btn = `<button class="w-full mt-2 bg-gray-800 py-2 rounded text-sm text-gray-500 cursor-not-allowed">Design in Progress...</button>`;
-            }
+        let btn = '';
+        if(o.status === 'Pending') {
+            btn = `<button onclick="clientEdit(${globalIdx})" class="w-full mt-2 bg-gray-700 py-2 rounded text-sm hover:bg-gray-600">Edit Brief (Resets Timer)</button>`;
+        } else if(o.status === 'Completed' && o.revisionsLeft > 0) {
+            btn = `<button onclick="requestRev(${globalIdx})" class="w-full mt-2 bg-yellow-600 py-2 rounded text-sm font-bold">Request Revision (${o.revisionsLeft} Left)</button>`;
+        } else if(o.status === 'Completed') {
+            btn = `<button class="w-full mt-2 bg-green-600 py-2 rounded text-sm font-bold">Download Files</button>`;
+        } else {
+            btn = `<button class="w-full mt-2 bg-gray-800 py-2 rounded text-sm text-gray-500 cursor-not-allowed">Design in Progress...</button>`;
+        }
 
-            return `
-            <div class="glass p-6 rounded-xl border border-gray-700">
-                <div class="flex justify-between mb-4">
-                    <h3 class="text-xl font-bold">${o.brandName}</h3>
-                    <span class="px-2 py-1 bg-indigo-900 rounded text-xs">${o.status}</span>
+        return `
+        <div class="glass p-6 rounded-xl border border-gray-700">
+            <div class="flex justify-between mb-4">
+                <h3 class="text-xl font-bold">${o.brandName}</h3>
+                <span class="px-2 py-1 bg-indigo-900 rounded text-xs">${o.status}</span>
+            </div>
+            <div class="bg-black/40 p-4 rounded-lg mb-4">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Deadline: ${t.deadlineObj.toLocaleString()}</span>
+                    <span>${t.text}</span>
                 </div>
-                <div class="bg-black/40 p-4 rounded-lg mb-4">
-                    <div class="flex justify-between text-xs text-gray-400 mb-1">
-                        <span>Deadline: ${t.deadlineObj.toLocaleString()}</span>
-                        <span>${t.text}</span>
-                    </div>
-                    <div class="w-full bg-gray-700 h-2 rounded-full overflow-hidden">
-                        <div class="bg-indigo-500 h-2" style="width: ${o.status==='Completed'?100:t.percent}%"></div>
-                    </div>
+                <div class="w-full bg-gray-700 h-2 rounded-full overflow-hidden">
+                    <div class="bg-indigo-500 h-2" style="width: ${o.status==='Completed'?100:t.percent}%"></div>
                 </div>
-                ${btn}
-            </div>`;
-        }).join('');
-    }
+            </div>
+            ${btn}
+        </div>`;
+    }).join('');
 }
 
 function clientEdit(index) {
