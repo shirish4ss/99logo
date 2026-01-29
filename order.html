@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Place Order | PixelPerfect</title>
+    <title>Place Order | 99logo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         /* Base Glass Styles */
         .glass {
@@ -148,7 +151,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="text-xs text-pink-300 font-bold ml-1 mb-2 block uppercase tracking-wider">Brand Name</label>
-                            <input type="text" name="brandName" required placeholder="PixelPerfect" class="input-field">
+                            <input type="text" name="brandName" required placeholder="99logo" class="input-field">
                         </div>
                         <div>
                             <label class="text-xs text-pink-300 font-bold ml-1 mb-2 block uppercase tracking-wider">Tagline (Optional)</label>
@@ -324,7 +327,7 @@
             <p class="mb-6 text-sm text-slate-400">Scan via Any UPI App</p>
             
             <div class="bg-white p-3 rounded-2xl inline-block mb-4 shadow-lg mx-auto">
-                <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=PixelPerfect&am=150" class="w-40 h-40 object-contain">
+                <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=99logo&am=150" class="w-40 h-40 object-contain">
             </div>
             
             <div class="text-3xl font-bold text-white mb-6">
@@ -341,6 +344,11 @@
     </div>
 
     <script>
+        // --- SUPABASE CONFIGURATION ---
+        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
         // FIXED: Character Counter Logic
         const ideasInput = document.getElementById('ideasInput');
         const charCount = document.getElementById('charCount');
@@ -375,9 +383,9 @@
             document.getElementById('payAmount').innerText = '₹' + total;
             document.getElementById('summaryPackage').innerText = selectedPackage.value;
             
-            // Update QR Code
+            // Update QR Code with 99logo brand name
             const qrImg = document.getElementById('qrImage');
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=PixelPerfect&am=${total}`;
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=99logo&am=${total}`;
         }
 
         // Listen for changes on Package and Addons
@@ -399,8 +407,8 @@
             document.getElementById('paymentModal').classList.remove('active');
         }
 
-        // --- STRONG DATABASE SYSTEM ---
-        function confirmOrder() {
+        // --- STRONG DATABASE SYSTEM (Connected to Supabase) ---
+        async function confirmOrder() {
             const txId = document.getElementById('userTxId').value;
             if(!txId) { 
                 alert("Please enter Transaction ID"); 
@@ -408,46 +416,61 @@
                 return; 
             }
             
+            const btn = document.querySelector('button[onclick="confirmOrder()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Database...';
+            btn.disabled = true;
+
             const form = document.getElementById('orderForm');
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
 
-            // 1. Create Order Object
-            const newOrder = {
-                ...data,
-                id: "#" + Math.floor(100 + Math.random() * 900),
-                txId: txId,
-                status: "Unconfirmed", // Admin Gate
-                date: new Date().toLocaleDateString(),
-                timestamp: Date.now()
+            // 1. Prepare Data
+            const orderId = "#" + Math.floor(100 + Math.random() * 900);
+            
+            const userData = {
+                email: data.userEmail,
+                password: data.userPass,
+                name: data.clientName,
+                role: 'client'
             };
 
-            // 2. Save Order to Database
-            let orders = JSON.parse(localStorage.getItem('pixel_orders') || '[]');
-            orders.push(newOrder);
-            localStorage.setItem('pixel_orders', JSON.stringify(orders));
+            const orderData = {
+                id: orderId,
+                txId: txId,
+                status: "Unconfirmed",
+                date: new Date().toLocaleDateString(),
+                timestamp: Date.now(),
+                // Form Fields
+                clientName: data.clientName,
+                contact: data.contact,
+                userEmail: data.userEmail,
+                userPass: data.userPass,
+                brandName: data.brandName,
+                tagline: data.tagline,
+                niche: data.niche,
+                audience: data.audience,
+                colors: data.colors,
+                vibe: data.vibe,
+                ideas: data.ideas,
+                refLink: data.refLink,
+                packageType: data.packageType
+            };
 
-            // 3. Save User to Database (Enables Login)
-            let users = JSON.parse(localStorage.getItem('pixel_users') || '[]');
-            // Check if user already exists
-            if(!users.find(u => u.email === data.userEmail)) {
-                users.push({
-                    email: data.userEmail,
-                    password: data.userPass,
-                    name: data.clientName,
-                    role: 'client'
-                });
-                localStorage.setItem('pixel_users', JSON.stringify(users));
-            }
+            // 2. Save User (Ignore error if exists)
+            await supabase.from('users').insert([userData]);
 
-            // Simulating API call
-            const btn = document.querySelector('button[onclick="confirmOrder()"]');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Database...';
-            
-            setTimeout(() => {
-                alert("Order Placed Successfully! Your order will be visible in the dashboard after Admin confirms your payment (1-2 hours).");
+            // 3. Save Order
+            const { error: orderError } = await supabase.from('orders').insert([orderData]);
+
+            if (orderError) {
+                alert("Error saving order: " + orderError.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } else {
+                alert("Order Placed Successfully! Your order will be visible in the dashboard after Admin confirms your payment.");
                 window.location.href = "login.html"; // Redirect to login
-            }, 1500);
+            }
         }
     </script>
 </body>
