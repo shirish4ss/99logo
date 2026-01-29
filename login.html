@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | PixelPerfect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-btn:hover {
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
+        }
+        /* NEW FEATURE: Shake Animation for Login Error */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+    </style>
+</head>
+<body class="bg-[#0f172a] h-screen flex items-center justify-center relative overflow-hidden">
+
+    <div id="loginBox" class="glass p-10 rounded-2xl w-full max-w-md relative z-10 transition-all">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold mb-2 text-white">Welcome Back</h1>
+            <p class="text-gray-400">Login to manage orders.</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label class="block text-sm text-gray-400 mb-2 uppercase tracking-widest font-bold text-[10px]">Email Address</label>
+                <input type="email" id="email" required class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-indigo-500 transition-all">
+            </div>
+            <div class="relative">
+                <label class="block text-sm text-gray-400 mb-2 uppercase tracking-widest font-bold text-[10px]">Password</label>
+                <input type="password" id="password" required class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-indigo-500 transition-all">
+                
+                <!-- NEW FEATURE 1: Password Visibility Toggle -->
+                <button type="button" onclick="togglePassword()" class="absolute right-3 top-9 text-gray-500 hover:text-indigo-400">
+                    <i id="eyeIcon" class="fas fa-eye text-sm"></i>
+                </button>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-indigo-600 rounded-lg font-bold text-white hover:bg-indigo-700 transition-all glow-btn">Login to Dashboard</button>
+        </form>
+        
+        <div class="mt-6 text-center text-xs text-gray-500 border-t border-gray-700 pt-4">
+            <p class="mb-2">Admin: <span class="text-white">admin@pixel.com</span> / <span class="text-white">admin123</span></p>
+            <p class="mb-4">Clients: Use email/password set during Order.</p>
+            
+            <button onclick="hardReset()" class="text-red-500 hover:text-red-400 underline">System Error? Click here to Reset Data</button>
+        </div>
+    </div>
+
+    <!-- Background Decoration -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
+    </div>
+
+    <script>
+        // NEW FEATURE 1: Toggle Password Visibility
+        function togglePassword() {
+            const passInput = document.getElementById('password');
+            const eye = document.getElementById('eyeIcon');
+            if (passInput.type === "password") {
+                passInput.type = "text";
+                eye.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                passInput.type = "password";
+                eye.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // FIXED LOGIN LOGIC (Strong Database Check)
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBox = document.getElementById('loginBox');
+
+            // 1. Check Admin Credentials
+            if(email === 'admin@pixel.com' && password === 'admin123') {
+                localStorage.setItem('currentUser', JSON.stringify({
+                    email: email,
+                    role: 'admin',
+                    name: 'Agency Admin'
+                }));
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            // 2. Check Client "Database" (pixel_users array)
+            const users = JSON.parse(localStorage.getItem('pixel_users') || '[]');
+            const user = users.find(u => u.email === email && u.password === password);
+
+            if(user) {
+                // Successful Login
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                window.location.href = 'dashboard.html';
+            } else {
+                // NEW FEATURE 2: Login Failure Shake & Alert
+                loginBox.classList.add('shake');
+                setTimeout(() => loginBox.classList.remove('shake'), 400);
+                
+                alert("Incorrect Email or Password. If you just placed an order, please check your credentials.");
+            }
+        });
+
+        // System Hard Reset
+        function hardReset() {
+            if(confirm("⚠️ This will delete ALL orders and users. Continue?")) {
+                localStorage.clear();
+                alert("System Reset Complete.");
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>

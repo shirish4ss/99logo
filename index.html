@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelPerfect | Visionary Logo Design</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* --- CORE STYLES (Preserved) --- */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+        .bg-mesh { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: #0f172a; overflow: hidden; }
+        .blob { position: absolute; filter: blur(80px); opacity: 0.6; animation: float 10s infinite alternate; border-radius: 50%; }
+        .blob-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: #4f46e5; }
+        .blob-2 { bottom: -10%; right: -10%; width: 500px; height: 500px; background: #ec4899; animation-delay: -5s; }
+        .blob-3 { top: 40%; left: 40%; width: 300px; height: 300px; background: #06b6d4; animation-delay: -2s; opacity: 0.4; }
+
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .btn-primary { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; transition: all 0.3s ease; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.5); }
+        .text-gradient-primary { background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        /* --- HERO SECTION: NEW DESIGN PANEL STYLES --- */
+        .hero-card-container { width: 340px; height: 420px; position: relative; perspective: 1000px; transform-style: preserve-3d; transition: transform 0.1s ease-out; }
+        
+        .design-panel {
+            width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 30px 60px -15px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.05);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Bar of Panel */
+        .panel-header { padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; align-items: center; }
+        .dot { width: 10px; height: 10px; rounded-full; border-radius: 50%; }
+        .dot-r { background: #ef4444; } .dot-y { background: #f59e0b; } .dot-g { background: #22c55e; }
+
+        /* Central Canvas Area */
+        .panel-canvas { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 20px 20px; }
+        
+        /* The Logo Animation Container - ADJUSTED WIDTH FOR TEXT */
+        .logo-stage { position: relative; width: 280px; height: 180px; display: flex; align-items: center; justify-content: center; }
+        
+        /* Layers of the Logo */
+        .logo-layer { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.5s ease; }
+        
+        /* 1. Sketch (Outline) */
+        .layer-sketch { color: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.1); border-radius: 12px; animation: sketchAnim 4s infinite; }
+        .sketch-text { border: 1px dashed rgba(255,255,255,0.2); padding: 2px 10px; margin-top: 10px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; }
+        .sketch-tag { font-size: 0.6rem; margin-top: 4px; border-bottom: 1px dashed rgba(255,255,255,0.1); }
+        
+        /* 2. Vector (Path) */
+        .layer-vector { color: transparent; opacity: 0; animation: vectorAnim 4s infinite; }
+        .vector-icon { -webkit-text-stroke: 1px #6366f1; font-size: 3.5rem; }
+        .vector-text { -webkit-text-stroke: 1px #6366f1; font-size: 1.5rem; font-weight: 800; margin-top: 10px; }
+        .vector-tag { -webkit-text-stroke: 0.5px #6366f1; font-size: 0.7rem; margin-top: 2px; }
+        
+        /* 3. Final (Filled) */
+        .layer-final { opacity: 0; animation: finalAnim 4s infinite; transform: scale(0.8); }
+        .final-icon { background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.5)); font-size: 4rem; }
+        .final-text { color: white; font-size: 1.8rem; font-weight: 900; margin-top: 5px; letter-spacing: -1px; }
+        .final-tag { color: #818cf8; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; }
+
+        /* Cursor Animation */
+        .cursor-tool { position: absolute; font-size: 1.2rem; color: white; text-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 10; animation: cursorMove 4s infinite; pointer-events: none; }
+
+        /* Keyframes for the Loop */
+        @keyframes sketchAnim { 0% { opacity: 1; } 30% { opacity: 1; } 35% { opacity: 0; } 95% { opacity: 0; } 100% { opacity: 1; } }
+        @keyframes vectorAnim { 0% { opacity: 0; } 30% { opacity: 0; } 35% { opacity: 1; } 65% { opacity: 1; } 70% { opacity: 0; } 100% { opacity: 0; } }
+        @keyframes finalAnim { 0% { opacity: 0; transform: scale(0.8); } 65% { opacity: 0; transform: scale(0.8); } 70% { opacity: 1; transform: scale(1.05); } 90% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.8); } }
+        @keyframes cursorMove { 
+            0% { top: 80%; left: 80%; opacity: 0; } 
+            10% { opacity: 1; }
+            30% { top: 30%; left: 30%; } 
+            60% { top: 60%; left: 70%; transform: rotate(-10deg); } 
+            80% { top: 90%; left: 90%; opacity: 0; }
+            100% { opacity: 0; }
+        }
+
+        /* Floating Palettes */
+        .palette-float { position: absolute; background: rgba(0,0,0,0.8); padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 5px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .p-swatch { width: 15px; height: 15px; rounded-full; }
+        .palette-1 { top: 40px; right: -20px; animation: float 6s infinite ease-in-out; }
+        .palette-2 { bottom: 60px; left: -20px; animation: float 5s infinite reverse ease-in-out; }
+
+        /* --- MARQUEE --- */
+        .marquee-container { overflow: hidden; white-space: nowrap; }
+        .marquee-content { display: inline-block; animation: marquee 30s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        /* --- SCROLL REVEAL --- */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        /* --- FAQ STYLES (Fixed) --- */
+        .accordion-item { border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .accordion-button { width: 100%; text-align: left; padding: 1.5rem 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; outline: none; }
+        .accordion-content { height: 0; overflow: hidden; transition: height 0.3s ease-out; color: #94a3b8; font-size: 0.95rem; }
+        .accordion-item.active .accordion-button i { transform: rotate(180deg); color: #818cf8; }
+
+        /* --- CREATIVE FOOTER STYLES --- */
+        .creative-footer { position: relative; overflow: hidden; background: #0b1120; }
+        .footer-watermark {
+            position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+            font-size: 15vw; font-weight: 900; line-height: 1;
+            color: rgba(255, 255, 255, 0.02); pointer-events: none;
+            z-index: 0; letter-spacing: -5px; user-select: none;
+        }
+        .footer-glow-border {
+            position: absolute; top: 0; left: 0; width: 100%; height: 1px;
+            background: linear-gradient(90deg, transparent, #4f46e5, #ec4899, transparent);
+        }
+        /* New Footer Feature Styles */
+        .footer-link-item { transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; }
+        .footer-link-item:hover { transform: translateX(5px); color: white; }
+        .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #22c55e; }
+
+        /* --- MODAL --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.3s ease forwards; }
+        .modal-box { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; width: 90%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); position: relative; }
+        .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); border-radius: 1.5rem 1.5rem 0 0; }
+        .modal-body { padding: 2rem; overflow-y: auto; color: #cbd5e1; font-size: 0.9rem; line-height: 1.6; }
+        .modal-body h3 { color: #818cf8; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; }
+        .modal-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Particles */
+        .particle { position: absolute; background: white; border-radius: 50%; opacity: 0; animation: particleFloat 15s infinite linear; }
+        @keyframes particleFloat { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 20% { opacity: 0.5; } 80% { opacity: 0.5; } 100% { transform: translateY(-100px) scale(1.5); opacity: 0; } }
+    </style>
+</head>
+<body class="antialiased text-slate-300 selection:bg-indigo-500 selection:text-white relative">
+
+    <div id="particles" class="fixed inset-0 pointer-events-none z-0"></div>
+
+    <!-- Advanced Background -->
+    <div class="bg-mesh">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 transition-all duration-300 border-b border-white/5 bg-black/10 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold tracking-tighter text-white flex items-center gap-2">
+                <i class="fas fa-cube text-indigo-500"></i> Pixel<span class="text-indigo-500">.</span>
+            </a>
+            
+            <div class="hidden md:flex gap-8 text-sm font-medium">
+                <a href="#work" class="hover:text-white hover:tracking-wide transition-all">Work</a>
+                <a href="#process" class="hover:text-white hover:tracking-wide transition-all">Process</a>
+                <a href="#pricing" class="hover:text-white hover:tracking-wide transition-all">Pricing</a>
+                <a href="#faq" class="hover:text-white hover:tracking-wide transition-all">FAQ</a>
+            </div>
+
+            <div class="flex gap-4">
+                <a href="login.html" class="px-5 py-2 text-sm font-bold text-white hover:text-indigo-400 transition">Login</a>
+                <a href="order.html" class="px-6 py-2 rounded-full text-sm font-bold btn-primary shadow-lg shadow-indigo-500/20">Start Project</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Supercharged Hero Section -->
+    <section class="min-h-screen flex items-center pt-20 overflow-hidden relative z-10">
+        <div class="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            
+            <!-- Left: Text (Unchanged) -->
+            <div class="z-10 relative">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-bold tracking-widest uppercase mb-8 animate-pulse">
+                    <span class="w-2 h-2 rounded-full bg-green-400"></span> Available for New Projects
+                </div>
+                <h1 class="text-5xl md:text-7xl font-bold leading-tight text-white mb-6">
+                    We Don't Just Design. <br>
+                    We <span class="text-gradient-primary">Define Brands.</span>
+                </h1>
+                <p class="text-lg text-slate-400 mb-8 max-w-lg leading-relaxed">
+                    Transform your business with a logo that demands attention. 
+                    Professional, high-end design delivered in <span class="text-white font-bold border-b border-indigo-500">48 working hours</span>.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="order.html" class="px-8 py-4 rounded-full text-center font-bold btn-primary text-lg">
+                        Get Your Logo <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                    <a href="#work" class="px-8 py-4 rounded-full border border-white/10 hover:bg-white/5 text-white font-bold text-center transition hover:border-white/30">
+                        View Portfolio
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right: NEW Sober & Elegant Interactive Visual -->
+            <div class="hero-visual hidden md:flex justify-center items-center h-full" id="heroVisual">
+                <div class="hero-card-container">
+                    
+                    <!-- Design Panel Interface -->
+                    <div class="design-panel">
+                        <!-- Header -->
+                        <div class="panel-header">
+                            <div class="dot dot-r"></div>
+                            <div class="dot dot-y"></div>
+                            <div class="dot dot-g"></div>
+                            <div class="h-1 w-20 bg-white/10 rounded ml-4"></div>
+                        </div>
+
+                        <!-- Canvas -->
+                        <div class="panel-canvas">
+                            
+                            <!-- Central Logo Animation -->
+                            <div class="logo-stage">
+                                <!-- 1. Sketch Phase -->
+                                <div class="logo-layer layer-sketch">
+                                    <i class="fas fa-cube text-4xl"></i>
+                                    <div class="sketch-text">Company Name</div>
+                                    <div class="sketch-tag">Your Brand Tagline Goes Here</div>
+                                </div>
+                                <!-- 2. Vector Outline Phase -->
+                                <div class="logo-layer layer-vector">
+                                    <i class="fas fa-cube vector-icon"></i>
+                                    <div class="vector-text">Company Name</div>
+                                    <div class="vector-tag">YOUR BRAND TAGLINE GOES HERE</div>
+                                </div>
+                                <!-- 3. Final Render Phase -->
+                                <div class="logo-layer layer-final">
+                                    <i class="fas fa-cube final-icon"></i>
+                                    <div class="final-text">Company Name</div>
+                                    <div class="final-tag">Designated For Success</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Moving Cursor -->
+                            <div class="cursor-tool">
+                                <i class="fas fa-mouse-pointer text-indigo-400"></i>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Floating Palettes (Decoration) -->
+                    <div class="palette-float palette-1">
+                        <div class="p-swatch bg-indigo-500"></div>
+                        <div class="p-swatch bg-purple-500"></div>
+                        <div class="p-swatch bg-pink-500"></div>
+                    </div>
+                    <div class="palette-float palette-2">
+                        <div class="text-[10px] text-gray-400 font-mono px-2">Layer 1: <span class="text-green-400">Active</span></div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Infinite Marquee -->
+    <div class="py-8 border-y border-white/5 bg-black/20 backdrop-blur-sm relative z-20">
+        <div class="marquee-container">
+            <div class="marquee-content text-5xl font-bold text-transparent stroke-text uppercase tracking-tighter opacity-20" style="-webkit-text-stroke: 1px white;">
+                Minimalist <span class="text-indigo-500">•</span> Luxury <span class="text-indigo-500">•</span> Modern <span class="text-indigo-500">•</span> Abstract <span class="text-indigo-500">•</span> Typography <span class="text-indigo-500">•</span> Emblem <span class="text-indigo-500">•</span> Minimalist <span class="text-indigo-500">•</span> Luxury <span class="text-indigo-500">•</span> Modern <span class="text-indigo-500">•</span> 
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Section -->
+    <section id="work" class="py-24 relative z-10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-4">Selected <span class="text-gradient-primary">Masterpieces</span></h2>
+                <p class="text-slate-400">Recent work delivered to happy clients.</p>
+            </div>
+
+            <div id="portfolioGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Fallback content if no JS loads -->
+                <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500">
+                     <img src="https://images.unsplash.com/photo-1626785774573-4b799314346d?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
+                </div>
+                <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500" style="transition-delay: 100ms">
+                     <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
+                </div>
+                <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500" style="transition-delay: 200ms">
+                     <img src="https://images.unsplash.com/photo-1572044162444-ad60f128bdea?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Us / Process -->
+    <section id="process" class="py-24 bg-black/20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12 reveal">
+                <h2 class="text-3xl md:text-4xl font-bold text-white">Why Choose PixelPerfect?</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass p-8 rounded-2xl feature-card reveal text-center hover:bg-white/5 transition duration-500">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-2xl mb-6 shadow-[0_0_20px_rgba(99,102,241,0.3)]"><i class="fas fa-bolt"></i></div>
+                    <h3 class="text-xl font-bold text-white mb-2">48h Speed</h3>
+                    <p class="text-sm text-slate-400">First draft delivered within 2 working days.</p>
+                </div>
+                <div class="glass p-8 rounded-2xl feature-card reveal text-center hover:bg-white/5 transition duration-500" style="transition-delay: 100ms">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 text-2xl mb-6 shadow-[0_0_20px_rgba(236,72,153,0.3)]"><i class="fas fa-infinity"></i></div>
+                    <h3 class="text-xl font-bold text-white mb-2">Vector Quality</h3>
+                    <p class="text-sm text-slate-400">Infinite scalability with AI, EPS & SVG files.</p>
+                </div>
+                <div class="glass p-8 rounded-2xl feature-card reveal text-center hover:bg-white/5 transition duration-500" style="transition-delay: 200ms">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-2xl mb-6 shadow-[0_0_20px_rgba(6,182,212,0.3)]"><i class="fas fa-user-shield"></i></div>
+                    <h3 class="text-xl font-bold text-white mb-2">Full Ownership</h3>
+                    <p class="text-sm text-slate-400">You own 100% of the copyright rights.</p>
+                </div>
+                <div class="glass p-8 rounded-2xl feature-card reveal text-center hover:bg-white/5 transition duration-500" style="transition-delay: 300ms">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 text-2xl mb-6 shadow-[0_0_20px_rgba(249,115,22,0.3)]"><i class="fas fa-wallet"></i></div>
+                    <h3 class="text-xl font-bold text-white mb-2">Best Pricing</h3>
+                    <p class="text-sm text-slate-400">Agency quality designs starting at just ₹99.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Stats -->
+    <section class="py-12 border-y border-white/5 relative bg-indigo-900/10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-white/10">
+                <div class="reveal">
+                    <div class="text-4xl font-bold text-white mb-1">500+</div>
+                    <div class="text-xs uppercase tracking-widest text-indigo-400">Happy Clients</div>
+                </div>
+                <div class="reveal" style="transition-delay: 100ms">
+                    <div class="text-4xl font-bold text-white mb-1">98%</div>
+                    <div class="text-xs uppercase tracking-widest text-indigo-400">Satisfaction</div>
+                </div>
+                <div class="reveal" style="transition-delay: 200ms">
+                    <div class="text-4xl font-bold text-white mb-1">48h</div>
+                    <div class="text-xs uppercase tracking-widest text-indigo-400">Avg Delivery</div>
+                </div>
+                <div class="reveal" style="transition-delay: 300ms">
+                    <div class="text-4xl font-bold text-white mb-1">24/7</div>
+                    <div class="text-xs uppercase tracking-widest text-indigo-400">Support</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-24 relative z-10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-4">Transparent <span class="text-gradient-primary">Pricing</span></h2>
+                <p class="text-slate-400">Invest in your brand's future today.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                <div class="glass p-8 rounded-3xl border border-white/10 hover:border-indigo-500/50 transition duration-300 reveal group">
+                    <h3 class="text-xl font-bold text-slate-300">Basic</h3>
+                    <div class="my-4"><span class="text-4xl font-bold text-white group-hover:text-indigo-400 transition">₹99</span></div>
+                    <ul class="space-y-3 text-sm text-slate-400 mb-8">
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-500"></i> 2 Creative Options</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-500"></i> JPEG & PNG Files</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-clock text-indigo-500"></i> 48h Delivery</li>
+                    </ul>
+                    <a href="order.html?plan=Basic" class="block w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-center font-bold text-white transition border border-white/10 hover:border-indigo-500">Select Basic</a>
+                </div>
+
+                <div class="glass p-10 rounded-3xl border border-indigo-500 shadow-[0_0_50px_rgba(99,102,241,0.2)] relative transform md:-translate-y-4 reveal" style="transition-delay: 100ms">
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">Most Popular</div>
+                    <h3 class="text-xl font-bold text-indigo-300">Standard</h3>
+                    <div class="my-4"><span class="text-5xl font-bold text-white">₹150</span></div>
+                    <ul class="space-y-4 text-sm text-slate-300 mb-8">
+                        <li class="flex items-center gap-2"><i class="fas fa-check-circle text-indigo-400"></i> 4 Unique Options</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check-circle text-indigo-400"></i> Source Files (AI/EPS/SVG)</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check-circle text-indigo-400"></i> 2 Free Revisions</li>
+                    </ul>
+                    <a href="order.html?plan=Standard" class="block w-full py-4 rounded-xl btn-primary text-center font-bold transition shadow-lg">Select Standard</a>
+                </div>
+
+                <div class="glass p-8 rounded-3xl border border-white/10 hover:border-pink-500/50 transition duration-300 reveal group" style="transition-delay: 200ms">
+                    <h3 class="text-xl font-bold text-pink-300">Premium</h3>
+                    <div class="my-4"><span class="text-4xl font-bold text-white group-hover:text-pink-400 transition">₹200</span></div>
+                    <ul class="space-y-3 text-sm text-slate-400 mb-8">
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-pink-500"></i> 8 VIP Options</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-pink-500"></i> All Source Files + PDF</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-crown text-pink-500"></i> Priority Support</li>
+                    </ul>
+                    <a href="order.html?plan=Premium" class="block w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-center font-bold text-white transition border border-white/10 hover:border-pink-500">Select Premium</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section (Logic Fixed) -->
+    <section id="faq" class="py-24 relative z-10 bg-black/20">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="text-center mb-12 reveal">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Frequently Asked <span class="text-gradient-primary">Questions</span></h2>
+            </div>
+            
+            <div class="glass rounded-3xl p-6 md:p-10 reveal">
+                <!-- FAQ Item 1 -->
+                <div class="accordion-item">
+                    <button class="accordion-button" onclick="toggleAccordion(this)">
+                        <span class="font-bold text-white">How does the payment process work?</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="pb-6">
+                        100% full payment is required upfront. No work begins until payment is verified. We accept UPI and major online payment methods.
+                        </div>
+                    </div>
+                </div>
+                <!-- FAQ Item 2 -->
+                <div class="accordion-item">
+                    <button class="accordion-button" onclick="toggleAccordion(this)">
+                        <span class="font-bold text-white">Do you offer 3D Mockups or Print services?</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="pb-6">
+                        No. We strictly provide flat 2D images. We do not offer 3D previews, stationery mockups, or print services. All files are RGB optimized for screens.
+                        </div>
+                    </div>
+                </div>
+                <!-- FAQ Item 3 -->
+                <div class="accordion-item">
+                    <button class="accordion-button" onclick="toggleAccordion(this)">
+                        <span class="font-bold text-white">What is your Revision Policy?</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="pb-6">
+                        We allow 2 small changes (color or font) on the final selected design. Requesting a new icon or a "fresh start" is not included and requires a new order.
+                        </div>
+                    </div>
+                </div>
+                <!-- FAQ Item 4 -->
+                <div class="accordion-item">
+                    <button class="accordion-button" onclick="toggleAccordion(this)">
+                        <span class="font-bold text-white">When will I get my files?</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="pb-6">
+                        Standard delivery time is 48 working hours (excluding Sundays & Holidays). The clock starts after we receive both payment and the design brief.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEW CREATIVE FOOTER (Enhanced with 2 additional features) -->
+    <footer class="creative-footer pt-24 pb-12 relative z-10">
+        <!-- Decoration -->
+        <div class="footer-glow-border"></div>
+        <div class="footer-watermark">PIXEL</div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                
+                <div class="col-span-1 md:col-span-2">
+                    <a href="#" class="text-3xl font-bold tracking-tighter text-white flex items-center gap-2 mb-4">
+                        <i class="fas fa-cube text-indigo-500"></i> Pixel<span class="text-indigo-500">.</span>
+                    </a>
+                    <p class="text-slate-400 text-sm leading-relaxed max-w-sm mb-6">
+                        Professional logo design agency tailored for modern businesses. We deliver high-quality, vector-based identities with speed and precision.
+                    </p>
+                    <!-- FEATURE 1: Agency Performance Tracker (Live Status) -->
+                    <div class="inline-flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full text-xs text-white mb-8">
+                        <span class="status-dot animate-pulse"></span> Service Status: <span class="text-green-400 font-bold">100% Operational</span>
+                    </div>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition duration-300"><i class="fab fa-instagram text-xl"></i></a>
+                        <a href="#" class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition duration-300"><i class="fab fa-twitter text-xl"></i></a>
+                        <a href="#" class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition duration-300"><i class="fas fa-envelope text-xl"></i></a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-bold mb-6 uppercase text-xs tracking-wider border-l-2 border-indigo-500 pl-3">Quick Links</h4>
+                    <ul class="space-y-3 text-sm text-slate-400">
+                        <li><a href="#work" class="footer-link-item hover:text-white">Portfolio</a></li>
+                        <li><a href="#pricing" class="footer-link-item hover:text-white">Pricing Plans</a></li>
+                        <li><a href="login.html" class="footer-link-item hover:text-white">Client Login</a></li>
+                        <li><a href="order.html" class="footer-link-item hover:text-white">Order Now</a></li>
+                        <!-- FEATURE 2: Community Feature -->
+                        <li><a href="#" class="footer-link-item text-indigo-400 font-bold hover:text-indigo-300"><i class="fas fa-users text-[10px]"></i> Join Design Club</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-bold mb-6 uppercase text-xs tracking-wider border-l-2 border-pink-500 pl-3">Legal & Support</h4>
+                    <ul class="space-y-3 text-sm text-slate-400">
+                        <li><button onclick="openTerms()" class="footer-link-item hover:text-white text-left">Terms & Conditions</button></li>
+                        <li><a href="#" class="footer-link-item hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#faq" class="footer-link-item hover:text-white">Help Center</a></li>
+                        <li><a href="#" class="footer-link-item hover:text-white">Brand Assets</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
+                <p>&copy; 2026 PixelPerfect Agency. All rights reserved.</p>
+                <p class="mt-2 md:mt-0">Designed with <i class="fas fa-heart text-indigo-500"></i> by PixelTeam</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- TERMS & CONDITIONS MODAL -->
+    <div id="termsModal" class="modal-overlay">
+        <div class="modal-box glass">
+            <div class="modal-header">
+                <h2 class="text-xl font-bold text-white">Service Terms & Conditions</h2>
+                <button onclick="closeTerms()" class="text-2xl text-gray-400 hover:text-white transition">&times;</button>
+            </div>
+            <div class="modal-body custom-scrollbar">
+                
+                <h3>1. Payments & Pricing</h3>
+                <ul>
+                    <li>100% full payment is required upfront. No work begins without verification.</li>
+                    <li>Payments are strictly non-refundable under any circumstances.</li>
+                    <li>Prices are fixed: 99 INR (2 options), 150 INR (4 options), 200 INR (8 options).</li>
+                    <li>"Rush Service" (5 hours) requires an additional 100 INR.</li>
+                    <li>No discounts for bulk/future orders.</li>
+                </ul>
+
+                <h3>2. No-Mockup & RGB Policy (Strict)</h3>
+                <ul>
+                    <li><strong>Strictly No 3D Mockups:</strong> We provide flat 2D images only. No stationery or signage previews.</li>
+                    <li><strong>RGB Color Only:</strong> Files are optimized for digital screens. We do not provide CMYK (Print) profiles.</li>
+                    <li>We do not guarantee color accuracy on physical printing machines.</li>
+                    <li>We do not provide "Gold/Silver Foil" effects.</li>
+                </ul>
+
+                <h3>3. Timeline & Delivery</h3>
+                <ul>
+                    <li>Standard delivery time is <strong>48 working hours</strong>.</li>
+                    <li>Working hours exclude Sundays and National Holidays.</li>
+                    <li>The clock starts only after payment AND design brief are received.</li>
+                    <li>We are not liable for delays caused by internet/technical outages.</li>
+                </ul>
+
+                <h3>4. Revisions & Final Adjustments</h3>
+                <ul>
+                    <li><strong>Strictly NO REVISIONS</strong> (starting over) are included.</li>
+                    <li>Only two (2) small changes (color/font) are allowed on the final design.</li>
+                    <li>Requesting a new icon is NOT a small change.</li>
+                    <li>Small changes take 12 working hours.</li>
+                    <li>Changing brand name mid-project requires a new payment.</li>
+                </ul>
+
+                <h3>5. Source Files & Deliverables</h3>
+                <ul>
+                    <li>Source files provided ONLY for the final chosen logo.</li>
+                    <li>Formats: PNG, EPS, AI, SVG, PDF, JPEG.</li>
+                    <li>We do not provide source files for rejected options.</li>
+                    <li>Files are sent in ZIP format. We do not teach how to use AI software.</li>
+                    <li>File backup is kept for 7 days only. Retrieval fee: 50 INR.</li>
+                </ul>
+
+                <h3>6. Communication & Ownership</h3>
+                <ul>
+                    <li>All communication must be written (Instagram DM/Email). <strong>No Voice/Video Calls.</strong></li>
+                    <li>Abusive behavior results in cancellation.</li>
+                    <li>Copyright transfers to client upon final delivery. Rejected concepts remain our property.</li>
+                    <li>We reserve the right to display the logo in our portfolio.</li>
+                </ul>
+                
+                <p class="mt-6 text-xs text-center text-gray-500 border-t border-gray-700 pt-4">
+                    By placing an order, you automatically accept these terms. <br>
+                    Modification of terms can happen at any time.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 3D PANEL TILT & MOUSE TRACKING ---
+        const container = document.querySelector('.hero-card-container');
+        if(container) {
+            document.addEventListener('mousemove', (e) => {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+                container.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            });
+            document.addEventListener('mouseleave', () => {
+                container.style.transform = `rotateY(0deg) rotateX(0deg)`;
+            });
+        }
+
+        // --- SCROLL REVEAL ---
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            const windowHeight = window.innerHeight;
+            const elementVisible = 150;
+            revealElements.forEach((reveal) => {
+                const elementTop = reveal.getBoundingClientRect().top;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveal.classList.add('active');
+                }
+            });
+        }
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+
+        // --- FIXED FAQ LOGIC ---
+        // Open the first item by default on load
+        document.addEventListener('DOMContentLoaded', () => {
+             const firstItem = document.querySelector('.accordion-item');
+             if(firstItem) {
+                 firstItem.classList.add('active');
+                 const content = firstItem.querySelector('.accordion-content');
+                 content.style.height = content.scrollHeight + "px";
+             }
+        });
+
+        function toggleAccordion(button) {
+            const item = button.parentElement;
+            const content = button.nextElementSibling;
+            
+            // Close all others
+            document.querySelectorAll('.accordion-item').forEach(other => {
+                if(other !== item) {
+                    other.classList.remove('active');
+                    other.querySelector('.accordion-content').style.height = '0';
+                }
+            });
+
+            // Toggle current
+            item.classList.toggle('active');
+            if (item.classList.contains('active')) {
+                content.style.height = content.scrollHeight + "px";
+            } else {
+                content.style.height = '0';
+            }
+        }
+
+        // --- TERMS MODAL LOGIC ---
+        function openTerms() {
+            document.getElementById('termsModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTerms() {
+            document.getElementById('termsModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        document.getElementById('termsModal').addEventListener('click', function(e) {
+            if (e.target === this) closeTerms();
+        });
+
+        // --- PARTICLES ---
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 20;
+
+            for(let i=0; i<particleCount; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle');
+                
+                const size = Math.random() * 3 + 1;
+                p.style.width = `${size}px`;
+                p.style.height = `${size}px`;
+                p.style.left = `${Math.random() * 100}vw`;
+                p.style.animationDuration = `${Math.random() * 10 + 10}s`;
+                p.style.animationDelay = `${Math.random() * 5}s`;
+                
+                container.appendChild(p);
+            }
+        }
+        createParticles();
+    </script>
+</body>
+</html>
