@@ -82,7 +82,7 @@
             }
         }
 
-        // --- LOGIN LOGIC ---
+        // --- LOGIN LOGIC WITH DIAGNOSTICS ---
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault(); 
             e.stopImmediatePropagation();
@@ -93,36 +93,50 @@
             const btn = this.querySelector('button[type="submit"]');
             
             const originalText = btn.innerText;
-            btn.innerText = "Verifying Credentials...";
+            btn.innerText = "Checking Database...";
             btn.disabled = true;
 
             try {
-                // 1. Query Supabase Database for User
-                // We use .single() because email should be unique
+                // DEBUG STEP 1: Check if Supabase connects at all
+                console.log("Attempting login for:", email);
+
+                // DEBUG STEP 2: Run Query
                 const { data, error } = await supabase
                     .from('users')
                     .select('*')
                     .eq('email', email)
                     .eq('password', password)
-                    .single();
+                    .maybeSingle(); // .maybeSingle() prevents error if 0 rows found
 
-                if (error || !data) {
-                    throw new Error("Invalid credentials");
+                // DEBUG STEP 3: Analyze Result
+                if (error) {
+                    // Connection Error or RLS Error
+                    console.error("Supabase Error:", error);
+                    throw new Error("DB Error: " + error.message + " (" + error.code + ")");
                 }
 
-                // 2. SUCCESS: Handle Role Case Sensitivity
-                // Database says "Admin", Dashboard code expects "admin"
+                if (!data) {
+                    // Connected fine, but no matching user found
+                    throw new Error("No user found with these credentials. Please check Email/Password.");
+                }
+
+                // DEBUG STEP 4: Success Logic
+                console.log("User Found:", data);
+
+                // Normalize Role (Fixes "Admin" vs "admin" issue)
                 if (data.role) {
                     data.role = data.role.toLowerCase();
+                } else {
+                    data.role = 'client'; // Default if missing
                 }
 
-                // 3. Save to Session and Redirect
+                // Save and Redirect
                 localStorage.setItem('currentUser', JSON.stringify(data));
+                alert("Login Successful! Redirecting...");
                 window.location.href = 'dashboard.html';
 
             } catch (err) {
-                console.error("Login Error:", err);
-                // Reset Button
+                // ERROR HANDLING
                 btn.innerText = originalText;
                 btn.disabled = false;
                 
@@ -130,7 +144,13 @@
                 loginBox.classList.add('shake');
                 setTimeout(() => loginBox.classList.remove('shake'), 400);
                 
-                alert("Login Failed: Incorrect Email or Password.");
+                // SHOW EXACT ERROR TO USER
+                alert(err.message);
+                
+                // If the error is about RLS (Row Level Security)
+                if(err.message.includes("policy") || err.message.includes("permission")) {
+                    alert("DIAGNOSTIC HINT: Go to Supabase Dashboard > Table Editor > 'users' table > Disable RLS (Row Level Security) or add a policy to allow reading.");
+                }
             }
         });
 
