@@ -203,14 +203,14 @@
                             <label class="text-xs text-cyan-300 font-bold ml-1 mb-4 block uppercase tracking-wider">Premium Add-ons</label>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <label class="glass p-4 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-white/5 transition">
-                                    <input type="checkbox" name="addon" value="50" class="w-5 h-5 accent-indigo-500 addon-checkbox" onchange="updatePrice()">
+                                    <input type="checkbox" name="addon" value="50" class="w-5 h-5 accent-indigo-500 addon-checkbox">
                                     <div>
                                         <p class="text-sm font-bold">Social Media Kit (+₹50)</p>
                                         <p class="text-[10px] text-gray-400">FB, IG, LI profile and cover sizes.</p>
                                     </div>
                                 </label>
                                 <label class="glass p-4 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-white/5 transition">
-                                    <input type="checkbox" name="addon" value="100" class="w-5 h-5 accent-indigo-500 addon-checkbox" onchange="updatePrice()">
+                                    <input type="checkbox" name="addon" value="100" class="w-5 h-5 accent-indigo-500 addon-checkbox">
                                     <div>
                                         <p class="text-sm font-bold">Logo Animation (+₹100)</p>
                                         <p class="text-[10px] text-gray-400">High-end video intro for your logo.</p>
@@ -247,7 +247,7 @@
                     <div class="package-grid">
                         
                         <label class="package-option">
-                            <input type="radio" name="packageType" value="Basic" data-price="99" onchange="updatePrice()">
+                            <input type="radio" name="packageType" value="Basic" data-price="99">
                             <div class="package-card hover:bg-white/5">
                                 <div class="check-icon"><i class="fas fa-check"></i></div>
                                 <h4 class="text-lg font-bold text-slate-300">Basic</h4>
@@ -261,7 +261,7 @@
                         </label>
 
                         <label class="package-option">
-                            <input type="radio" name="packageType" value="Standard" data-price="150" checked onchange="updatePrice()">
+                            <input type="radio" name="packageType" value="Standard" data-price="150" checked>
                             <div class="package-card">
                                 <div class="absolute -top-0 left-1/2 -translate-x-1/2 bg-indigo-600 text-[9px] font-bold px-3 py-1 rounded-b-lg uppercase tracking-wider shadow-lg shadow-indigo-500/20">Most Popular</div>
                                 <div class="check-icon"><i class="fas fa-check"></i></div>
@@ -276,7 +276,7 @@
                         </label>
 
                         <label class="package-option">
-                            <input type="radio" name="packageType" value="Premium" data-price="200" onchange="updatePrice()">
+                            <input type="radio" name="packageType" value="Premium" data-price="200">
                             <div class="package-card hover:bg-white/5">
                                 <div class="check-icon"><i class="fas fa-check"></i></div>
                                 <h4 class="text-lg font-bold text-pink-300">Premium</h4>
@@ -306,7 +306,7 @@
 
                 <!-- Submit Button -->
                 <div class="pt-2">
-                    <button type="button" onclick="openPayment()" class="w-full py-5 rounded-xl font-bold text-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-2xl shadow-indigo-500/30 flex items-center justify-center gap-3 group transition-all transform hover:scale-[1.01]">
+                    <button type="button" id="proceedBtn" class="w-full py-5 rounded-xl font-bold text-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-2xl shadow-indigo-500/30 flex items-center justify-center gap-3 group transition-all transform hover:scale-[1.01]">
                         Proceed to Payment <i class="fas fa-arrow-right group-hover:translate-x-1 transition"></i>
                     </button>
                     <p class="text-center text-xs text-gray-500 mt-4"><i class="fas fa-lock text-gray-600"></i> Your data is encrypted and secure.</p>
@@ -345,28 +345,32 @@
     </div>
 
     <script>
-        /* ----------------------------------------------------
-           1. CORE FUNCTIONS (Crash Proof - Define FIRST) 
-           ---------------------------------------------------- */
+        // --- 1. CONFIGURATION & INIT ---
+        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
         
-        // --- Live Pricing Logic ---
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        } catch(e) {
+            console.error("Supabase Init Error:", e);
+        }
+
+        // --- 2. LOGIC ---
         function updatePrice() {
             try {
-                // Get selected package
+                // Get Package
                 const selectedPackage = document.querySelector('input[name="packageType"]:checked');
-                if(!selectedPackage) return;
-
-                const basePrice = parseInt(selectedPackage.getAttribute('data-price')) || 0;
+                const basePrice = selectedPackage ? parseInt(selectedPackage.getAttribute('data-price')) : 0;
                 
-                // Get addons (Fixed Logic)
+                // Get Addons
                 let addonsPrice = 0;
-                document.querySelectorAll('input[name="addon"]:checked').forEach(addon => {
-                    addonsPrice += parseInt(addon.value) || 0;
-                });
+                const addons = document.querySelectorAll('input[name="addon"]:checked');
+                addons.forEach(el => addonsPrice += parseInt(el.value));
 
                 const total = basePrice + addonsPrice;
 
-                // Update DOM
+                // Update UI
                 const priceEl = document.getElementById('summaryPrice');
                 const amountEl = document.getElementById('payAmount');
                 const pkgEl = document.getElementById('summaryPackage');
@@ -374,7 +378,7 @@
 
                 if(priceEl) priceEl.innerText = '₹' + total;
                 if(amountEl) amountEl.innerText = '₹' + total;
-                if(pkgEl) pkgEl.innerText = selectedPackage.value;
+                if(pkgEl && selectedPackage) pkgEl.innerText = selectedPackage.value;
                 
                 // Update QR Code
                 if(qrImg) {
@@ -385,7 +389,6 @@
             }
         }
 
-        // --- File Upload Logic ---
         function updateFileName(input) {
             const display = document.getElementById('fileNameDisplay');
             if(input.files && input.files[0]) {
@@ -393,16 +396,14 @@
             }
         }
 
-        // --- Modal & Validation Logic ---
         function openPayment() {
-            // FIX: Removed Supabase check here to ensure modal opens even if script is slow
             const form = document.getElementById('orderForm');
             if(form.checkValidity()) {
-                updatePrice(); // Ensure price is correct before showing modal
+                updatePrice(); // Ensure price is current
                 document.getElementById('paymentModal').classList.add('active');
             } else {
                 alert("Please fill in all required fields marked with *");
-                form.reportValidity(); // FIX: Visually show what is missing
+                form.reportValidity();
             }
         }
 
@@ -410,69 +411,31 @@
             document.getElementById('paymentModal').classList.remove('active');
         }
 
-        /* ----------------------------------------------------
-           2. EVENT LISTENERS (Run on Load)
-           ---------------------------------------------------- */
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize Price
-            updatePrice();
-            
-            // Character Counter
-            const ideasInput = document.getElementById('ideasInput');
-            const charCount = document.getElementById('charCount');
-            if(ideasInput && charCount) {
-                ideasInput.addEventListener('input', () => {
-                    charCount.innerText = `${ideasInput.value.length}/300`;
-                    if(ideasInput.value.length >= 300) charCount.classList.add('text-red-500');
-                    else charCount.classList.remove('text-red-500');
-                });
-            }
-        });
-
-        /* ----------------------------------------------------
-           3. DATABASE LOGIC (Supabase)
-           ---------------------------------------------------- */
-        
-        // Configuration
-        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
-        
-        // Safe Client Creation
-        let supabase;
-        try {
-            supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        } catch(e) {
-            console.error("Supabase Init Error:", e);
-        }
-
         async function confirmOrder() {
-            // FIX: Check Supabase Here
-            if (typeof window.supabase === 'undefined' || !supabase) {
-                alert("System Error: Database not loaded. Please disable AdBlock or refresh.");
-                return;
-            }
+            if (!supabase) { alert("System Error: Database not connected."); return; }
 
             const txId = document.getElementById('userTxId').value;
-            if(!txId) { 
-                alert("Please enter Transaction ID"); 
-                document.getElementById('userTxId').focus();
-                return; 
-            }
+            if(!txId) { alert("Please enter Transaction ID"); return; }
             
             const btn = document.querySelector('button[onclick="confirmOrder()"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Database...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             btn.disabled = true;
 
             const form = document.getElementById('orderForm');
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
 
-            // Data Preparation
+            // Prepare Data
             const orderId = "#" + Math.floor(100 + Math.random() * 900);
             
+            // Re-calculate price for DB record
+            let totalPrice = 0;
+            const pkg = document.querySelector('input[name="packageType"]:checked');
+            if(pkg) totalPrice += parseInt(pkg.getAttribute('data-price'));
+            document.querySelectorAll('input[name="addon"]:checked').forEach(a => totalPrice += parseInt(a.value));
+
             const userData = {
-                email: data.userEmail.toLowerCase(), // Ensure lowercase for login match
+                email: data.userEmail.toLowerCase(),
                 password: data.userPass,
                 name: data.clientName,
                 role: 'client'
@@ -496,29 +459,51 @@
                 vibe: data.vibe,
                 ideas: data.ideas,
                 refLink: data.refLink,
-                packageType: data.packageType
+                packageType: data.packageType,
+                // Store Addons in description or separate field if schema allows, 
+                // for now we append to ideas so admin sees it
+                designNotes: (data.ideas || '') + ` [Total Paid: ₹${totalPrice}]`
             };
 
-            // Database Operations
             try {
-                // 1. Save User (RLS Disabled allows this)
+                // 1. Save User
                 await supabase.from('users').insert([userData]);
-
                 // 2. Save Order
-                const { error: orderError } = await supabase.from('orders').insert([orderData]);
+                const { error } = await supabase.from('orders').insert([orderData]);
+                if (error) throw error;
 
-                if (orderError) throw orderError;
-
-                alert("Order Placed Successfully! Your order will be visible in the dashboard after Admin confirms your payment.");
+                alert("Order Placed Successfully!");
                 window.location.href = "login.html"; 
-
             } catch (err) {
-                alert("Error saving order: " + err.message);
-                console.error(err);
-                btn.innerHTML = originalText;
+                alert("Error: " + err.message);
+                btn.innerHTML = "Confirm Payment";
                 btn.disabled = false;
             }
         }
+
+        // --- 3. EVENT LISTENERS (FIXED) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Attach 'change' event to all radio/checkbox inputs for price updates
+            const inputs = document.querySelectorAll('input[name="packageType"], input[name="addon"]');
+            inputs.forEach(input => {
+                input.addEventListener('change', updatePrice);
+            });
+
+            // Attach click to Proceed button
+            document.getElementById('proceedBtn').addEventListener('click', openPayment);
+
+            // Initial Price Calc
+            updatePrice();
+
+            // Char Counter
+            const ideasInput = document.getElementById('ideasInput');
+            const charCount = document.getElementById('charCount');
+            if(ideasInput) {
+                ideasInput.addEventListener('input', () => {
+                    charCount.innerText = `${ideasInput.value.length}/300`;
+                });
+            }
+        });
     </script>
 </body>
 </html>
