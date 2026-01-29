@@ -58,12 +58,14 @@
         </div>
     </div>
 
+    <!-- Background Decoration -->
     <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
     </div>
 
     <script>
+        // --- SUPABASE CONFIGURATION ---
         const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
         const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -80,30 +82,23 @@
             }
         }
 
+        // --- LOGIN LOGIC ---
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+            e.preventDefault(); 
+            e.stopImmediatePropagation();
+            
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const loginBox = document.getElementById('loginBox');
             const btn = this.querySelector('button[type="submit"]');
             
             const originalText = btn.innerText;
-            btn.innerText = "Verifying...";
+            btn.innerText = "Verifying Credentials...";
             btn.disabled = true;
 
             try {
-                // FIX 1: Direct Admin Check (Matches your DB, bypasses API potential errors)
-                if (email === "admin@99logo.com" && password === "admin123") {
-                    localStorage.setItem('currentUser', JSON.stringify({
-                        email: email,
-                        name: "Admin",
-                        role: "admin" // Normalized for dashboard
-                    }));
-                    window.location.href = 'dashboard.html';
-                    return;
-                }
-
-                // FIX 2: Supabase Query for Clients
+                // 1. Query Supabase Database for User
+                // We use .single() because email should be unique
                 const { data, error } = await supabase
                     .from('users')
                     .select('*')
@@ -111,19 +106,30 @@
                     .eq('password', password)
                     .single();
 
-                if (data) {
-                    if (data.role) data.role = data.role.toLowerCase(); // Handle "Admin" vs "admin"
-                    localStorage.setItem('currentUser', JSON.stringify(data));
-                    window.location.href = 'dashboard.html';
-                } else {
+                if (error || !data) {
                     throw new Error("Invalid credentials");
                 }
 
+                // 2. SUCCESS: Handle Role Case Sensitivity
+                // Database says "Admin", Dashboard code expects "admin"
+                if (data.role) {
+                    data.role = data.role.toLowerCase();
+                }
+
+                // 3. Save to Session and Redirect
+                localStorage.setItem('currentUser', JSON.stringify(data));
+                window.location.href = 'dashboard.html';
+
             } catch (err) {
+                console.error("Login Error:", err);
+                // Reset Button
                 btn.innerText = originalText;
                 btn.disabled = false;
+                
+                // Shake Animation
                 loginBox.classList.add('shake');
                 setTimeout(() => loginBox.classList.remove('shake'), 400);
+                
                 alert("Login Failed: Incorrect Email or Password.");
             }
         });
