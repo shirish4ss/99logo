@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | PixelPerfect</title>
+    <title>Login | 99logo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         .glass {
             background: rgba(255, 255, 255, 0.05);
@@ -52,10 +55,10 @@
         </form>
         
         <div class="mt-6 text-center text-xs text-gray-500 border-t border-gray-700 pt-4">
-            <p class="mb-2">Admin: <span class="text-white">admin@pixel.com</span> / <span class="text-white">admin123</span></p>
+            <p class="mb-2">Admin: <span class="text-white">admin@99logo.com</span> / <span class="text-white">admin123</span></p>
             <p class="mb-4">Clients: Use email/password set during Order.</p>
             
-            <button onclick="hardReset()" class="text-red-500 hover:text-red-400 underline">System Error? Click here to Reset Data</button>
+            <button onclick="hardReset()" class="text-red-500 hover:text-red-400 underline">System Error? Click here to Reset Session</button>
         </div>
     </div>
 
@@ -66,6 +69,11 @@
     </div>
 
     <script>
+        // --- SUPABASE CONFIGURATION ---
+        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
         // NEW FEATURE 1: Toggle Password Visibility
         function togglePassword() {
             const passInput = document.getElementById('password');
@@ -79,46 +87,51 @@
             }
         }
 
-        // FIXED LOGIN LOGIC (Strong Database Check)
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        // FIXED LOGIN LOGIC (Supabase Database Check)
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const loginBox = document.getElementById('loginBox');
+            const btn = this.querySelector('button[type="submit"]');
+            
+            // Loading State
+            const originalText = btn.innerText;
+            btn.innerText = "Checking Database...";
+            btn.disabled = true;
 
-            // 1. Check Admin Credentials
-            if(email === 'admin@pixel.com' && password === 'admin123') {
-                localStorage.setItem('currentUser', JSON.stringify({
-                    email: email,
-                    role: 'admin',
-                    name: 'Agency Admin'
-                }));
-                window.location.href = 'dashboard.html';
-                return;
-            }
+            try {
+                // Query Supabase 'users' table
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('email', email)
+                    .eq('password', password)
+                    .single();
 
-            // 2. Check Client "Database" (pixel_users array)
-            const users = JSON.parse(localStorage.getItem('pixel_users') || '[]');
-            const user = users.find(u => u.email === email && u.password === password);
+                if (data) {
+                    // Successful Login
+                    localStorage.setItem('currentUser', JSON.stringify(data));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    throw new Error("Invalid credentials");
+                }
 
-            if(user) {
-                // Successful Login
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                window.location.href = 'dashboard.html';
-            } else {
-                // NEW FEATURE 2: Login Failure Shake & Alert
+            } catch (err) {
+                // Login Failure Shake & Alert
+                btn.innerText = originalText;
+                btn.disabled = false;
                 loginBox.classList.add('shake');
                 setTimeout(() => loginBox.classList.remove('shake'), 400);
-                
-                alert("Incorrect Email or Password. If you just placed an order, please check your credentials.");
+                alert("Incorrect Email or Password. Please try again.");
             }
         });
 
-        // System Hard Reset
+        // System Hard Reset (Clears Local Session Only)
         function hardReset() {
-            if(confirm("⚠️ This will delete ALL orders and users. Continue?")) {
+            if(confirm("⚠️ This will clear your local login session. Continue?")) {
                 localStorage.clear();
-                alert("System Reset Complete.");
+                alert("Session Cleared.");
                 location.reload();
             }
         }
