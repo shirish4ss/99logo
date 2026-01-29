@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <style>
         .glass {
             background: rgba(255, 255, 255, 0.05);
@@ -79,34 +81,22 @@
             }
         }
 
-        // FIXED LOGIN LOGIC (Strong Database Check)
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        // FIXED LOGIN LOGIC (Supabase Database Check)
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const loginBox = document.getElementById('loginBox');
 
-            // 1. Check Admin Credentials
-            if(email === 'admin@pixel.com' && password === 'admin123') {
-                localStorage.setItem('currentUser', JSON.stringify({
-                    email: email,
-                    role: 'admin',
-                    name: 'Agency Admin'
-                }));
-                window.location.href = 'dashboard.html';
-                return;
-            }
-
-            // 2. Check Client "Database" (pixel_users array)
-            const users = JSON.parse(localStorage.getItem('pixel_users') || '[]');
-            const user = users.find(u => u.email === email && u.password === password);
-
-            if(user) {
+            // Verify login with Supabase
+            const result = await verifyUserLogin(email, password);
+            
+            if(result.success) {
                 // Successful Login
-                localStorage.setItem('currentUser', JSON.stringify(user));
+                localStorage.setItem('currentUser', JSON.stringify(result.data));
                 window.location.href = 'dashboard.html';
             } else {
-                // NEW FEATURE 2: Login Failure Shake & Alert
+                // Login Failure Shake & Alert
                 loginBox.classList.add('shake');
                 setTimeout(() => loginBox.classList.remove('shake'), 400);
                 
@@ -114,12 +104,17 @@
             }
         });
 
-        // System Hard Reset
-        function hardReset() {
+        // System Hard Reset (Supabase)
+        async function hardReset() {
             if(confirm("⚠️ This will delete ALL orders and users. Continue?")) {
-                localStorage.clear();
-                alert("System Reset Complete.");
-                location.reload();
+                const result = await hardResetDatabase();
+                if(result.success) {
+                    localStorage.clear();
+                    alert("System Reset Complete.");
+                    location.reload();
+                } else {
+                    alert("Error resetting database: " + result.error);
+                }
             }
         }
     </script>
