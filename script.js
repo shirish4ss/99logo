@@ -1,6 +1,6 @@
 // ================= CONFIGURATION =================
 const UPI_ID = "yourname@okaxis"; 
-const ADMIN_EMAIL = "admin@pixel.com";
+const ADMIN_EMAIL = "admin@99logo.com"; // FIXED: Updated email
 const ADMIN_PASS = "admin123";
 const WORK_START_HOUR = 10; // 10 AM
 const WORK_END_HOUR = 18;   // 6 PM
@@ -59,12 +59,21 @@ if (orderForm) {
         const fd = new FormData(orderForm);
         const data = Object.fromEntries(fd.entries());
         
-        // Get Price from Dropdown
-        const pkgSelect = document.getElementById('packageSelect');
-        const selectedOption = pkgSelect.options[pkgSelect.selectedIndex];
+        // --- FIX START: Changed from Dropdown logic to Radio Button logic + Addons ---
+        const selectedPkg = document.querySelector('input[name="packageType"]:checked');
+        data.packageType = selectedPkg ? selectedPkg.value : 'Standard'; // Default
         
-        data.packageType = pkgSelect.value;
-        data.totalPrice = parseInt(selectedOption.getAttribute('data-price'));
+        let basePrice = selectedPkg ? parseInt(selectedPkg.getAttribute('data-price')) : 150;
+        
+        // Calculate Addons
+        let addonPrice = 0;
+        document.querySelectorAll('input[name="addon"]:checked').forEach(addon => {
+            addonPrice += parseInt(addon.value) || 0;
+        });
+
+        data.totalPrice = basePrice + addonPrice;
+        // --- FIX END ---
+
         data.dateOfInquiry = new Date().toISOString();
         data.status = 'Pending';
         data.paymentStatus = 'Unpaid'; // Default
