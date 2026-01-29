@@ -17,8 +17,14 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .glow-btn:hover { box-shadow: 0 0 20px rgba(79, 70, 229, 0.4); }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .glow-btn:hover {
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
         .shake { animation: shake 0.4s ease-in-out; }
     </style>
 </head>
@@ -43,7 +49,7 @@
                 </button>
             </div>
 
-            <button type="button" id="loginBtn" onclick="handleLogin()" class="w-full py-3 bg-indigo-600 rounded-lg font-bold text-white hover:bg-indigo-700 transition-all glow-btn">
+            <button type="button" id="loginBtn" class="w-full py-3 bg-indigo-600 rounded-lg font-bold text-white hover:bg-indigo-700 transition-all glow-btn">
                 Login to Dashboard
             </button>
         </form>
@@ -58,122 +64,116 @@
         </div>
     </div>
 
-    <script>
-        // --- GLOBAL ERROR CATCHER ---
-        window.onerror = function(msg, url, line) {
-            const el = document.getElementById('debugStatus');
-            el.innerHTML = `<span style="color:#ef4444">CRITICAL ERROR: ${msg} <br> Line: ${line}</span>`;
-            console.error(msg);
-            return false;
-        };
+    <!-- Background Decoration -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
+    </div>
 
-        // --- 1. SETUP LOGGING ---
+    <script>
+        // --- CONFIGURATION ---
+        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
+        
+        // --- UTILS ---
         const statusEl = document.getElementById('debugStatus');
-        function log(msg) {
+        function log(msg, isError = false) {
             console.log(msg);
             statusEl.innerText = msg;
+            if(isError) statusEl.style.color = '#ef4444'; // Red
+            else statusEl.style.color = '#4ade80'; // Green
         }
 
-        // --- 2. INIT SUPABASE ---
-        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT'; 
-        
-        let supabase;
-
-        // Run Immediately
-        (function initSystem() {
-            log("1. Script Started. Checking Libraries...");
-            
-            if (typeof window.supabase === 'undefined') {
-                log("ERROR: Supabase Library NOT loaded. AdBlocker?");
-                document.getElementById('loginBtn').disabled = true;
-                document.getElementById('loginBtn').innerText = "Library Failed to Load";
-                return;
-            }
-
-            try {
-                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-                log("2. System Ready. Waiting for input.");
-            } catch (e) {
-                log("Init Failed: " + e.message);
-            }
-        })();
-
-        // --- 3. UI FUNCTIONS ---
         function togglePassword() {
             const passInput = document.getElementById('password');
             const eye = document.getElementById('eyeIcon');
-            passInput.type = passInput.type === "password" ? "text" : "password";
-            eye.classList.toggle('fa-eye');
-            eye.classList.toggle('fa-eye-slash');
+            if (passInput.type === "password") {
+                passInput.type = "text";
+                eye.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                passInput.type = "password";
+                eye.classList.replace('fa-eye-slash', 'fa-eye');
+            }
         }
 
-        // --- 4. LOGIN LOGIC ---
-        async function handleLogin() {
-            log("3. Button Clicked. Validating...");
-            
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const btn = document.getElementById('loginBtn');
-            const loginBox = document.getElementById('loginBox');
+        // --- MAIN SCRIPT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            log("DOM Loaded. Checking Libraries...");
 
-            if(!email || !password) {
-                log("Error: Fields empty.");
-                alert("Please enter both email and password.");
+            // 1. Check if Supabase Loaded
+            if (typeof window.supabase === 'undefined') {
+                log("CRITICAL ERROR: Supabase Library failed to load. Please check your internet or AdBlocker.", true);
                 return;
             }
 
-            btn.innerText = "Connecting...";
-            btn.disabled = true;
-
+            // 2. Initialize Client
+            let supabase;
             try {
-                log(`4. Querying DB for: ${email}...`);
-                
-                // Use maybeSingle to prevent 406/JSON errors on 0 results
-                const { data, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('email', email)
-                    .eq('password', password)
-                    .maybeSingle();
-
-                if (error) {
-                    log("DB Error: " + error.message + " (" + error.code + ")");
-                    throw error;
-                }
-
-                if (!data) {
-                    log("Result: No user found. Incorrect credentials.");
-                    throw new Error("Invalid Email or Password");
-                }
-
-                log("5. Success! Role: " + data.role);
-
-                // FIX: Normalize Role
-                if (data.role) data.role = data.role.toLowerCase();
-                else data.role = 'client';
-                
-                localStorage.setItem('currentUser', JSON.stringify(data));
-                log("6. Redirecting...");
-                
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 500);
-
-            } catch (err) {
-                btn.innerText = "Login to Dashboard";
-                btn.disabled = false;
-                
-                loginBox.classList.add('shake');
-                setTimeout(() => loginBox.classList.remove('shake'), 400);
-
-                if (err.message.includes("Invalid Email")) {
-                    alert("Incorrect Email or Password.");
-                } else {
-                    alert("System Error: " + err.message);
-                }
+                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                log("System Ready. Database Client Connected.");
+            } catch (e) {
+                log("Init Error: " + e.message, true);
+                return;
             }
-        }
+
+            // 3. Attach Login Handler
+            document.getElementById('loginBtn').addEventListener('click', async () => {
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const btn = document.getElementById('loginBtn');
+                const loginBox = document.getElementById('loginBox');
+
+                if(!email || !password) {
+                    alert("Please fill in all fields.");
+                    return;
+                }
+
+                btn.innerText = "Checking Credentials...";
+                btn.disabled = true;
+                log("Querying Database...");
+
+                try {
+                    // Query DB
+                    const { data, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('email', email)
+                        .eq('password', password)
+                        .maybeSingle();
+
+                    // Network or Policy Error
+                    if (error) {
+                        throw new Error(error.message);
+                    }
+
+                    // No User Found
+                    if (!data) {
+                        throw new Error("Invalid Email or Password");
+                    }
+
+                    // Success
+                    log("Success! Redirecting...");
+                    
+                    // Normalize Role (Fix for Admin vs admin)
+                    if (data.role) data.role = data.role.toLowerCase();
+                    else data.role = 'client';
+
+                    localStorage.setItem('currentUser', JSON.stringify(data));
+                    window.location.href = 'dashboard.html';
+
+                } catch (err) {
+                    console.error(err);
+                    btn.innerText = "Login to Dashboard";
+                    btn.disabled = false;
+                    
+                    loginBox.classList.add('shake');
+                    setTimeout(() => loginBox.classList.remove('shake'), 400);
+
+                    log("Login Failed: " + err.message, true);
+                    alert("Login Failed: " + err.message);
+                }
+            });
+        });
 
         function hardReset() {
             localStorage.clear();
