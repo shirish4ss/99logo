@@ -89,6 +89,9 @@
         </div>
     </nav>
 
+    <!-- DEBUG LOGGER (Visible only if things crash) -->
+    <div id="crashLogger" class="hidden max-w-4xl mx-auto mt-4 p-4 bg-red-900 border border-red-500 rounded text-red-200 font-mono text-xs"></div>
+
     <div class="max-w-[1600px] mx-auto px-4 py-8">
         
         <!-- ================= ADMIN AREA ================= -->
@@ -348,79 +351,95 @@
         </div>
     </div>
 
-    <!-- SCRIPT LOGIC (FIXES & NEW FEATURES - SUPABASE INTEGRATED) -->
+    <!-- SCRIPT LOGIC (CRASH-PROOF & DEBUGGING ADDED) -->
     <script>
-        // --- ERROR HANDLER (Displays Alert instead of Blank Screen) ---
+        // --- 1. GLOBAL ERROR CATCHER ---
+        // If anything crashes before initialization, this will show it on screen.
         window.onerror = function(msg, url, line) {
-            alert("Dashboard Error:\n" + msg);
+            const logger = document.getElementById('crashLogger');
+            logger.classList.remove('hidden');
+            logger.innerHTML += `CRASH: ${msg} (Line ${line})<br>`;
+            // Force show Admin view so screen isn't blank
+            document.getElementById('adminView').classList.remove('hidden');
             return false;
         };
 
-        // --- SUPABASE CONFIGURATION ---
+        // --- 2. CONFIG ---
         const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
         const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
         let supabase;
-        let globalOrders = []; 
+        let globalOrders = [];
 
-        async function loadDashboard() {
-            try {
-                // 1. Initialize Supabase Safely
-                if (typeof window.supabase !== 'undefined') {
-                    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-                } else {
-                    console.error("Supabase library not loaded");
-                    // We continue anyway to show the UI, even if data fails
-                }
+        // --- 3. INIT LOGIC (Synchronous First) ---
+        function initDashboard() {
+            // A. Check LocalStorage User
+            const userStr = localStorage.getItem('currentUser');
+            if (!userStr) {
+                window.location.href = 'login.html';
+                return;
+            }
 
-                // 2. Check User from LocalStorage
-                const user = JSON.parse(localStorage.getItem('currentUser'));
-                if (!user) { window.location.href = 'login.html'; return; }
+            const user = JSON.parse(userStr);
+            const userDisplay = document.getElementById('userDisplay');
+            if(userDisplay) userDisplay.innerText = `Welcome, ${user.name || 'Admin'}`;
 
-                document.getElementById('userDisplay').innerText = `Welcome, ${user.name || 'Admin'}`;
-
-                // 3. Determine Role (Case-Insensitive)
-                const role = user.role ? user.role.toLowerCase() : 'client';
-
-                // 4. REVEAL UI IMMEDIATELY (Prevents Blank Screen)
-                if (role === 'admin') {
-                    document.getElementById('adminView').classList.remove('hidden');
-                    document.getElementById('clientView').classList.add('hidden');
-                    // Fetch Data *After* showing UI
-                    if(supabase) await renderAdminOrders();
-                } else {
-                    document.getElementById('adminView').classList.add('hidden');
-                    document.getElementById('clientView').classList.remove('hidden');
-                    
-                    document.getElementById('settingsBtn').classList.add('hidden');
-                    document.getElementById('notificationCenter').classList.add('hidden');
-                    
-                    if(supabase) await renderClientOrders(user.email);
-                }
-
-            } catch (err) {
-                console.error("Dashboard Init Error:", err);
-                // Fallback: If error, show Admin View so screen isn't black
+            // B. IMMEDIATE UI UN-HIDE (Prevents Blank Screen)
+            const role = user.role ? user.role.toLowerCase() : 'client';
+            
+            if (role === 'admin') {
                 document.getElementById('adminView').classList.remove('hidden');
+                document.getElementById('clientView').classList.add('hidden');
+            } else {
+                document.getElementById('adminView').classList.add('hidden');
+                document.getElementById('clientView').classList.remove('hidden');
+                document.getElementById('settingsBtn').classList.add('hidden');
+                document.getElementById('notificationCenter').classList.add('hidden');
+            }
+
+            // C. Connect to DB (Async)
+            if (typeof window.supabase !== 'undefined') {
+                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                if (role === 'admin') fetchAdminData();
+                else fetchClientData(user.email);
+            } else {
+                const logger = document.getElementById('crashLogger');
+                logger.classList.remove('hidden');
+                logger.innerText = "WARNING: Supabase Library failed to load. Data will not sync.";
             }
         }
 
-        async function renderAdminOrders() {
-            // Fetch from Supabase
-            const { data: orders, error } = await supabase.from('orders').select('*');
-            if(error) { 
-                console.error("DB Error:", error); 
-                return; // Stop here but keep UI
+        // --- 4. DATA FETCHING ---
+        async function fetchAdminData() {
+            try {
+                const { data, error } = await supabase.from('orders').select('*');
+                if (error) throw error;
+                globalOrders = data || [];
+                renderAdminUI(globalOrders);
+            } catch (err) {
+                console.error("Fetch Error:", err);
             }
-            globalOrders = orders || []; 
+        }
 
+        async function fetchClientData(email) {
+            try {
+                const { data, error } = await supabase.from('orders').select('*').eq('userEmail', email);
+                if (error) throw error;
+                renderClientUI(data || []);
+            } catch (err) {
+                console.error("Fetch Error:", err);
+            }
+        }
+
+        // --- 5. RENDER FUNCTIONS ---
+        function renderAdminUI(orders) {
             const tableBody = document.getElementById('ordersTableBody');
             if(!tableBody) return;
 
-            // Stats Calculation
+            // Stats
             document.getElementById('stat-total').innerText = orders.length;
             document.getElementById('stat-pending').innerText = orders.filter(o => o.status === 'In Progress').length;
             document.getElementById('stat-unpaid').innerText = orders.filter(o => o.status === 'Unconfirmed').length;
-
+            
             let earnings = 0;
             orders.forEach(o => {
                 if(o.status !== 'Unconfirmed') {
@@ -431,7 +450,8 @@
             });
             document.getElementById('totalEarnings').innerText = '₹' + earnings;
 
-            tableBody.innerHTML = orders.map((o, index) => `
+            // Table
+            tableBody.innerHTML = orders.map((o) => `
                 <tr class="border-b border-gray-800 hover:bg-white/5 transition">
                     <td class="px-4 py-3 font-bold text-gray-300">${o.id}</td>
                     <td class="px-4 py-3">${o.clientName}</td>
@@ -447,11 +467,11 @@
                 </tr>
             `).join('');
 
-            // Also populate priority list
-            const priorityList = document.getElementById('priorityList');
-            if(priorityList) {
-                const activeOrders = orders.filter(o => o.status !== 'Completed');
-                priorityList.innerHTML = activeOrders.map(o => `
+            // Priority
+            const pList = document.getElementById('priorityList');
+            if(pList) {
+                const active = orders.filter(o => o.status !== 'Completed');
+                pList.innerHTML = active.map(o => `
                      <div class="glass p-3 rounded-lg border-l-4 border-indigo-500 cursor-pointer hover:bg-white/5" onclick="viewOrder('${o.id}')">
                         <div class="flex justify-between items-center">
                             <span class="font-bold text-sm">${o.id}</span>
@@ -463,6 +483,38 @@
             }
         }
 
+        function renderClientUI(orders) {
+            const container = document.getElementById('clientOrdersContainer');
+            if(!container) return;
+            
+            if(orders.length > 0) {
+                const active = orders[0];
+                document.getElementById('clientProgress').classList.remove('hidden');
+                
+                let percent = 10;
+                if(active.status === 'In Progress') percent = 45;
+                if(active.status === 'Sent for Approval') percent = 80;
+                if(active.status === 'Completed') percent = 100;
+                
+                document.getElementById('progBar').style.width = percent + '%';
+                document.getElementById('progPercent').innerText = percent + '%';
+            }
+
+            container.innerHTML = orders.map((o) => `
+                <div class="glass p-6 rounded-2xl border border-white/10 relative overflow-hidden mb-4">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold">${o.brandName} <span class="text-xs text-gray-500 font-normal">${o.id}</span></h3>
+                            <p class="text-xs text-gray-400">Targeting: ${o.audience || 'General'}</p>
+                        </div>
+                        <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-widest">${o.status}</span>
+                    </div>
+                    ${o.status === 'Unconfirmed' ? `<div class="bg-red-500/10 p-4 rounded text-center text-red-400 text-xs font-bold">Waiting for payment verification: ${o.txId}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // --- 6. ACTIONS ---
         function viewOrder(id) {
             const o = globalOrders.find(order => order.id === id);
             if(!o) return;
@@ -471,21 +523,18 @@
             document.getElementById('vClient').innerText = o.clientName;
             document.getElementById('vBrand').innerText = o.brandName;
             document.getElementById('vNiche').innerText = o.niche;
-            document.getElementById('vColors').innerText = o.colors || 'Not specified';
+            document.getElementById('vColors').innerText = o.colors || '-';
             document.getElementById('vVibe').innerText = o.vibe;
-            document.getElementById('vNotes').innerText = o.ideas || o.designNotes || 'None';
+            document.getElementById('vNotes').innerText = o.ideas || o.designNotes || '-';
             document.getElementById('vTx').innerText = o.txId;
-            document.getElementById('vPayStatus').innerText = o.status === 'Unconfirmed' ? 'Pending Verification' : 'Paid & Verified';
+            document.getElementById('vPayStatus').innerText = o.status === 'Unconfirmed' ? 'Pending' : 'Paid';
             document.getElementById('vStatus').innerText = o.status;
             document.getElementById('vIndex').value = o.id; 
-            document.getElementById('vWa').href = `https://wa.me/${o.contact.replace(/\D/g,'')}`;
+            document.getElementById('vWa').href = `https://wa.me/${o.contact ? o.contact.replace(/\D/g,'') : ''}`;
 
             const vBtn = document.getElementById('verifyBtn');
-            if(o.status === 'Unconfirmed') {
-                vBtn.classList.remove('hidden');
-            } else {
-                vBtn.classList.add('hidden');
-            }
+            if(o.status === 'Unconfirmed') vBtn.classList.remove('hidden');
+            else vBtn.classList.add('hidden');
             
             document.getElementById('updateStatusSelect').value = o.status;
             document.getElementById('checkPng').checked = o.pngSent;
@@ -497,12 +546,7 @@
         async function confirmOrderByAdmin() {
             const id = document.getElementById('vIndex').value;
             const { error } = await supabase.from('orders').update({ status: "In Progress" }).eq('id', id);
-            
-            if(error) alert("Error verifying: " + error.message);
-            else {
-                alert("Order Verified! Client can now see progress.");
-                location.reload();
-            }
+            if(error) alert(error.message); else { alert("Verified!"); location.reload(); }
         }
 
         async function saveAdminChanges() {
@@ -512,88 +556,20 @@
             const sourceSent = document.getElementById('checkSource').checked;
 
             const { error } = await supabase.from('orders').update({ 
-                status: newStatus,
-                pngSent: pngSent,
-                sourceSent: sourceSent
+                status: newStatus, pngSent, sourceSent
             }).eq('id', id);
 
-            if(error) alert("Error saving: " + error.message);
-            else {
-                alert("Status Updated");
-                location.reload();
-            }
+            if(error) alert(error.message); else { alert("Saved!"); location.reload(); }
         }
         
         async function deleteOrder() {
-            if(confirm("Permanently delete this order from database?")) {
+            if(confirm("Delete Permanently?")) {
                 const id = document.getElementById('vIndex').value;
                 const { error } = await supabase.from('orders').delete().eq('id', id);
-                if(error) alert("Error: " + error.message);
-                else {
-                    alert("Deleted.");
-                    location.reload();
-                }
+                if(error) alert(error.message); else { alert("Deleted."); location.reload(); }
             }
         }
 
-        async function renderClientOrders(email) {
-            const { data: myOrders, error } = await supabase.from('orders').select('*').eq('userEmail', email);
-            if(error) console.error(error);
-
-            const container = document.getElementById('clientOrdersContainer');
-            if(!container) return;
-            
-            if(myOrders && myOrders.length > 0) {
-                const active = myOrders[0];
-                document.getElementById('whatsappDesigner').href = `https://wa.me/919876543210?text=Hello, I need help with my project ${active.id}`;
-                
-                const progressBox = document.getElementById('clientProgress');
-                if(progressBox) progressBox.classList.remove('hidden');
-                
-                let percent = 10; let label = "Payment Verification";
-                if(active.status === 'In Progress') { percent = 45; label = "Designer is creating your concepts"; }
-                if(active.status === 'Sent for Approval') { percent = 80; label = "Concepts sent! Check WhatsApp/Email"; }
-                if(active.status === 'Completed') { percent = 100; label = "Project Finished!"; }
-                
-                document.getElementById('progBar').style.width = percent + '%';
-                document.getElementById('progPercent').innerText = percent + '%';
-                document.getElementById('progLabel').innerText = label;
-            }
-
-            container.innerHTML = myOrders.map((o, idx) => `
-                <div class="glass p-6 rounded-2xl border border-white/10 relative overflow-hidden">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-xl font-bold">${o.brandName} <span class="text-xs text-gray-500 font-normal">${o.id}</span></h3>
-                            <p class="text-xs text-gray-400">Targeting: ${o.audience || 'General'}</p>
-                        </div>
-                        <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-widest">${o.status}</span>
-                    </div>
-                    
-                    ${o.status === 'Unconfirmed' ? `
-                        <div class="bg-red-500/10 border border-red-500/30 p-4 rounded-xl text-center">
-                            <p class="text-xs text-red-400 font-bold">Waiting for designer to verify payment ID: ${o.txId}</p>
-                        </div>
-                    ` : `
-                        <div class="flex gap-2">
-                             <div class="bg-white/5 p-3 rounded-xl flex-1 text-center">
-                                <p class="text-[10px] text-gray-500 uppercase">Selected Plan</p>
-                                <p class="text-sm font-bold">${o.packageType || 'Standard'}</p>
-                             </div>
-                             <div class="bg-white/5 p-3 rounded-xl flex-1 text-center">
-                                <p class="text-[10px] text-gray-500 uppercase">Delivery Window</p>
-                                <p class="text-sm font-bold">48 Working Hours</p>
-                             </div>
-                             <div class="bg-white/5 p-3 rounded-xl flex-1 text-center cursor-pointer hover:bg-white/10" onclick="openClientEdit('${o.id}', '${o.designNotes}')">
-                                <p class="text-[10px] text-gray-500 uppercase">Action</p>
-                                <p class="text-sm font-bold text-yellow-400">Edit Brief</p>
-                             </div>
-                        </div>
-                    `}
-                </div>
-            `).join('');
-        }
-        
         function openClientEdit(id, currentNotes) {
             document.getElementById('cEditIndex').value = id; 
             document.getElementById('cEditNotes').value = currentNotes || '';
@@ -603,24 +579,11 @@
         async function submitClientEdit() {
             const id = document.getElementById('cEditIndex').value;
             const newNotes = document.getElementById('cEditNotes').value;
-            
-            const { error } = await supabase.from('orders').update({
-                designNotes: newNotes,
-                date: new Date().toLocaleDateString() 
-            }).eq('id', id);
-            
-            if(error) alert(error.message);
-            else {
-                alert("Brief Updated & Timer Reset.");
-                location.reload();
-            }
+            const { error } = await supabase.from('orders').update({ designNotes: newNotes }).eq('id', id);
+            if(error) alert(error.message); else { alert("Updated."); location.reload(); }
         }
 
-        function logout() {
-            localStorage.removeItem('currentUser');
-            window.location.href = 'login.html';
-        }
-
+        function logout() { localStorage.removeItem('currentUser'); window.location.href = 'login.html'; }
         function closeViewModal() { document.getElementById('viewModal').classList.remove('active'); }
         function toggleSettingsModal() { document.getElementById('settingsModal').classList.toggle('active'); }
         function setTheme(theme) { 
@@ -628,22 +591,17 @@
             if(theme !== 'default') document.body.classList.add('theme-' + theme);
             toggleSettingsModal();
         }
-        
-        // Mock Admin Functions (Sticky Notes stay local as per original design)
         function addStickyNote() {
             const container = document.getElementById('stickyNotesContainer');
             const note = document.createElement('textarea');
-            note.className = "w-full bg-yellow-500/10 border border-yellow-500/30 rounded p-2 text-xs text-yellow-100 placeholder-yellow-200/50 resize-none";
+            note.className = "w-full bg-yellow-500/10 border border-yellow-500/30 rounded p-2 text-xs text-yellow-100 resize-none";
             note.rows = 2; note.placeholder = "New note...";
             container.prepend(note);
         }
-
-        function toggleViewMode(mode) {
-            alert("Switching view to " + mode);
-        }
-
-        // Initialize
-        loadDashboard();
+        function toggleViewMode(mode) { alert("Switching view to " + mode); }
+        
+        // START THE DASHBOARD
+        initDashboard();
     </script>
 </body>
 </html>
