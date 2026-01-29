@@ -65,12 +65,90 @@
         <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
     </div>
 
-    <!-- Load Supabase first -->
+    <!-- Load Supabase Client Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
     
     <script>
-        // NEW FEATURE 1: Toggle Password Visibility
+        // ============================================
+        // SUPABASE CONFIGURATION (Embedded)
+        // ============================================
+        const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
+
+        // Initialize Supabase Client
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase client initialized');
+        } catch (error) {
+            console.error('❌ Supabase initialization failed:', error);
+        }
+
+        // ============================================
+        // VERIFY USER LOGIN FUNCTION
+        // ============================================
+        async function verifyUserLogin(email, password) {
+            try {
+                console.log('🔍 Attempting login for:', email);
+                
+                // Check admin credentials first
+                if (email === 'admin@pixel.com' && password === 'admin123') {
+                    console.log('✅ Admin login successful');
+                    return {
+                        success: true,
+                        data: {
+                            email: email,
+                            role: 'admin',
+                            name: 'Agency Admin'
+                        }
+                    };
+                }
+                
+                // Check in Supabase database
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('email', email)
+                    .eq('password', password)
+                    .single();
+                
+                if (error || !data) {
+                    console.log('❌ Login failed:', error?.message || 'Invalid credentials');
+                    return { success: false, error: 'Invalid credentials' };
+                }
+                
+                console.log('✅ User login successful');
+                return { success: true, data };
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // ============================================
+        // HARD RESET DATABASE FUNCTION
+        // ============================================
+        async function hardResetDatabase() {
+            try {
+                console.log('🗑️ Starting database reset...');
+                
+                // Delete all orders
+                await supabase.from('orders').delete().neq('id', '');
+                
+                // Delete all users except admin
+                await supabase.from('users').delete().neq('email', 'admin@pixel.com');
+                
+                console.log('✅ Database reset complete');
+                return { success: true, message: 'Database reset complete' };
+            } catch (error) {
+                console.error('❌ Reset error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // ============================================
+        // PASSWORD VISIBILITY TOGGLE
+        // ============================================
         function togglePassword() {
             const passInput = document.getElementById('password');
             const eye = document.getElementById('eyeIcon');
@@ -83,51 +161,66 @@
             }
         }
 
-        // Wait for page to load
+        // ============================================
+        // LOGIN FORM HANDLER
+        // ============================================
         window.addEventListener('DOMContentLoaded', function() {
-            // FIXED LOGIN LOGIC (Supabase Database Check)
+            console.log('📄 Page loaded, initializing login form...');
+            
             document.getElementById('loginForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
+                console.log('🚀 Login form submitted');
+                
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
                 const loginBox = document.getElementById('loginBox');
+
+                // Validate inputs
+                if (!email || !password) {
+                    alert('Please enter both email and password');
+                    return;
+                }
 
                 try {
                     // Verify login with Supabase
                     const result = await verifyUserLogin(email, password);
                     
                     if(result.success) {
+                        console.log('✅ Login successful, redirecting...');
                         // Successful Login
                         localStorage.setItem('currentUser', JSON.stringify(result.data));
                         window.location.href = 'dashboard.html';
                     } else {
+                        console.log('❌ Login failed');
                         // Login Failure Shake & Alert
                         loginBox.classList.add('shake');
                         setTimeout(() => loginBox.classList.remove('shake'), 400);
                         
-                        alert("Incorrect Email or Password. If you just placed an order, please check your credentials.");
+                        alert("❌ Incorrect Email or Password.\n\nIf you just placed an order, please check your credentials.");
                     }
                 } catch (error) {
-                    console.error('Login error:', error);
+                    console.error('❌ Login error:', error);
                     alert("Login error: " + error.message);
                 }
             });
         });
 
-        // System Hard Reset (Supabase)
+        // ============================================
+        // HARD RESET HANDLER
+        // ============================================
         async function hardReset() {
-            if(confirm("⚠️ This will delete ALL orders and users. Continue?")) {
+            if(confirm("⚠️ This will delete ALL orders and users from the database.\n\nAre you sure you want to continue?")) {
                 try {
                     const result = await hardResetDatabase();
                     if(result.success) {
                         localStorage.clear();
-                        alert("System Reset Complete.");
+                        alert("✅ System Reset Complete.\n\nAll data has been cleared.");
                         location.reload();
                     } else {
-                        alert("Error resetting database: " + result.error);
+                        alert("❌ Error resetting database: " + result.error);
                     }
                 } catch (error) {
-                    console.error('Reset error:', error);
+                    console.error('❌ Reset error:', error);
                     alert("Reset error: " + error.message);
                 }
             }
