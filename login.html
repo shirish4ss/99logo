@@ -6,7 +6,6 @@
     <title>Login | PixelPerfect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
     <style>
         .glass {
             background: rgba(255, 255, 255, 0.05);
@@ -83,15 +82,20 @@
         <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
     </div>
 
-    <!-- Load Supabase FIRST -->
+    <!-- Load Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Load your config file SECOND -->
-    <script src="supabase-config.js"></script>
-    
-    <!-- ONLY UI Logic (no Supabase initialization) -->
     <script>
-        // Debug logging function
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
+
+        // Initialize Supabase Client
+        let supabaseClient;
+        
+        // Debug logging
         function debugLog(message, type = 'info') {
             const debugDiv = document.getElementById('debugInfo');
             const timestamp = new Date().toLocaleTimeString();
@@ -100,7 +104,92 @@
             console.log(`${icon} ${message}`);
         }
 
-        // Password visibility toggle
+        // Initialize Supabase when page loads
+        try {
+            if (window.supabase && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                debugLog('✅ Supabase initialized successfully', 'success');
+            } else {
+                throw new Error('Supabase library not loaded');
+            }
+        } catch (error) {
+            debugLog('❌ Supabase init failed: ' + error.message, 'error');
+        }
+
+        // ============================================
+        // VERIFY USER LOGIN
+        // ============================================
+        async function verifyUserLogin(email, password) {
+            try {
+                debugLog(`Verifying login for: ${email}`);
+                
+                // Check admin credentials first (HARDCODED - ALWAYS WORKS)
+                if (email === 'admin@pixel.com' && password === 'admin123') {
+                    debugLog('✅ Admin login successful!', 'success');
+                    return {
+                        success: true,
+                        data: {
+                            email: email,
+                            role: 'admin',
+                            name: 'Agency Admin'
+                        }
+                    };
+                }
+                
+                // For non-admin users, check database
+                if (!supabaseClient) {
+                    throw new Error('Supabase client not initialized');
+                }
+                
+                debugLog('Checking database...');
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('email', email)
+                    .eq('password', password)
+                    .single();
+                
+                if (error || !data) {
+                    debugLog('❌ No match in database', 'error');
+                    return { success: false, error: 'Invalid credentials' };
+                }
+                
+                debugLog('✅ User found in database', 'success');
+                return { success: true, data };
+            } catch (error) {
+                debugLog('❌ Login error: ' + error.message, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
+        // ============================================
+        // HARD RESET DATABASE
+        // ============================================
+        async function hardResetDatabase() {
+            try {
+                if (!supabaseClient) {
+                    throw new Error('Supabase not initialized');
+                }
+                
+                debugLog('Starting database reset...');
+                
+                // Delete all orders
+                await supabaseClient.from('orders').delete().neq('id', '');
+                
+                // Delete all users except admin
+                await supabaseClient.from('users').delete().neq('email', 'admin@pixel.com');
+                
+                debugLog('✅ Reset complete', 'success');
+                return { success: true, message: 'Database reset complete' };
+            } catch (error) {
+                debugLog('❌ Reset error: ' + error.message, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
+        // ============================================
+        // PASSWORD TOGGLE
+        // ============================================
         function togglePassword() {
             const passInput = document.getElementById('password');
             const eye = document.getElementById('eyeIcon');
@@ -113,24 +202,12 @@
             }
         }
 
-        // Wait for everything to load
+        // ============================================
+        // LOGIN FORM HANDLER
+        // ============================================
         window.addEventListener('load', function() {
-            debugLog('Page fully loaded');
+            debugLog('Page loaded');
             
-            // Check if functions are available
-            if (typeof verifyUserLogin === 'function') {
-                debugLog('✅ verifyUserLogin function loaded', 'success');
-            } else {
-                debugLog('❌ verifyUserLogin NOT FOUND!', 'error');
-            }
-            
-            if (typeof supabase !== 'undefined') {
-                debugLog('✅ Supabase client available', 'success');
-            } else {
-                debugLog('❌ Supabase client NOT available!', 'error');
-            }
-
-            // Setup form handler
             const loginForm = document.getElementById('loginForm');
             const loginBtn = document.getElementById('loginBtn');
             const btnText = document.getElementById('btnText');
@@ -140,13 +217,12 @@
                 e.preventDefault();
                 e.stopPropagation();
                 
-                debugLog('🚀 Form submitted');
+                debugLog('🚀 Login attempt started');
                 
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
 
                 if (!email || !password) {
-                    debugLog('❌ Empty credentials', 'error');
                     alert('Please enter both email and password');
                     return;
                 }
@@ -154,18 +230,9 @@
                 // Show loading
                 loginBtn.disabled = true;
                 btnText.innerHTML = 'Logging in... <span class="spinner"></span>';
-                debugLog(`Attempting login: ${email}`);
 
                 try {
-                    // Check if function exists
-                    if (typeof verifyUserLogin !== 'function') {
-                        throw new Error('verifyUserLogin function not loaded. Check supabase-config.js');
-                    }
-
-                    // Call the login function from supabase-config.js
                     const result = await verifyUserLogin(email, password);
-                    
-                    debugLog('Login result: ' + JSON.stringify(result));
                     
                     if (result.success) {
                         debugLog('✅ LOGIN SUCCESS!', 'success');
@@ -180,13 +247,13 @@
                             window.location.href = 'dashboard.html';
                         }, 800);
                     } else {
-                        debugLog('❌ LOGIN FAILED: ' + result.error, 'error');
+                        debugLog('❌ LOGIN FAILED', 'error');
                         
                         // Reset button
                         loginBtn.disabled = false;
                         btnText.textContent = 'Login to Dashboard';
                         
-                        // Shake effect
+                        // Shake
                         loginBox.classList.add('shake');
                         setTimeout(() => loginBox.classList.remove('shake'), 400);
                         
@@ -204,29 +271,22 @@
             });
         });
 
-        // Hard reset function
+        // ============================================
+        // HARD RESET HANDLER
+        // ============================================
         async function hardReset() {
             if (confirm("⚠️ This will delete ALL orders and users.\n\nContinue?")) {
                 try {
-                    debugLog('Starting hard reset...');
-                    
-                    if (typeof hardResetDatabase !== 'function') {
-                        throw new Error('hardResetDatabase function not found');
-                    }
-                    
                     const result = await hardResetDatabase();
                     
                     if (result.success) {
-                        debugLog('✅ Reset complete', 'success');
                         localStorage.clear();
                         alert("✅ Database reset complete!");
                         location.reload();
                     } else {
-                        debugLog('❌ Reset failed: ' + result.error, 'error');
                         alert("Reset error: " + result.error);
                     }
                 } catch (error) {
-                    debugLog('❌ Reset exception: ' + error.message, 'error');
                     alert("Error: " + error.message);
                 }
             }
