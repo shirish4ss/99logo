@@ -363,10 +363,11 @@
 
             document.getElementById('userDisplay').innerText = `Welcome, ${user.name || 'Admin'}`;
 
-            // FIX: Check 'role' safely (case-insensitive)
-            const role = user.role ? user.role.toLowerCase() : 'client';
+            // --- FIX APPLIED HERE: Case-Insensitive Check ---
+            // If the database returns 'Admin', this converts it to 'admin' for the check.
+            const userRole = user.role ? user.role.toLowerCase() : 'client';
 
-            if (role === 'admin') {
+            if (userRole === 'admin') {
                 document.getElementById('adminView').classList.remove('hidden');
                 document.getElementById('clientView').classList.add('hidden');
                 await renderAdminOrders();
