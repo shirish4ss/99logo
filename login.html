@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
     <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -35,7 +36,7 @@
             <p class="text-gray-400">Login to manage orders.</p>
         </div>
 
-        <form id="loginForm" class="space-y-6">
+        <form id="loginForm" class="space-y-6" onsubmit="return false;">
             <div>
                 <label class="block text-sm text-gray-400 mb-2 uppercase tracking-widest font-bold text-[10px]">Email Address</label>
                 <input type="email" id="email" required class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-indigo-500 transition-all">
@@ -48,13 +49,20 @@
                 </button>
             </div>
 
-            <button type="submit" class="w-full py-3 bg-indigo-600 rounded-lg font-bold text-white hover:bg-indigo-700 transition-all glow-btn">Login to Dashboard</button>
+            <!-- Changed to type="button" and explicit onclick to force JS execution -->
+            <button type="button" id="loginBtn" onclick="handleLogin()" class="w-full py-3 bg-indigo-600 rounded-lg font-bold text-white hover:bg-indigo-700 transition-all glow-btn">
+                Login to Dashboard
+            </button>
         </form>
         
         <div class="mt-6 text-center text-xs text-gray-500 border-t border-gray-700 pt-4">
-            <p class="mb-2">Admin: <span class="text-white">admin@99logo.com</span></p>
-            <p class="mb-4">Clients: Use email/password set during Order.</p>
-            <button onclick="hardReset()" class="text-red-500 hover:text-red-400 underline">System Error? Click here to Reset Session</button>
+            <p class="mb-2">System Status:</p>
+            <!-- Visible Debug Log -->
+            <p id="debugStatus" class="text-yellow-400 font-mono bg-black/50 p-2 rounded break-all">Initializing...</p>
+        </div>
+        
+        <div class="mt-4 text-center">
+            <button onclick="hardReset()" class="text-red-500 text-xs hover:text-red-400 underline">Reset Session</button>
         </div>
     </div>
 
@@ -65,11 +73,35 @@
     </div>
 
     <script>
-        // --- SUPABASE CONFIGURATION ---
-        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        // --- 1. SETUP LOGGING ---
+        const statusEl = document.getElementById('debugStatus');
+        function log(msg) {
+            console.log(msg);
+            statusEl.innerText = msg;
+        }
 
+        // --- 2. INIT SUPABASE ---
+        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT'; // Invalid key format usually, but assuming user provided correct one previously.
+        // NOTE: The key provided 'sb_publishable_...' looks weird. Usually it starts with 'eyJ...'. 
+        // I will use the variable provided, but this might be the issue.
+        
+        let supabase;
+
+        try {
+            if (typeof window.supabase === 'undefined') {
+                log("CRITICAL ERROR: Supabase Library failed to load. Check AdBlocker.");
+                document.getElementById('loginBtn').disabled = true;
+                document.getElementById('loginBtn').classList.add('bg-gray-600');
+            } else {
+                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                log("System Ready. Database Client Initialized.");
+            }
+        } catch (e) {
+            log("Init Error: " + e.message);
+        }
+
+        // --- 3. UI FUNCTIONS ---
         function togglePassword() {
             const passInput = document.getElementById('password');
             const eye = document.getElementById('eyeIcon');
@@ -82,84 +114,81 @@
             }
         }
 
-        // --- LOGIN LOGIC WITH DIAGNOSTICS ---
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault(); 
-            e.stopImmediatePropagation();
+        // --- 4. LOGIN LOGIC ---
+        async function handleLogin() {
+            log("Button Clicked. Starting login process...");
             
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
             const loginBox = document.getElementById('loginBox');
-            const btn = this.querySelector('button[type="submit"]');
-            
-            const originalText = btn.innerText;
-            btn.innerText = "Checking Database...";
+
+            if(!email || !password) {
+                log("Error: Fields empty.");
+                alert("Please enter both email and password.");
+                return;
+            }
+
+            btn.innerText = "Connecting to Database...";
             btn.disabled = true;
 
             try {
-                // DEBUG STEP 1: Check if Supabase connects at all
-                console.log("Attempting login for:", email);
-
-                // DEBUG STEP 2: Run Query
+                // Step 1: Query DB
+                log(`Querying DB for: ${email}...`);
+                
                 const { data, error } = await supabase
                     .from('users')
                     .select('*')
                     .eq('email', email)
                     .eq('password', password)
-                    .maybeSingle(); // .maybeSingle() prevents error if 0 rows found
+                    .maybeSingle(); // Prevents crash on 0 results
 
-                // DEBUG STEP 3: Analyze Result
+                // Step 2: Check Errors
                 if (error) {
-                    // Connection Error or RLS Error
-                    console.error("Supabase Error:", error);
-                    throw new Error("DB Error: " + error.message + " (" + error.code + ")");
+                    log("DB Error: " + error.message);
+                    throw error;
                 }
 
+                // Step 3: Check Data
                 if (!data) {
-                    // Connected fine, but no matching user found
-                    throw new Error("No user found with these credentials. Please check Email/Password.");
+                    log("Result: User not found in database.");
+                    throw new Error("Invalid Email or Password");
                 }
 
-                // DEBUG STEP 4: Success Logic
-                console.log("User Found:", data);
+                log("Success! User found. Role: " + data.role);
 
-                // Normalize Role (Fixes "Admin" vs "admin" issue)
-                if (data.role) {
-                    data.role = data.role.toLowerCase();
-                } else {
-                    data.role = 'client'; // Default if missing
-                }
-
-                // Save and Redirect
+                // Step 4: Normalize Role
+                if (data.role) data.role = data.role.toLowerCase();
+                
+                // Step 5: Save & Redirect
                 localStorage.setItem('currentUser', JSON.stringify(data));
-                alert("Login Successful! Redirecting...");
-                window.location.href = 'dashboard.html';
+                log("Redirecting to dashboard...");
+                
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 500);
 
             } catch (err) {
-                // ERROR HANDLING
-                btn.innerText = originalText;
+                // Error Handler
+                console.error(err);
+                btn.innerText = "Login to Dashboard";
                 btn.disabled = false;
                 
-                // Shake Animation
                 loginBox.classList.add('shake');
                 setTimeout(() => loginBox.classList.remove('shake'), 400);
-                
-                // SHOW EXACT ERROR TO USER
-                alert(err.message);
-                
-                // If the error is about RLS (Row Level Security)
-                if(err.message.includes("policy") || err.message.includes("permission")) {
-                    alert("DIAGNOSTIC HINT: Go to Supabase Dashboard > Table Editor > 'users' table > Disable RLS (Row Level Security) or add a policy to allow reading.");
+
+                if (err.message.includes("Invalid Email")) {
+                    alert("Incorrect Email or Password.");
+                } else {
+                    alert("System Error: " + err.message + "\n\nCheck the yellow text below for details.");
                 }
             }
-        });
+        }
 
         function hardReset() {
-            if(confirm("⚠️ This will clear your local login session. Continue?")) {
-                localStorage.clear();
-                alert("Session Cleared.");
-                location.reload();
-            }
+            localStorage.clear();
+            alert("Session Cleared.");
+            location.reload();
         }
     </script>
 </body>
