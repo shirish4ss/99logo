@@ -16,13 +16,28 @@
         .glow-btn:hover {
             box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
         }
-        /* NEW FEATURE: Shake Animation for Login Error */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-10px); }
             75% { transform: translateX(10px); }
         }
         .shake { animation: shake 0.4s ease-in-out; }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-[#0f172a] h-screen flex items-center justify-center relative overflow-hidden">
@@ -36,19 +51,20 @@
         <form id="loginForm" class="space-y-6">
             <div>
                 <label class="block text-sm text-gray-400 mb-2 uppercase tracking-widest font-bold text-[10px]">Email Address</label>
-                <input type="email" id="email" required class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-indigo-500 transition-all">
+                <input type="email" id="email" required value="admin@pixel.com" class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-indigo-500 transition-all">
             </div>
             <div class="relative">
                 <label class="block text-sm text-gray-400 mb-2 uppercase tracking-widest font-bold text-[10px]">Password</label>
-                <input type="password" id="password" required class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-indigo-500 transition-all">
+                <input type="password" id="password" required value="admin123" class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-indigo-500 transition-all">
                 
-                <!-- NEW FEATURE 1: Password Visibility Toggle -->
                 <button type="button" onclick="togglePassword()" class="absolute right-3 top-9 text-gray-500 hover:text-indigo-400">
                     <i id="eyeIcon" class="fas fa-eye text-sm"></i>
                 </button>
             </div>
 
-            <button type="submit" class="w-full py-3 bg-indigo-600 rounded-lg font-bold text-white hover:bg-indigo-700 transition-all glow-btn">Login to Dashboard</button>
+            <button type="submit" id="loginBtn" class="w-full py-3 bg-indigo-600 rounded-lg font-bold text-white hover:bg-indigo-700 transition-all glow-btn">
+                <span id="btnText">Login to Dashboard</span>
+            </button>
         </form>
         
         <div class="mt-6 text-center text-xs text-gray-500 border-t border-gray-700 pt-4">
@@ -57,6 +73,9 @@
             
             <button onclick="hardReset()" class="text-red-500 hover:text-red-400 underline">System Error? Click here to Reset Data</button>
         </div>
+        
+        <!-- Debug Info -->
+        <div id="debugInfo" class="mt-4 p-3 bg-black/50 rounded text-xs text-gray-400 font-mono hidden"></div>
     </div>
 
     <!-- Background Decoration -->
@@ -69,19 +88,33 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
+        // Debug logging
+        function debugLog(message, type = 'info') {
+            const debugDiv = document.getElementById('debugInfo');
+            debugDiv.classList.remove('hidden');
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : '🔍';
+            debugDiv.innerHTML += `${icon} [${timestamp}] ${message}<br>`;
+            console.log(`${icon} ${message}`);
+        }
+
         // ============================================
-        // SUPABASE CONFIGURATION (Embedded)
+        // SUPABASE CONFIGURATION
         // ============================================
         const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
 
-        // Initialize Supabase Client
         let supabase;
+
+        // Initialize Supabase Client
         try {
+            if (!window.supabase) {
+                throw new Error('Supabase library not loaded');
+            }
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('✅ Supabase client initialized');
+            debugLog('Supabase client initialized successfully', 'success');
         } catch (error) {
-            console.error('❌ Supabase initialization failed:', error);
+            debugLog('Supabase initialization FAILED: ' + error.message, 'error');
         }
 
         // ============================================
@@ -89,11 +122,11 @@
         // ============================================
         async function verifyUserLogin(email, password) {
             try {
-                console.log('🔍 Attempting login for:', email);
+                debugLog(`Attempting login for: ${email}`);
                 
-                // Check admin credentials first
+                // Check admin credentials first (HARDCODED - NO DATABASE NEEDED)
                 if (email === 'admin@pixel.com' && password === 'admin123') {
-                    console.log('✅ Admin login successful');
+                    debugLog('Admin credentials matched!', 'success');
                     return {
                         success: true,
                         data: {
@@ -104,7 +137,12 @@
                     };
                 }
                 
-                // Check in Supabase database
+                // For non-admin, check database
+                if (!supabase) {
+                    throw new Error('Supabase not initialized');
+                }
+                
+                debugLog('Checking database for user...');
                 const { data, error } = await supabase
                     .from('users')
                     .select('*')
@@ -113,35 +151,14 @@
                     .single();
                 
                 if (error || !data) {
-                    console.log('❌ Login failed:', error?.message || 'Invalid credentials');
+                    debugLog('Database check failed: ' + (error?.message || 'No match found'), 'error');
                     return { success: false, error: 'Invalid credentials' };
                 }
                 
-                console.log('✅ User login successful');
+                debugLog('User found in database!', 'success');
                 return { success: true, data };
             } catch (error) {
-                console.error('❌ Login error:', error);
-                return { success: false, error: error.message };
-            }
-        }
-
-        // ============================================
-        // HARD RESET DATABASE FUNCTION
-        // ============================================
-        async function hardResetDatabase() {
-            try {
-                console.log('🗑️ Starting database reset...');
-                
-                // Delete all orders
-                await supabase.from('orders').delete().neq('id', '');
-                
-                // Delete all users except admin
-                await supabase.from('users').delete().neq('email', 'admin@pixel.com');
-                
-                console.log('✅ Database reset complete');
-                return { success: true, message: 'Database reset complete' };
-            } catch (error) {
-                console.error('❌ Reset error:', error);
+                debugLog('Login error: ' + error.message, 'error');
                 return { success: false, error: error.message };
             }
         }
@@ -164,43 +181,70 @@
         // ============================================
         // LOGIN FORM HANDLER
         // ============================================
-        window.addEventListener('DOMContentLoaded', function() {
-            console.log('📄 Page loaded, initializing login form...');
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('Page loaded, form ready');
             
-            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('btnText');
+            const loginBox = document.getElementById('loginBox');
+            
+            loginForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                console.log('🚀 Login form submitted');
+                e.stopPropagation();
+                
+                debugLog('Form submitted!');
                 
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
-                const loginBox = document.getElementById('loginBox');
 
-                // Validate inputs
                 if (!email || !password) {
                     alert('Please enter both email and password');
                     return;
                 }
 
+                // Show loading state
+                loginBtn.disabled = true;
+                btnText.innerHTML = 'Logging in... <span class="spinner"></span>';
+
                 try {
-                    // Verify login with Supabase
+                    debugLog(`Credentials: ${email} / ${'*'.repeat(password.length)}`);
+                    
+                    // Verify login
                     const result = await verifyUserLogin(email, password);
                     
-                    if(result.success) {
-                        console.log('✅ Login successful, redirecting...');
-                        // Successful Login
+                    if (result.success) {
+                        debugLog('LOGIN SUCCESS! Redirecting...', 'success');
+                        btnText.textContent = '✓ Success!';
+                        
+                        // Save user to localStorage
                         localStorage.setItem('currentUser', JSON.stringify(result.data));
-                        window.location.href = 'dashboard.html';
+                        
+                        // Redirect after short delay
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 500);
                     } else {
-                        console.log('❌ Login failed');
-                        // Login Failure Shake & Alert
+                        debugLog('LOGIN FAILED: ' + result.error, 'error');
+                        
+                        // Reset button
+                        loginBtn.disabled = false;
+                        btnText.textContent = 'Login to Dashboard';
+                        
+                        // Shake animation
                         loginBox.classList.add('shake');
                         setTimeout(() => loginBox.classList.remove('shake'), 400);
                         
-                        alert("❌ Incorrect Email or Password.\n\nIf you just placed an order, please check your credentials.");
+                        alert("❌ Incorrect Email or Password\n\nPlease check your credentials and try again.");
                     }
                 } catch (error) {
-                    console.error('❌ Login error:', error);
-                    alert("Login error: " + error.message);
+                    debugLog('EXCEPTION: ' + error.message, 'error');
+                    
+                    // Reset button
+                    loginBtn.disabled = false;
+                    btnText.textContent = 'Login to Dashboard';
+                    
+                    alert("Error: " + error.message);
                 }
             });
         });
@@ -208,11 +252,33 @@
         // ============================================
         // HARD RESET HANDLER
         // ============================================
+        async function hardResetDatabase() {
+            try {
+                if (!supabase) {
+                    throw new Error('Supabase not initialized');
+                }
+                
+                debugLog('Starting database reset...');
+                
+                // Delete all orders
+                await supabase.from('orders').delete().neq('id', '');
+                
+                // Delete all users except admin
+                await supabase.from('users').delete().neq('email', 'admin@pixel.com');
+                
+                debugLog('Database reset complete', 'success');
+                return { success: true, message: 'Database reset complete' };
+            } catch (error) {
+                debugLog('Reset error: ' + error.message, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
         async function hardReset() {
-            if(confirm("⚠️ This will delete ALL orders and users from the database.\n\nAre you sure you want to continue?")) {
+            if (confirm("⚠️ This will delete ALL orders and users from the database.\n\nAre you sure you want to continue?")) {
                 try {
                     const result = await hardResetDatabase();
-                    if(result.success) {
+                    if (result.success) {
                         localStorage.clear();
                         alert("✅ System Reset Complete.\n\nAll data has been cleared.");
                         location.reload();
@@ -220,7 +286,6 @@
                         alert("❌ Error resetting database: " + result.error);
                     }
                 } catch (error) {
-                    console.error('❌ Reset error:', error);
                     alert("Reset error: " + error.message);
                 }
             }
