@@ -363,7 +363,10 @@
 
             document.getElementById('userDisplay').innerText = `Welcome, ${user.name || 'Admin'}`;
 
-            if (user.role === 'admin') {
+            // FIX: Check 'role' safely (case-insensitive)
+            const role = user.role ? user.role.toLowerCase() : 'client';
+
+            if (role === 'admin') {
                 document.getElementById('adminView').classList.remove('hidden');
                 document.getElementById('clientView').classList.add('hidden');
                 await renderAdminOrders();
