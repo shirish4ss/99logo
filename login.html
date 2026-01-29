@@ -7,8 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
     <style>
         .glass {
             background: rgba(255, 255, 255, 0.05);
@@ -67,6 +65,10 @@
         <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
     </div>
 
+    <!-- Load Supabase first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    
     <script>
         // NEW FEATURE 1: Toggle Password Visibility
         function togglePassword() {
@@ -81,39 +83,52 @@
             }
         }
 
-        // FIXED LOGIN LOGIC (Supabase Database Check)
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const loginBox = document.getElementById('loginBox');
+        // Wait for page to load
+        window.addEventListener('DOMContentLoaded', function() {
+            // FIXED LOGIN LOGIC (Supabase Database Check)
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const loginBox = document.getElementById('loginBox');
 
-            // Verify login with Supabase
-            const result = await verifyUserLogin(email, password);
-            
-            if(result.success) {
-                // Successful Login
-                localStorage.setItem('currentUser', JSON.stringify(result.data));
-                window.location.href = 'dashboard.html';
-            } else {
-                // Login Failure Shake & Alert
-                loginBox.classList.add('shake');
-                setTimeout(() => loginBox.classList.remove('shake'), 400);
-                
-                alert("Incorrect Email or Password. If you just placed an order, please check your credentials.");
-            }
+                try {
+                    // Verify login with Supabase
+                    const result = await verifyUserLogin(email, password);
+                    
+                    if(result.success) {
+                        // Successful Login
+                        localStorage.setItem('currentUser', JSON.stringify(result.data));
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        // Login Failure Shake & Alert
+                        loginBox.classList.add('shake');
+                        setTimeout(() => loginBox.classList.remove('shake'), 400);
+                        
+                        alert("Incorrect Email or Password. If you just placed an order, please check your credentials.");
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    alert("Login error: " + error.message);
+                }
+            });
         });
 
         // System Hard Reset (Supabase)
         async function hardReset() {
             if(confirm("⚠️ This will delete ALL orders and users. Continue?")) {
-                const result = await hardResetDatabase();
-                if(result.success) {
-                    localStorage.clear();
-                    alert("System Reset Complete.");
-                    location.reload();
-                } else {
-                    alert("Error resetting database: " + result.error);
+                try {
+                    const result = await hardResetDatabase();
+                    if(result.success) {
+                        localStorage.clear();
+                        alert("System Reset Complete.");
+                        location.reload();
+                    } else {
+                        alert("Error resetting database: " + result.error);
+                    }
+                } catch (error) {
+                    console.error('Reset error:', error);
+                    alert("Reset error: " + error.message);
                 }
             }
         }
