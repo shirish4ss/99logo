@@ -76,12 +76,11 @@
         </div>
     </nav>
 
-    <!-- LOADING OVERLAY (Auto-hides via CSS animation as fallback) -->
+    <!-- LOADING OVERLAY -->
     <div id="loadingOverlay" class="fixed inset-0 bg-[#0f172a] z-[90] flex items-center justify-center transition-opacity duration-500">
         <div class="text-center">
             <i class="fas fa-circle-notch fa-spin text-4xl text-indigo-500 mb-4"></i>
             <p class="text-gray-400 text-sm">Loading Dashboard...</p>
-            <!-- Emergency Logout Button if stuck -->
             <button onclick="logout()" class="mt-8 text-xs text-red-500 underline cursor-pointer">Stuck? Click to Logout</button>
         </div>
     </div>
@@ -90,6 +89,7 @@
     <div id="errorBanner" class="hidden fixed bottom-4 right-4 bg-red-900 border border-red-500 text-white p-4 rounded-xl z-[100] max-w-sm">
         <h4 class="font-bold"><i class="fas fa-exclamation-circle"></i> Error</h4>
         <p id="errorText" class="text-xs mt-1">Unknown error.</p>
+        <button onclick="document.getElementById('errorBanner').classList.add('hidden')" class="text-xs underline mt-2">Close</button>
     </div>
 
     <div class="max-w-[1600px] mx-auto px-4 py-8">
@@ -176,7 +176,9 @@
                                     <th class="px-4 py-3">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="ordersTableBody"></tbody>
+                            <tbody id="ordersTableBody">
+                                <tr><td colspan="5" class="text-center py-8 text-gray-500">No orders yet</td></tr>
+                            </tbody>
                         </table>
                     </div>
                     <div id="kanbanViewContainer" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4"></div>
@@ -197,7 +199,12 @@
                     <div id="progBar" class="accent-bg h-full transition-all duration-1000" style="width: 40%"></div>
                  </div>
             </div>
-            <div id="clientOrdersContainer" class="space-y-6"></div>
+            <div id="clientOrdersContainer" class="space-y-6">
+                <div class="glass p-6 rounded-2xl text-center text-gray-400">
+                    <i class="fas fa-inbox text-4xl mb-4"></i>
+                    <p>No orders found</p>
+                </div>
+            </div>
             <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <a id="whatsappDesigner" href="#" target="_blank" class="glass p-6 rounded-2xl flex items-center justify-between group hover:border-green-500 transition">
                     <div>
@@ -289,26 +296,44 @@
 
     <!-- SCRIPT -->
     <script>
-        // CONFIG
+        // CONFIG - REPLACE WITH YOUR ACTUAL SUPABASE CREDENTIALS
         const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
+        const supabaseKey = 'YOUR_ACTUAL_ANON_KEY_HERE'; // IMPORTANT: Replace with real key from Supabase dashboard
+        
         let supabase;
         let globalOrders = [];
 
-        // FORCE HIDE LOADER AFTER 1 SECOND (Failsafe)
-        setTimeout(() => {
-            const l = document.getElementById('loadingOverlay');
-            if(l) l.classList.add('hidden');
-        }, 1000);
+        // Show error function
+        function showError(message) {
+            console.error(message);
+            const banner = document.getElementById('errorBanner');
+            const text = document.getElementById('errorText');
+            if(banner && text) {
+                text.innerText = message;
+                banner.classList.remove('hidden');
+            }
+        }
+
+        // Hide loading overlay
+        function hideLoader() {
+            const loader = document.getElementById('loadingOverlay');
+            if(loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.classList.add('hidden'), 500);
+            }
+        }
 
         // INIT
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             try {
+                console.log('🚀 Dashboard initializing...');
+                
                 // 1. Check User in LocalStorage
                 const userStr = localStorage.getItem('currentUser');
                 
-                // CRITICAL FIX: If no user, redirect immediately
+                // CRITICAL: If no user, redirect immediately
                 if (!userStr || userStr === "null" || userStr === "undefined") { 
+                    console.warn('No user found, redirecting to login...');
                     window.location.href = 'login.html'; 
                     return; 
                 }
@@ -316,19 +341,27 @@
                 // 2. Parse User (Safe)
                 let user;
                 try { 
-                    user = JSON.parse(userStr); 
+                    user = JSON.parse(userStr);
+                    console.log('✅ User loaded:', user.name || user.email);
                 } catch(e) { 
+                    console.error('Invalid user data:', e);
                     localStorage.removeItem('currentUser');
                     window.location.href = 'login.html'; 
                     return; 
                 }
 
-                document.getElementById('userDisplay').innerText = `Welcome, ${user.name || 'Admin'}`;
+                // Update UI with user name
+                const userDisplay = document.getElementById('userDisplay');
+                if(userDisplay) {
+                    userDisplay.innerText = `Welcome, ${user.name || user.email || 'User'}`;
+                }
 
-                // 3. UI Reveal
+                // 3. Determine Role and Show Appropriate View
                 const role = user.role ? user.role.toLowerCase() : 'client';
                 const adminView = document.getElementById('adminView');
                 const clientView = document.getElementById('clientView');
+
+                console.log('👤 User role:', role);
 
                 if (role === 'admin') {
                     adminView.classList.remove('hidden');
@@ -336,80 +369,187 @@
                 } else {
                     adminView.classList.add('hidden');
                     clientView.classList.remove('hidden');
-                    document.getElementById('settingsBtn').classList.add('hidden');
-                    document.getElementById('notificationCenter').classList.add('hidden');
+                    // Hide admin-only elements
+                    const settingsBtn = document.getElementById('settingsBtn');
+                    const notifCenter = document.getElementById('notificationCenter');
+                    if(settingsBtn) settingsBtn.classList.add('hidden');
+                    if(notifCenter) notifCenter.classList.add('hidden');
                 }
                 
-                // Hide Loader Immediately after UI decision
-                document.getElementById('loadingOverlay').classList.add('hidden');
+                // Hide loader IMMEDIATELY after showing UI
+                hideLoader();
 
-                // 4. Connect Supabase
-                if (typeof window.supabase !== 'undefined') {
+                // 4. Initialize Supabase
+                try {
+                    if (typeof window.supabase === 'undefined') {
+                        throw new Error('Supabase library not loaded');
+                    }
+                    
+                    // CORRECTED: Use supabase.supabase.createClient
                     supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-                    if (role === 'admin') fetchAdminData();
-                    else fetchClientData(user.email);
+                    console.log('✅ Supabase initialized');
+                    
+                    // 5. Fetch Data Based on Role
+                    if (role === 'admin') {
+                        await fetchAdminData();
+                    } else {
+                        await fetchClientData(user.email);
+                    }
+                    
+                } catch (supaError) {
+                    console.error('Supabase initialization failed:', supaError);
+                    showError('Database connection failed. Using demo mode.');
+                    
+                    // Show demo data instead of breaking
+                    if(role === 'admin') {
+                        showDemoAdminData();
+                    } else {
+                        showDemoClientData();
+                    }
                 }
 
             } catch (err) {
-                console.error(err);
-                // Last resort: Show Error on screen
-                document.getElementById('errorBanner').classList.remove('hidden');
-                document.getElementById('errorText').innerText = err.message;
+                console.error('Dashboard error:', err);
+                showError(err.message || 'Failed to load dashboard');
+                hideLoader();
             }
         });
 
         // DATA FUNCTIONS
         async function fetchAdminData() {
-            const { data: orders, error } = await supabase.from('orders').select('*');
-            if (error) { console.error(error); return; }
-            globalOrders = data || [];
-            
+            try {
+                console.log('📊 Fetching admin data...');
+                const { data: orders, error } = await supabase.from('orders').select('*');
+                
+                if (error) { 
+                    console.error('Supabase error:', error); 
+                    showError('Failed to load orders: ' + error.message);
+                    showDemoAdminData();
+                    return; 
+                }
+                
+                // FIXED: Use 'orders' not 'data'
+                globalOrders = orders || [];
+                console.log('✅ Loaded orders:', globalOrders.length);
+                
+                updateAdminUI();
+                
+            } catch(err) {
+                console.error('fetchAdminData error:', err);
+                showError('Error loading admin data');
+                showDemoAdminData();
+            }
+        }
+
+        function updateAdminUI() {
+            // Update table
             const tbody = document.getElementById('ordersTableBody');
             if(tbody) {
-                tbody.innerHTML = globalOrders.map(o => `
-                    <tr class="border-b border-gray-800 hover:bg-white/5 transition cursor-pointer" onclick="viewOrder('${o.id}')">
-                        <td class="px-4 py-3 font-bold text-gray-300">${o.id}</td>
-                        <td class="px-4 py-3">${o.clientName}</td>
-                        <td class="px-4 py-3 text-xs text-gray-500">${o.date || '-'}</td>
-                        <td class="px-4 py-3"><span class="px-2 py-1 rounded text-[10px] font-bold ${o.status==='Unconfirmed'?'bg-red-900 text-red-300':'bg-indigo-900 text-indigo-300'}">${o.status}</span></td>
-                        <td class="px-4 py-3 text-xs">Manage</td>
-                    </tr>
-                `).join('');
+                if(globalOrders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No orders yet</td></tr>';
+                } else {
+                    tbody.innerHTML = globalOrders.map(o => `
+                        <tr class="border-b border-gray-800 hover:bg-white/5 transition cursor-pointer" onclick="viewOrder('${o.id}')">
+                            <td class="px-4 py-3 font-bold text-gray-300">${o.id}</td>
+                            <td class="px-4 py-3">${o.clientName || 'N/A'}</td>
+                            <td class="px-4 py-3 text-xs text-gray-500">${o.date || '-'}</td>
+                            <td class="px-4 py-3"><span class="px-2 py-1 rounded text-[10px] font-bold ${o.status==='Unconfirmed'?'bg-red-900 text-red-300':'bg-indigo-900 text-indigo-300'}">${o.status || 'Pending'}</span></td>
+                            <td class="px-4 py-3 text-xs text-indigo-400 hover:text-indigo-300">Manage</td>
+                        </tr>
+                    `).join('');
+                }
             }
             
+            // Update stats
             document.getElementById('stat-total').innerText = globalOrders.length;
             document.getElementById('stat-unpaid').innerText = globalOrders.filter(o => o.status === 'Unconfirmed').length;
             document.getElementById('stat-pending').innerText = globalOrders.filter(o => o.status === 'In Progress').length;
             
+            // Update priority list
             const pList = document.getElementById('priorityList');
             if(pList) {
-                pList.innerHTML = globalOrders.filter(o => o.status !== 'Completed').map(o => `
-                    <div class="glass p-3 rounded-lg border-l-4 border-indigo-500 cursor-pointer mb-2 hover:bg-white/5" onclick="viewOrder('${o.id}')">
-                        <div class="flex justify-between"><span class="font-bold text-sm">${o.id}</span><span class="text-xs">${o.status}</span></div>
-                        <div class="text-xs text-gray-400">${o.brandName}</div>
-                    </div>
-                `).join('');
+                const activeOrders = globalOrders.filter(o => o.status !== 'Completed');
+                if(activeOrders.length === 0) {
+                    pList.innerHTML = '<div class="glass p-4 rounded-lg text-center text-gray-500 text-sm">All caught up! 🎉</div>';
+                } else {
+                    pList.innerHTML = activeOrders.map(o => `
+                        <div class="glass p-3 rounded-lg border-l-4 border-indigo-500 cursor-pointer hover:bg-white/5 transition" onclick="viewOrder('${o.id}')">
+                            <div class="flex justify-between"><span class="font-bold text-sm">${o.id}</span><span class="text-xs text-gray-400">${o.status || 'Pending'}</span></div>
+                            <div class="text-xs text-gray-400">${o.brandName || 'Brand Name'}</div>
+                        </div>
+                    `).join('');
+                }
             }
         }
 
         async function fetchClientData(email) {
-            const { data, error } = await supabase.from('orders').select('*').eq('userEmail', email);
-            if(error) { console.error(error); return; }
-            
-            const container = document.getElementById('clientOrdersContainer');
-            if(container && data) {
-                container.innerHTML = data.map(o => `
-                    <div class="glass p-6 rounded-2xl border border-white/10 mb-4">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-xl font-bold">${o.brandName}</h3>
-                            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-bold">${o.status}</span>
-                        </div>
-                        <div class="text-sm text-gray-400">Order ID: ${o.id} | Plan: ${o.packageType}</div>
-                        ${o.status === 'Unconfirmed' ? '<p class="text-red-400 text-xs mt-2">Waiting for verification...</p>' : ''}
-                    </div>
-                `).join('');
+            try {
+                console.log('📊 Fetching client data for:', email);
+                const { data, error } = await supabase.from('orders').select('*').eq('userEmail', email);
                 
-                if(data.length > 0) document.getElementById('clientProgress').classList.remove('hidden');
+                if(error) { 
+                    console.error('Client data error:', error); 
+                    showError('Failed to load your orders');
+                    showDemoClientData();
+                    return; 
+                }
+                
+                const container = document.getElementById('clientOrdersContainer');
+                if(container && data) {
+                    if(data.length === 0) {
+                        container.innerHTML = `
+                            <div class="glass p-6 rounded-2xl text-center text-gray-400">
+                                <i class="fas fa-inbox text-4xl mb-4"></i>
+                                <p>No orders found</p>
+                                <p class="text-xs mt-2">Place your first order to get started!</p>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = data.map(o => `
+                            <div class="glass p-6 rounded-2xl border border-white/10">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-xl font-bold">${o.brandName || 'Your Logo'}</h3>
+                                    <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-bold">${o.status || 'Pending'}</span>
+                                </div>
+                                <div class="text-sm text-gray-400">Order ID: ${o.id} | Plan: ${o.packageType || 'Standard'}</div>
+                                ${o.status === 'Unconfirmed' ? '<p class="text-red-400 text-xs mt-2">⏳ Waiting for payment verification...</p>' : ''}
+                                ${o.status === 'Completed' ? '<p class="text-green-400 text-xs mt-2">✅ Your logo is ready!</p>' : ''}
+                            </div>
+                        `).join('');
+                        
+                        // Show progress bar if there's an active order
+                        const activeOrder = data.find(o => o.status === 'In Progress');
+                        if(activeOrder) {
+                            document.getElementById('clientProgress').classList.remove('hidden');
+                        }
+                    }
+                }
+            } catch(err) {
+                console.error('fetchClientData error:', err);
+                showDemoClientData();
+            }
+        }
+
+        // Demo data functions (for when Supabase fails)
+        function showDemoAdminData() {
+            globalOrders = [
+                {id: 'DEMO-001', clientName: 'Demo Client', brandName: 'Demo Brand', status: 'In Progress', date: '2026-01-30'},
+            ];
+            updateAdminUI();
+        }
+
+        function showDemoClientData() {
+            const container = document.getElementById('clientOrdersContainer');
+            if(container) {
+                container.innerHTML = `
+                    <div class="glass p-6 rounded-2xl border border-yellow-500/30">
+                        <div class="flex items-center gap-3 mb-4">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl"></i>
+                            <h3 class="text-xl font-bold">Demo Mode</h3>
+                        </div>
+                        <p class="text-sm text-gray-400">Unable to connect to database. Please check your Supabase configuration.</p>
+                    </div>
+                `;
             }
         }
 
@@ -418,31 +558,32 @@
             if(!o) return;
             
             document.getElementById('vID').innerText = o.id;
-            document.getElementById('vClient').innerText = o.clientName;
-            document.getElementById('vBrand').innerText = o.brandName;
-            document.getElementById('vNiche').innerText = o.niche;
-            document.getElementById('vColors').innerText = o.colors;
-            document.getElementById('vVibe').innerText = o.vibe;
-            document.getElementById('vNotes').innerText = o.designNotes || o.ideas;
+            document.getElementById('vClient').innerText = o.clientName || 'N/A';
+            document.getElementById('vBrand').innerText = o.brandName || 'N/A';
+            document.getElementById('vNiche').innerText = o.niche || 'N/A';
+            document.getElementById('vColors').innerText = o.colors || 'N/A';
+            document.getElementById('vVibe').innerText = o.vibe || 'N/A';
+            document.getElementById('vNotes').innerText = o.designNotes || o.ideas || 'No notes';
             document.getElementById('vPayStatus').innerText = o.status === 'Unconfirmed' ? 'Unpaid' : 'Paid';
-            document.getElementById('vTx').innerText = o.txId;
-            document.getElementById('vStatus').innerText = o.status;
+            document.getElementById('vTx').innerText = o.txId || 'N/A';
+            document.getElementById('vStatus').innerText = o.status || 'Pending';
             document.getElementById('vIndex').value = o.id;
             
             const vBtn = document.getElementById('verifyBtn');
             vBtn.classList.toggle('hidden', o.status !== 'Unconfirmed');
             
-            document.getElementById('updateStatusSelect').value = o.status;
-            document.getElementById('checkPng').checked = o.pngSent;
-            document.getElementById('checkSource').checked = o.sourceSent;
+            document.getElementById('updateStatusSelect').value = o.status || 'Pending';
+            document.getElementById('checkPng').checked = o.pngSent || false;
+            document.getElementById('checkSource').checked = o.sourceSent || false;
             
             document.getElementById('viewModal').classList.add('active');
         }
 
         async function confirmOrderByAdmin() {
             const id = document.getElementById('vIndex').value;
-            await supabase.from('orders').update({ status: 'In Progress' }).eq('id', id);
-            location.reload();
+            const { error } = await supabase.from('orders').update({ status: 'In Progress' }).eq('id', id);
+            if(error) showError(error.message);
+            else location.reload();
         }
 
         async function saveAdminChanges() {
@@ -450,16 +591,19 @@
             const status = document.getElementById('updateStatusSelect').value;
             const pngSent = document.getElementById('checkPng').checked;
             const sourceSent = document.getElementById('checkSource').checked;
-            await supabase.from('orders').update({ status, pngSent, sourceSent }).eq('id', id);
-            location.reload();
+            
+            const { error } = await supabase.from('orders').update({ status, pngSent, sourceSent }).eq('id', id);
+            if(error) showError(error.message);
+            else location.reload();
         }
 
         async function deleteOrder() {
-            if(confirm("Delete?")) {
-                const id = document.getElementById('vIndex').value;
-                await supabase.from('orders').delete().eq('id', id);
-                location.reload();
-            }
+            if(!confirm("Are you sure you want to delete this order?")) return;
+            
+            const id = document.getElementById('vIndex').value;
+            const { error } = await supabase.from('orders').delete().eq('id', id);
+            if(error) showError(error.message);
+            else location.reload();
         }
 
         function openClientEdit(id, currentNotes) {
@@ -472,17 +616,78 @@
             const id = document.getElementById('cEditIndex').value;
             const newNotes = document.getElementById('cEditNotes').value;
             const { error } = await supabase.from('orders').update({ designNotes: newNotes }).eq('id', id);
-            if(error) alert(error.message); else { alert("Updated."); location.reload(); }
+            if(error) showError(error.message);
+            else { alert("Updated successfully!"); location.reload(); }
         }
 
-        function logout() { localStorage.removeItem('currentUser'); window.location.href = 'login.html'; }
-        function closeViewModal() { document.getElementById('viewModal').classList.remove('active'); }
-        function toggleSettingsModal() { document.getElementById('settingsModal').classList.toggle('active'); }
-        function setTheme(t) { console.log("Theme set to " + t); toggleSettingsModal(); }
-        function addStickyNote() { alert("Note added (Local only)"); }
-        function toggleViewMode(m) { alert("Switched to " + m); }
-        function printInvoice() { window.print(); }
-        function exportData() { alert("Exporting..."); }
+        function logout() { 
+            localStorage.removeItem('currentUser'); 
+            window.location.href = 'login.html'; 
+        }
+        
+        function closeViewModal() { 
+            document.getElementById('viewModal').classList.remove('active'); 
+        }
+        
+        function toggleSettingsModal() { 
+            document.getElementById('settingsModal').classList.toggle('active'); 
+        }
+        
+        function setTheme(t) { 
+            console.log("Theme set to " + t); 
+            document.body.className = `bg-[#0f172a] text-white transition-colors duration-300 theme-${t}`;
+            toggleSettingsModal(); 
+        }
+        
+        function addStickyNote() { 
+            alert("Note added (feature coming soon)"); 
+        }
+        
+        function toggleViewMode(m) { 
+            const tableView = document.getElementById('tableViewContainer');
+            const kanbanView = document.getElementById('kanbanViewContainer');
+            const btnTable = document.getElementById('btn-table');
+            const btnKanban = document.getElementById('btn-kanban');
+            
+            if(m === 'table') {
+                tableView.classList.remove('hidden');
+                kanbanView.classList.add('hidden');
+                btnTable.classList.add('bg-white/10', 'text-white');
+                btnTable.classList.remove('text-gray-400');
+                btnKanban.classList.remove('bg-white/10', 'text-white');
+                btnKanban.classList.add('text-gray-400');
+            } else {
+                tableView.classList.add('hidden');
+                kanbanView.classList.remove('hidden');
+                btnKanban.classList.add('bg-white/10', 'text-white');
+                btnKanban.classList.remove('text-gray-400');
+                btnTable.classList.remove('bg-white/10', 'text-white');
+                btnTable.classList.add('text-gray-400');
+            }
+        }
+        
+        function printInvoice() { 
+            window.print(); 
+        }
+        
+        function exportData() { 
+            const csv = 'ID,Client,Status,Date\n' + globalOrders.map(o => 
+                `${o.id},${o.clientName},${o.status},${o.date}`
+            ).join('\n');
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'orders-export.csv';
+            a.click();
+        }
+
+        function addPortfolioItem() {
+            const url = document.getElementById('portfolioUrl').value;
+            if(!url) { alert('Please enter an image URL'); return; }
+            alert('Portfolio item added (feature coming soon)');
+            document.getElementById('portfolioUrl').value = '';
+        }
     </script>
 </body>
 </html>
