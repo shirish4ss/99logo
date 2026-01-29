@@ -94,7 +94,7 @@
             btn.disabled = true;
 
             try {
-                // Query DB (Removed hardcoded check to use real DB data)
+                // Query DB
                 const { data, error } = await supabase
                     .from('users')
                     .select('*')
@@ -103,8 +103,10 @@
                     .single();
 
                 if (data) {
-                    // FIX: Normalize role to lowercase ('Admin' -> 'admin') for dashboard compatibility
-                    data.role = data.role ? data.role.toLowerCase() : 'client';
+                    // FIX: Ensure Role is lowercase for Dashboard compatibility ('Admin' -> 'admin')
+                    if (data.role) {
+                        data.role = data.role.toLowerCase();
+                    }
                     
                     localStorage.setItem('currentUser', JSON.stringify(data));
                     window.location.href = 'dashboard.html';
