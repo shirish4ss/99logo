@@ -3,262 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | 99logo</title>
+    <title>Dashboard | 99logo [DEBUG]</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .text-gradient { background: linear-gradient(to right, var(--accent-color, #818cf8), #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, var(--accent-color, #818cf8), #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
         .modal-overlay.active { display: flex; }
-        :root { --accent-color: #6366f1; } 
-        .theme-pink { --accent-color: #ec4899; }
-        .theme-blue { --accent-color: #3b82f6; }
-        .theme-green { --accent-color: #22c55e; }
+        
+        :root { --accent-color: #6366f1; }
         .accent-bg { background-color: var(--accent-color); }
         .accent-text { color: var(--accent-color); }
-        .accent-border { border-color: var(--accent-color); }
     </style>
 </head>
-<body class="bg-[#0f172a] text-white transition-colors duration-300">
+<body class="bg-[#0f172a] text-white">
+
+    <!-- DEBUG PANEL (Always visible in bottom-right) -->
+    <div id="debugPanel" class="fixed bottom-4 right-4 bg-black/90 border border-green-500 text-green-400 p-4 rounded-xl z-[999] max-w-md text-xs font-mono max-h-96 overflow-y-auto">
+        <div class="flex justify-between items-center mb-2">
+            <h4 class="font-bold text-white">🔍 DEBUG LOG</h4>
+            <button onclick="document.getElementById('debugPanel').classList.add('hidden')" class="text-red-400">×</button>
+        </div>
+        <div id="debugLog"></div>
+    </div>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-[#0f172a] z-[90] flex items-center justify-center">
+        <div class="text-center max-w-md mx-auto p-8">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-indigo-500 mb-4"></i>
+            <p class="text-gray-400 text-sm mb-8">Initializing Dashboard...</p>
+            
+            <!-- MANUAL LOGIN OPTION -->
+            <div class="glass p-6 rounded-xl border border-yellow-500/30">
+                <h3 class="text-lg font-bold mb-4 text-yellow-400">⚠️ Taking Too Long?</h3>
+                <p class="text-xs text-gray-400 mb-4">If stuck, manually set your user:</p>
+                
+                <select id="manualRole" class="w-full bg-black/60 border border-gray-600 rounded p-2 text-sm mb-3">
+                    <option value="admin">Admin</option>
+                    <option value="client">Client</option>
+                </select>
+                
+                <input type="text" id="manualName" placeholder="Your Name" class="w-full bg-black/60 border border-gray-600 rounded p-2 text-sm mb-3">
+                <input type="email" id="manualEmail" placeholder="Your Email" class="w-full bg-black/60 border border-gray-600 rounded p-2 text-sm mb-3">
+                
+                <button onclick="manualLogin()" class="w-full bg-green-600 hover:bg-green-500 py-2 rounded font-bold text-sm">
+                    Force Login & Continue
+                </button>
+            </div>
+            
+            <button onclick="logout()" class="mt-4 text-xs text-red-500 underline">Clear & Logout</button>
+        </div>
+    </div>
 
     <nav class="glass border-b border-gray-800 sticky top-0 z-50">
         <div class="max-w-[1600px] mx-auto px-6 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold">99logo<span class="text-gradient">Dashboard</span></h1>
             <div class="flex items-center gap-4">
-                <button onclick="toggleSettingsModal()" class="text-gray-400 hover:text-white"><i class="fas fa-cog text-lg"></i></button>
-                <span id="userDisplay" class="text-gray-400 text-sm hidden md:block">User</span>
-                <button onclick="window.location.href='login.html'" class="text-red-400 text-sm font-semibold border border-red-400/30 px-3 py-1 rounded-lg">Logout</button>
+                <span id="userDisplay" class="text-gray-400 text-sm">Loading...</span>
+                <button onclick="logout()" class="text-red-400 text-sm font-semibold border border-red-400/30 px-3 py-1 rounded-lg">Logout</button>
             </div>
         </div>
     </nav>
 
-    <!-- LOADING OVERLAY -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-[#0f172a] z-[90] flex items-center justify-center transition-opacity duration-500">
-        <div class="text-center">
-            <i class="fas fa-circle-notch fa-spin text-4xl text-indigo-500 mb-4"></i>
-            <p class="text-gray-400 text-sm">Loading Dashboard...</p>
-            <!-- Direct Link Backup -->
-            <a href="login.html" class="block mt-8 text-xs text-red-500 underline cursor-pointer">Stuck? Click here to Re-Login</a>
-        </div>
-    </div>
-
-    <!-- ERROR DISPLAY -->
-    <div id="errorBanner" class="hidden fixed bottom-4 right-4 bg-red-900 border border-red-500 text-white p-4 rounded-xl z-[100] max-w-sm">
-        <h4 class="font-bold"><i class="fas fa-exclamation-circle"></i> Error</h4>
-        <p id="errorText" class="text-xs mt-1">Unknown error.</p>
-    </div>
-
-    <!-- INDEPENDENT FAIL-SAFE SCRIPT -->
-    <script>
-        // This runs immediately. Even if the main script crashes, this will hide the loader after 2 seconds.
-        setTimeout(function() {
-            var overlay = document.getElementById('loadingOverlay');
-            if(overlay) overlay.style.display = 'none';
-        }, 2000);
-    </script>
-
     <div class="max-w-[1600px] mx-auto px-4 py-8">
         
-        <!-- ADMIN AREA -->
+        <!-- ADMIN VIEW -->
         <div id="adminView" class="hidden">
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-                <div class="glass p-5 rounded-xl border-l-4 border-green-500">
-                    <h3 class="text-gray-400 text-xs">Total Earnings</h3><p class="text-2xl font-bold text-green-400" id="totalEarnings">₹0</p>
+            <h2 class="text-3xl font-bold mb-8">Admin Dashboard</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="glass p-6 rounded-xl border-l-4 border-green-500">
+                    <h3 class="text-gray-400 text-xs uppercase">Total Orders</h3>
+                    <p class="text-3xl font-bold" id="stat-total">0</p>
                 </div>
-                <div class="glass p-5 rounded-xl border-l-4 accent-border" style="border-left-width: 4px;">
-                    <h3 class="text-gray-400 text-xs">Total Orders</h3><p class="text-2xl font-bold" id="stat-total">0</p>
+                <div class="glass p-6 rounded-xl border-l-4 border-yellow-500">
+                    <h3 class="text-gray-400 text-xs uppercase">In Progress</h3>
+                    <p class="text-3xl font-bold" id="stat-pending">0</p>
                 </div>
-                <div class="glass p-5 rounded-xl border-l-4 border-yellow-500">
-                    <h3 class="text-gray-400 text-xs">Working Now</h3><p class="text-2xl font-bold" id="stat-pending">0</p>
+                <div class="glass p-6 rounded-xl border-l-4 border-red-500">
+                    <h3 class="text-gray-400 text-xs uppercase">Unpaid</h3>
+                    <p class="text-3xl font-bold" id="stat-unpaid">0</p>
                 </div>
-                <div class="glass p-5 rounded-xl border-l-4 border-red-500">
-                    <h3 class="text-gray-400 text-xs">Unpaid</h3><p class="text-2xl font-bold" id="stat-unpaid">0</p>
+                <div class="glass p-6 rounded-xl border-l-4 border-indigo-500">
+                    <h3 class="text-gray-400 text-xs uppercase">Completed</h3>
+                    <p class="text-3xl font-bold" id="stat-completed">0</p>
                 </div>
-                <button onclick="window.print()" class="glass p-5 rounded-xl border border-gray-700 hover:bg-white/5 flex flex-col justify-center items-center gap-2">
-                    <i class="fas fa-file-invoice text-2xl text-purple-400"></i><span class="text-xs font-bold">Print Invoice</span>
-                </button>
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
-                <div class="xl:col-span-1 space-y-4">
-                    <div class="glass p-4 rounded-xl">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-sm font-bold flex items-center gap-2">Priority Queue</h3>
-                        </div>
-                        <div id="priorityList" class="space-y-3"></div>
-                    </div>
-                </div>
-
-                <div class="xl:col-span-3">
-                    <div id="tableViewContainer" class="overflow-x-auto glass rounded-xl">
-                        <table class="w-full text-left text-sm text-gray-400">
-                            <thead class="bg-black/40 text-gray-200 text-xs uppercase">
-                                <tr>
-                                    <th class="px-4 py-3">ID</th><th class="px-4 py-3">Client</th><th class="px-4 py-3">Deadline</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ordersTableBody"></tbody>
-                        </table>
-                    </div>
+            <div class="glass p-6 rounded-xl">
+                <h3 class="text-xl font-bold mb-4">Orders List</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-black/40 text-gray-400 text-xs uppercase">
+                            <tr>
+                                <th class="px-4 py-3">ID</th>
+                                <th class="px-4 py-3">Client</th>
+                                <th class="px-4 py-3">Brand</th>
+                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <tr><td colspan="5" class="text-center py-8 text-gray-500">Loading orders...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- CLIENT AREA -->
+        <!-- CLIENT VIEW -->
         <div id="clientView" class="hidden max-w-4xl mx-auto">
-            <h2 class="text-3xl font-bold mb-6">Your Orders</h2>
-            <div id="clientOrdersContainer" class="space-y-6"></div>
-        </div>
-    </div>
-
-    <!-- Modals -->
-    <div id="viewModal" class="modal-overlay">
-        <div class="glass max-w-3xl w-full p-8 rounded-2xl m-4 relative">
-            <button onclick="document.getElementById('viewModal').classList.remove('active')" class="absolute top-4 right-4 text-2xl">&times;</button>
-            <h2 class="text-2xl font-bold mb-4">Order <span id="vID"></span></h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-black/30 p-4 rounded-lg">
-                    <p class="text-sm"><strong>Brand:</strong> <span id="vBrand"></span></p>
-                    <p class="text-sm"><strong>Niche:</strong> <span id="vNiche"></span></p>
-                    <p class="text-sm"><strong>Notes:</strong> <span id="vNotes"></span></p>
-                </div>
-                <div class="bg-black/30 p-4 rounded-lg">
-                    <select id="updateStatusSelect" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm mb-2">
-                        <option>Pending</option><option>In Progress</option><option>Completed</option>
-                    </select>
-                    <button onclick="saveAdminChanges()" class="w-full bg-indigo-600 py-2 rounded text-sm">Update Status</button>
+            <h2 class="text-3xl font-bold mb-8">Your Orders</h2>
+            <div id="clientOrdersContainer" class="space-y-6">
+                <div class="glass p-6 rounded-2xl text-center text-gray-400">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                    <p>Loading your orders...</p>
                 </div>
             </div>
-            <input type="hidden" id="vIndex">
         </div>
     </div>
 
-    <!-- MAIN SCRIPT -->
     <script>
+        // DEBUG LOGGING
+        const debugLog = [];
+        function log(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.push(`[${timestamp}] ${msg}`);
+            
+            const logEl = document.getElementById('debugLog');
+            const colorClass = type === 'error' ? 'text-red-400' : type === 'success' ? 'text-green-400' : 'text-blue-400';
+            logEl.innerHTML += `<div class="${colorClass}">[${timestamp}] ${msg}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
+            
+            console.log(`[${type.toUpperCase()}] ${msg}`);
+        }
+
         // CONFIG
         const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzczNjQ2MzEsImV4cCI6MjA1Mjk0MDYzMX0.UiLZoLk6jpNl4RnkFdmZWF0s5UyevyK1xKZxnUjVqR4';
+        
         let supabase;
         let globalOrders = [];
 
-        // STARTUP
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                // 1. Check LocalStorage safely
-                let userStr, user;
-                try {
-                    userStr = localStorage.getItem('currentUser');
-                    if(userStr) user = JSON.parse(userStr);
-                } catch(e) { console.error("Storage Error"); }
+        // MANUAL LOGIN FUNCTION
+        function manualLogin() {
+            log('Manual login initiated...', 'info');
+            const role = document.getElementById('manualRole').value;
+            const name = document.getElementById('manualName').value || 'Test User';
+            const email = document.getElementById('manualEmail').value || 'test@example.com';
+            
+            const user = { role, name, email };
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            log(`User set: ${name} (${role})`, 'success');
+            
+            location.reload();
+        }
 
-                // 2. Redirect if not logged in
-                if (!user) {
-                    // Don't redirect instantly if debugging, but here we must
-                    window.location.href = 'login.html';
-                    return; 
+        // HIDE LOADER
+        function hideLoader() {
+            log('Hiding loader...', 'info');
+            const loader = document.getElementById('loadingOverlay');
+            if(loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 300);
+            }
+        }
+
+        // INIT
+        window.addEventListener('DOMContentLoaded', async () => {
+            log('🚀 Dashboard starting...', 'info');
+            
+            try {
+                // STEP 1: Check localStorage
+                log('Step 1: Checking localStorage...', 'info');
+                const userStr = localStorage.getItem('currentUser');
+                log(`LocalStorage value: ${userStr ? 'Found' : 'NOT FOUND'}`, userStr ? 'success' : 'error');
+                
+                if (!userStr || userStr === "null" || userStr === "undefined") {
+                    log('❌ No valid user found - need login', 'error');
+                    log('Please use manual login or go back to login page', 'error');
+                    return; // Don't redirect, show manual login
+                }
+                
+                // STEP 2: Parse User
+                log('Step 2: Parsing user data...', 'info');
+                let user;
+                try {
+                    user = JSON.parse(userStr);
+                    log(`✅ User parsed: ${JSON.stringify(user)}`, 'success');
+                } catch(e) {
+                    log(`❌ Parse error: ${e.message}`, 'error');
+                    localStorage.removeItem('currentUser');
+                    return;
                 }
 
-                document.getElementById('userDisplay').innerText = `Hello, ${user.name || 'Admin'}`;
+                // STEP 3: Update UI
+                log('Step 3: Updating UI...', 'info');
+                const userDisplay = document.getElementById('userDisplay');
+                if(userDisplay) {
+                    userDisplay.innerText = `Welcome, ${user.name || user.email || 'User'}`;
+                    log('✅ Username displayed', 'success');
+                }
 
-                // 3. UI Setup
+                // STEP 4: Show appropriate view
+                log('Step 4: Determining user role...', 'info');
                 const role = user.role ? user.role.toLowerCase() : 'client';
+                log(`Role detected: ${role}`, 'info');
+                
                 const adminView = document.getElementById('adminView');
                 const clientView = document.getElementById('clientView');
 
                 if (role === 'admin') {
+                    log('Showing ADMIN view', 'success');
                     adminView.classList.remove('hidden');
                     clientView.classList.add('hidden');
                 } else {
+                    log('Showing CLIENT view', 'success');
                     adminView.classList.add('hidden');
                     clientView.classList.remove('hidden');
                 }
+                
+                // STEP 5: Hide loader
+                log('Step 5: Hiding loader...', 'success');
+                hideLoader();
 
-                // 4. Force Hide Loader (Redundant but safe)
-                document.getElementById('loadingOverlay').style.display = 'none';
-
-                // 5. Connect Supabase
-                if (typeof window.supabase !== 'undefined') {
+                // STEP 6: Initialize Supabase
+                log('Step 6: Connecting to Supabase...', 'info');
+                try {
+                    if (typeof window.supabase === 'undefined') {
+                        throw new Error('Supabase library not loaded');
+                    }
+                    
                     supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-                    if (role === 'admin') await fetchAdminData();
-                    else await fetchClientData(user.email);
-                } else {
-                    throw new Error("Supabase Library missing");
+                    log('✅ Supabase client created', 'success');
+                    
+                    // STEP 7: Fetch data
+                    log('Step 7: Fetching data...', 'info');
+                    if (role === 'admin') {
+                        await fetchAdminData();
+                    } else {
+                        await fetchClientData(user.email);
+                    }
+                    
+                } catch (supaError) {
+                    log(`❌ Supabase error: ${supaError.message}`, 'error');
+                    showDemoData(role);
                 }
 
             } catch (err) {
-                console.error(err);
-                document.getElementById('loadingOverlay').style.display = 'none'; // Ensure visible even on error
-                document.getElementById('errorBanner').classList.remove('hidden');
-                document.getElementById('errorText').innerText = err.message;
+                log(`❌ FATAL ERROR: ${err.message}`, 'error');
+                log(`Stack: ${err.stack}`, 'error');
             }
         });
 
-        // FETCH ADMIN
+        // FETCH ADMIN DATA
         async function fetchAdminData() {
-            const { data, error } = await supabase.from('orders').select('*');
-            if (error) throw error;
-            globalOrders = data || [];
+            try {
+                log('Fetching admin orders from database...', 'info');
+                const { data: orders, error } = await supabase.from('orders').select('*');
+                
+                if (error) {
+                    log(`Database error: ${error.message}`, 'error');
+                    showDemoData('admin');
+                    return;
+                }
+                
+                log(`✅ Loaded ${orders ? orders.length : 0} orders`, 'success');
+                globalOrders = orders || [];
+                updateAdminUI();
+                
+            } catch(err) {
+                log(`Fetch error: ${err.message}`, 'error');
+                showDemoData('admin');
+            }
+        }
+
+        // UPDATE ADMIN UI
+        function updateAdminUI() {
+            log('Updating admin UI...', 'info');
             
             // Stats
             document.getElementById('stat-total').innerText = globalOrders.length;
+            document.getElementById('stat-pending').innerText = globalOrders.filter(o => o.status === 'In Progress').length;
             document.getElementById('stat-unpaid').innerText = globalOrders.filter(o => o.status === 'Unconfirmed').length;
-
-            // Table
-            document.getElementById('ordersTableBody').innerHTML = globalOrders.map(o => `
-                <tr class="border-b border-gray-800 hover:bg-white/5 cursor-pointer" onclick="viewOrder('${o.id}')">
-                    <td class="px-4 py-3 font-bold">${o.id}</td>
-                    <td class="px-4 py-3">${o.clientName}</td>
-                    <td class="px-4 py-3 text-xs">${o.date || '-'}</td>
-                    <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs bg-gray-700">${o.status}</span></td>
-                    <td class="px-4 py-3 text-xs">Edit</td>
-                </tr>
-            `).join('');
-        }
-
-        // FETCH CLIENT
-        async function fetchClientData(email) {
-            const { data, error } = await supabase.from('orders').select('*').eq('userEmail', email);
-            if (error) throw error;
+            document.getElementById('stat-completed').innerText = globalOrders.filter(o => o.status === 'Completed').length;
             
-            document.getElementById('clientOrdersContainer').innerHTML = (data || []).map(o => `
-                <div class="glass p-6 rounded-2xl border border-white/10 mb-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xl font-bold">${o.brandName}</h3>
-                        <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-bold">${o.status}</span>
-                    </div>
-                    <p class="text-sm text-gray-400">Package: ${o.packageType}</p>
-                </div>
-            `).join('');
+            // Table
+            const tbody = document.getElementById('ordersTableBody');
+            if(tbody) {
+                if(globalOrders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No orders in database</td></tr>';
+                } else {
+                    tbody.innerHTML = globalOrders.map(o => `
+                        <tr class="border-b border-gray-800 hover:bg-white/5">
+                            <td class="px-4 py-3 font-mono text-xs">${o.id}</td>
+                            <td class="px-4 py-3">${o.clientName || 'N/A'}</td>
+                            <td class="px-4 py-3">${o.brandName || 'N/A'}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 rounded text-xs ${
+                                    o.status === 'Completed' ? 'bg-green-900 text-green-300' :
+                                    o.status === 'In Progress' ? 'bg-yellow-900 text-yellow-300' :
+                                    'bg-red-900 text-red-300'
+                                }">${o.status || 'Pending'}</span>
+                            </td>
+                            <td class="px-4 py-3 text-xs text-gray-500">${o.date || '-'}</td>
+                        </tr>
+                    `).join('');
+                }
+            }
+            
+            log('✅ Admin UI updated', 'success');
         }
 
-        // ACTIONS
-        function viewOrder(id) {
-            const o = globalOrders.find(x => x.id === id);
-            if(!o) return;
-            document.getElementById('vID').innerText = o.id;
-            document.getElementById('vBrand').innerText = o.brandName;
-            document.getElementById('vNiche').innerText = o.niche;
-            document.getElementById('vNotes').innerText = o.designNotes || o.ideas;
-            document.getElementById('updateStatusSelect').value = o.status;
-            document.getElementById('vIndex').value = o.id;
-            document.getElementById('viewModal').classList.add('active');
+        // FETCH CLIENT DATA
+        async function fetchClientData(email) {
+            try {
+                log(`Fetching orders for: ${email}`, 'info');
+                const { data, error } = await supabase.from('orders').select('*').eq('userEmail', email);
+                
+                if(error) {
+                    log(`Database error: ${error.message}`, 'error');
+                    showDemoData('client');
+                    return;
+                }
+                
+                log(`✅ Found ${data ? data.length : 0} orders`, 'success');
+                
+                const container = document.getElementById('clientOrdersContainer');
+                if(container && data) {
+                    if(data.length === 0) {
+                        container.innerHTML = `
+                            <div class="glass p-8 rounded-2xl text-center">
+                                <i class="fas fa-inbox text-5xl text-gray-600 mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Orders Yet</h3>
+                                <p class="text-gray-400 text-sm">Place your first order to get started!</p>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = data.map(o => `
+                            <div class="glass p-6 rounded-2xl border border-white/10">
+                                <div class="flex justify-between items-center mb-4">
+                                    <div>
+                                        <h3 class="text-xl font-bold">${o.brandName || 'Your Logo'}</h3>
+                                        <p class="text-xs text-gray-500">Order ID: ${o.id}</p>
+                                    </div>
+                                    <span class="px-3 py-1 rounded text-xs font-bold ${
+                                        o.status === 'Completed' ? 'bg-green-500/20 text-green-400' :
+                                        o.status === 'In Progress' ? 'bg-yellow-500/20 text-yellow-400' :
+                                        'bg-red-500/20 text-red-400'
+                                    }">${o.status || 'Pending'}</span>
+                                </div>
+                                <div class="text-sm text-gray-400">
+                                    <p><strong>Package:</strong> ${o.packageType || 'Standard'}</p>
+                                    <p><strong>Niche:</strong> ${o.niche || 'N/A'}</p>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+                
+            } catch(err) {
+                log(`Client fetch error: ${err.message}`, 'error');
+                showDemoData('client');
+            }
         }
 
-        async function saveAdminChanges() {
-            const id = document.getElementById('vIndex').value;
-            const status = document.getElementById('updateStatusSelect').value;
-            const { error } = await supabase.from('orders').update({ status }).eq('id', id);
-            if(error) alert(error.message);
-            else location.reload();
+        // SHOW DEMO DATA
+        function showDemoData(role) {
+            log('⚠️ Showing demo data (database unavailable)', 'error');
+            
+            if(role === 'admin') {
+                globalOrders = [
+                    {id: 'DEMO-001', clientName: 'Demo Client', brandName: 'Demo Brand', status: 'In Progress', date: '2026-01-30'}
+                ];
+                updateAdminUI();
+            } else {
+                const container = document.getElementById('clientOrdersContainer');
+                if(container) {
+                    container.innerHTML = `
+                        <div class="glass p-6 rounded-2xl border border-yellow-500/30">
+                            <div class="flex items-center gap-3 mb-4">
+                                <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl"></i>
+                                <h3 class="text-xl font-bold">Demo Mode</h3>
+                            </div>
+                            <p class="text-sm text-gray-400">Unable to connect to database.</p>
+                            <p class="text-xs text-gray-500 mt-2">Check console for details.</p>
+                        </div>
+                    `;
+                }
+            }
         }
 
-        // UTILS
-        function toggleSettingsModal() { document.getElementById('settingsModal').classList.toggle('active'); }
-        function setTheme(t) { console.log(t); toggleSettingsModal(); }
+        function logout() {
+            log('Logging out...', 'info');
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
     </script>
 </body>
 </html>
