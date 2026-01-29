@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | PixelPerfect</title>
+    <title>Dashboard | 99logo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- CSS for Glassmorphism and Transitions -->
     <style>
@@ -52,7 +54,7 @@
 
     <nav class="glass border-b border-gray-800 sticky top-0 z-50">
         <div class="max-w-[1600px] mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold">Pixel<span class="text-gradient">Dashboard</span></h1>
+            <h1 class="text-xl font-bold">99logo<span class="text-gradient">Dashboard</span></h1>
             
             <div class="flex items-center gap-4">
                 
@@ -308,7 +310,7 @@
             
             <a id="vRefLink" href="#" target="_blank" class="block text-center w-full py-3 border border-gray-600 rounded-lg accent-text hover:bg-white/5 transition mb-4">🔗 Open Reference Link</a>
             
-            <input type="hidden" id="vIndex">
+            <input type="hidden" id="vIndex"> <!-- Holds the DB ID now -->
             <button onclick="deleteOrder()" class="text-red-500 text-xs w-full text-center hover:text-red-400">Delete Order Permanently</button>
         </div>
     </div>
@@ -346,9 +348,16 @@
         </div>
     </div>
 
-    <!-- SCRIPT LOGIC (FIXES & NEW FEATURES) -->
+    <!-- SCRIPT LOGIC (FIXES & NEW FEATURES - SUPABASE INTEGRATED) -->
     <script>
-        function loadDashboard() {
+        // --- SUPABASE CONFIGURATION ---
+        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let globalOrders = []; // To cache orders for viewing without re-fetching
+
+        async function loadDashboard() {
             const user = JSON.parse(localStorage.getItem('currentUser'));
             if (!user) { window.location.href = 'login.html'; return; }
 
@@ -357,25 +366,40 @@
             if (user.role === 'admin') {
                 document.getElementById('adminView').classList.remove('hidden');
                 document.getElementById('clientView').classList.add('hidden');
-                renderAdminOrders();
+                await renderAdminOrders();
             } else {
                 document.getElementById('adminView').classList.add('hidden');
                 document.getElementById('clientView').classList.remove('hidden');
                 // Security: Hide Admin Elements
                 document.getElementById('settingsBtn').classList.add('hidden');
                 document.getElementById('notificationCenter').classList.add('hidden');
-                renderClientOrders(user.email);
+                await renderClientOrders(user.email);
             }
         }
 
-        function renderAdminOrders() {
-            const orders = JSON.parse(localStorage.getItem('pixel_orders') || '[]');
+        async function renderAdminOrders() {
+            // Fetch from Supabase
+            const { data: orders, error } = await supabase.from('orders').select('*');
+            if(error) { console.error(error); return; }
+            globalOrders = orders; // Cache
+
             const tableBody = document.getElementById('ordersTableBody');
             
             // Stats Calculation
             document.getElementById('stat-total').innerText = orders.length;
             document.getElementById('stat-pending').innerText = orders.filter(o => o.status === 'In Progress').length;
             document.getElementById('stat-unpaid').innerText = orders.filter(o => o.status === 'Unconfirmed').length;
+
+            // Simple Sum of earnings (approximate based on plan)
+            let earnings = 0;
+            orders.forEach(o => {
+                if(o.status !== 'Unconfirmed') {
+                   if(o.packageType === 'Basic') earnings += 99;
+                   if(o.packageType === 'Standard') earnings += 150;
+                   if(o.packageType === 'Premium') earnings += 200;
+                }
+            });
+            document.getElementById('totalEarnings').innerText = '₹' + earnings;
 
             tableBody.innerHTML = orders.map((o, index) => `
                 <tr class="border-b border-gray-800 hover:bg-white/5 transition">
@@ -388,27 +412,40 @@
                         </span>
                     </td>
                     <td class="px-4 py-3">
-                        <button onclick="viewOrder(${index})" class="accent-text text-sm hover:underline">Manage</button>
+                        <button onclick="viewOrder('${o.id}')" class="accent-text text-sm hover:underline">Manage</button>
                     </td>
                 </tr>
             `).join('');
+
+            // Also populate priority list
+            const priorityList = document.getElementById('priorityList');
+            const activeOrders = orders.filter(o => o.status !== 'Completed');
+            priorityList.innerHTML = activeOrders.map(o => `
+                 <div class="glass p-3 rounded-lg border-l-4 border-indigo-500 cursor-pointer hover:bg-white/5" onclick="viewOrder('${o.id}')">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-sm">${o.id}</span>
+                        <span class="text-xs text-gray-400">${o.status}</span>
+                    </div>
+                    <div class="text-xs text-gray-300 mt-1">${o.brandName}</div>
+                </div>
+            `).join('');
         }
 
-        function viewOrder(index) {
-            const orders = JSON.parse(localStorage.getItem('pixel_orders'));
-            const o = orders[index];
-            
+        function viewOrder(id) {
+            const o = globalOrders.find(order => order.id === id);
+            if(!o) return;
+
             document.getElementById('vID').innerText = o.id;
             document.getElementById('vClient').innerText = o.clientName;
             document.getElementById('vBrand').innerText = o.brandName;
             document.getElementById('vNiche').innerText = o.niche;
             document.getElementById('vColors').innerText = o.colors || 'Not specified';
             document.getElementById('vVibe').innerText = o.vibe;
-            document.getElementById('vNotes').innerText = o.ideas || o.notes || 'None';
+            document.getElementById('vNotes').innerText = o.ideas || o.designNotes || 'None';
             document.getElementById('vTx').innerText = o.txId;
             document.getElementById('vPayStatus').innerText = o.status === 'Unconfirmed' ? 'Pending Verification' : 'Paid & Verified';
             document.getElementById('vStatus').innerText = o.status;
-            document.getElementById('vIndex').value = index;
+            document.getElementById('vIndex').value = o.id; // Using ID now instead of index
             document.getElementById('vWa').href = `https://wa.me/${o.contact.replace(/\D/g,'')}`;
 
             // Admin Verification Gate
@@ -418,35 +455,64 @@
             } else {
                 vBtn.classList.add('hidden');
             }
+            
+            document.getElementById('updateStatusSelect').value = o.status;
+            document.getElementById('checkPng').checked = o.pngSent;
+            document.getElementById('checkSource').checked = o.sourceSent;
 
             document.getElementById('viewModal').classList.add('active');
         }
 
-        function confirmOrderByAdmin() {
-            const index = document.getElementById('vIndex').value;
-            let orders = JSON.parse(localStorage.getItem('pixel_orders'));
-            orders[index].status = "In Progress";
-            localStorage.setItem('pixel_orders', JSON.stringify(orders));
-            alert("Order Verified! Client can now see progress.");
-            location.reload();
+        async function confirmOrderByAdmin() {
+            const id = document.getElementById('vIndex').value;
+            const { error } = await supabase.from('orders').update({ status: "In Progress" }).eq('id', id);
+            
+            if(error) alert("Error verifying: " + error.message);
+            else {
+                alert("Order Verified! Client can now see progress.");
+                location.reload();
+            }
         }
 
-        function saveAdminChanges() {
-            const index = document.getElementById('vIndex').value;
+        async function saveAdminChanges() {
+            const id = document.getElementById('vIndex').value;
             const newStatus = document.getElementById('updateStatusSelect').value;
-            let orders = JSON.parse(localStorage.getItem('pixel_orders'));
-            orders[index].status = newStatus;
-            localStorage.setItem('pixel_orders', JSON.stringify(orders));
-            alert("Status Updated");
-            location.reload();
+            const pngSent = document.getElementById('checkPng').checked;
+            const sourceSent = document.getElementById('checkSource').checked;
+
+            const { error } = await supabase.from('orders').update({ 
+                status: newStatus,
+                pngSent: pngSent,
+                sourceSent: sourceSent
+            }).eq('id', id);
+
+            if(error) alert("Error saving: " + error.message);
+            else {
+                alert("Status Updated");
+                location.reload();
+            }
+        }
+        
+        async function deleteOrder() {
+            if(confirm("Permanently delete this order from database?")) {
+                const id = document.getElementById('vIndex').value;
+                const { error } = await supabase.from('orders').delete().eq('id', id);
+                if(error) alert("Error: " + error.message);
+                else {
+                    alert("Deleted.");
+                    location.reload();
+                }
+            }
         }
 
-        function renderClientOrders(email) {
-            const orders = JSON.parse(localStorage.getItem('pixel_orders') || '[]');
-            const myOrders = orders.filter(o => o.userEmail === email);
+        async function renderClientOrders(email) {
+            // Fetch orders for this email
+            const { data: myOrders, error } = await supabase.from('orders').select('*').eq('userEmail', email);
+            if(error) console.error(error);
+
             const container = document.getElementById('clientOrdersContainer');
             
-            if(myOrders.length > 0) {
+            if(myOrders && myOrders.length > 0) {
                 const active = myOrders[0];
                 document.getElementById('whatsappDesigner').href = `https://wa.me/919876543210?text=Hello, I need help with my project ${active.id}`;
                 
@@ -468,7 +534,7 @@
                 <div class="glass p-6 rounded-2xl border border-white/10 relative overflow-hidden">
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <h3 class="text-xl font-bold">${o.brandName} <span class="text-xs text-gray-500 font-normal">#${o.id}</span></h3>
+                            <h3 class="text-xl font-bold">${o.brandName} <span class="text-xs text-gray-500 font-normal">${o.id}</span></h3>
                             <p class="text-xs text-gray-400">Targeting: ${o.audience || 'General'}</p>
                         </div>
                         <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-widest">${o.status}</span>
@@ -488,10 +554,36 @@
                                 <p class="text-[10px] text-gray-500 uppercase">Delivery Window</p>
                                 <p class="text-sm font-bold">48 Working Hours</p>
                              </div>
+                             <div class="bg-white/5 p-3 rounded-xl flex-1 text-center cursor-pointer hover:bg-white/10" onclick="openClientEdit('${o.id}', '${o.designNotes}')">
+                                <p class="text-[10px] text-gray-500 uppercase">Action</p>
+                                <p class="text-sm font-bold text-yellow-400">Edit Brief</p>
+                             </div>
                         </div>
                     `}
                 </div>
             `).join('');
+        }
+        
+        function openClientEdit(id, currentNotes) {
+            document.getElementById('cEditIndex').value = id; // ID
+            document.getElementById('cEditNotes').value = currentNotes || '';
+            document.getElementById('clientEditModal').classList.add('active');
+        }
+        
+        async function submitClientEdit() {
+            const id = document.getElementById('cEditIndex').value;
+            const newNotes = document.getElementById('cEditNotes').value;
+            
+            const { error } = await supabase.from('orders').update({
+                designNotes: newNotes,
+                date: new Date().toLocaleDateString() // Reset time essentially
+            }).eq('id', id);
+            
+            if(error) alert(error.message);
+            else {
+                alert("Brief Updated & Timer Reset.");
+                location.reload();
+            }
         }
 
         function logout() {
@@ -507,7 +599,7 @@
             toggleSettingsModal();
         }
         
-        // Mock Admin Functions
+        // Mock Admin Functions (Sticky Notes stay local as per original design)
         function addStickyNote() {
             const container = document.getElementById('stickyNotesContainer');
             const note = document.createElement('textarea');
