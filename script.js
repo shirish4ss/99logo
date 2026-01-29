@@ -1,6 +1,6 @@
 // ================= CONFIGURATION =================
 const UPI_ID = "yourname@okaxis"; 
-const ADMIN_EMAIL = "admin@99logo.com"; // FIXED: Updated email
+const ADMIN_EMAIL = "admin@99logo.com"; // FIXED: Updated to match your DB
 const ADMIN_PASS = "admin123";
 const WORK_START_HOUR = 10; // 10 AM
 const WORK_END_HOUR = 18;   // 6 PM
@@ -15,62 +15,78 @@ function generateId(orders) {
     return '#' + (lastId + 1);
 }
 
-// ================= LOGIN LOGIC (FIXED) =================
+// ================= LOGIN LOGIC =================
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
     loginForm.addEventListener('submit', function(e) {
-        // e.preventDefault(); // Removed to allow login.html script to run if present
-        // This is kept for backward compatibility if login.html doesn't have the new script
-        const email = document.getElementById('email').value.trim(); // Trim spaces
+        // We let the inline script in login.html handle the database login
+        // But we add this fallback for the hardcoded admin just in case
+        const email = document.getElementById('email').value.trim(); 
         const pass = document.getElementById('password').value.trim();
 
-        // 1. Check Admin
+        // 1. Check Admin (Hardcoded fallback)
         if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
             e.preventDefault();
-            localStorage.setItem('currentUser', JSON.stringify({ role: 'admin', email: email }));
+            localStorage.setItem('currentUser', JSON.stringify({ role: 'admin', email: email, name: 'Admin' }));
             window.location.href = 'dashboard.html';
             return;
         } 
     });
 }
 
-// ================= ORDER FORM LOGIC =================
+// ================= ORDER FORM LOGIC (FIXED) =================
 const orderForm = document.getElementById('orderForm');
-if (orderForm) {
-    orderForm.addEventListener('submit', (e) => {
-        // We allow the inline script in order.html to handle the database submission
-        // This part mainly handles the session storage for the modal if needed
-        
-        // FIX: Removed preventDefault here so the inline script in order.html can run
-        // But we need to ensure we calculate price correctly for SessionStorage
-        
-        const fd = new FormData(orderForm);
-        const data = Object.fromEntries(fd.entries());
-        
-        // --- FIXED: Logic changed from Dropdown to Radio Buttons ---
+
+// Global Update Price Function (So HTML can call it)
+window.updatePrice = function() {
+    try {
+        // FIX: Changed from looking for 'packageSelect' (Dropdown) to 'packageType' (Radio)
         const selectedPkg = document.querySelector('input[name="packageType"]:checked');
-        data.packageType = selectedPkg ? selectedPkg.value : 'Standard';
-        
-        const basePrice = selectedPkg ? parseInt(selectedPkg.getAttribute('data-price')) : 150;
-        
-        // Addons
+        const basePrice = selectedPkg ? parseInt(selectedPkg.getAttribute('data-price')) : 0;
+        const pkgName = selectedPkg ? selectedPkg.value : 'None';
+
+        // Calculate Addons
         let addonPrice = 0;
         document.querySelectorAll('input[name="addon"]:checked').forEach(addon => {
             addonPrice += parseInt(addon.value) || 0;
         });
-        
-        data.totalPrice = basePrice + addonPrice;
-        // ------------------------------------------------------------
-        
-        data.dateOfInquiry = new Date().toISOString();
-        data.status = 'Pending';
-        data.paymentStatus = 'Unpaid'; // Default
-        data.revisionsLeft = 2; 
 
-        // Save to Session for Payment Modal
-        sessionStorage.setItem('tempOrder', JSON.stringify(data));
+        const total = basePrice + addonPrice;
+
+        // Update UI
+        const priceEl = document.getElementById('summaryPrice');
+        const amountEl = document.getElementById('payAmount');
+        const pkgEl = document.getElementById('summaryPackage');
+        const qrImg = document.getElementById('qrImage');
+
+        if (priceEl) priceEl.innerText = '₹' + total;
+        if (amountEl) amountEl.innerText = '₹' + total;
+        if (pkgEl) pkgEl.innerText = pkgName;
         
-        // Modal logic is handled by openPayment() in order.html
+        // Update QR
+        if (qrImg) {
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${UPI_ID}&pn=99logo&am=${total}`;
+        }
+    } catch (e) {
+        console.error("Price Update Error:", e);
+    }
+};
+
+// Initialize listeners
+if (orderForm) {
+    // Run price update on load
+    window.updatePrice();
+
+    // Attach listeners to inputs
+    const inputs = document.querySelectorAll('input[name="packageType"], input[name="addon"]');
+    inputs.forEach(input => {
+        input.addEventListener('change', window.updatePrice);
+    });
+
+    orderForm.addEventListener('submit', (e) => {
+        // Prevent default submission to allow validation and modal opening
+        // Logic handled by openPayment() in order.html usually, but here is a backup
+        // e.preventDefault(); 
     });
 }
 
@@ -79,26 +95,11 @@ function closeModal() {
 }
 
 function confirmOrder() {
-    // This function is often overridden by the inline script in order.html for Supabase
-    // Keeping it for backup
+    // This logic is primarily handled in order.html via Supabase now
+    // But keeping this structure for file integrity
     const tx = document.getElementById('userTxId').value;
     if(!tx) return alert("Please enter Transaction ID");
-    
-    const data = JSON.parse(sessionStorage.getItem('tempOrder'));
-    if(!data) return alert("Session expired. Please fill form again.");
-
-    const orders = JSON.parse(localStorage.getItem('pixelOrders')) || [];
-    
-    data.id = generateId(orders);
-    data.transactionId = tx;
-    data.paymentStatus = 'Paid'; // Assuming user paid
-    
-    orders.push(data);
-    localStorage.setItem('pixelOrders', JSON.stringify(orders));
-    sessionStorage.removeItem('tempOrder');
-    
-    alert("Order Placed Successfully! Login to track.");
-    window.location.href = 'login.html';
+    alert("Please use the Confirm button in the modal (processed by order.html)");
 }
 
 // ================= DASHBOARD LOGIC =================
@@ -110,24 +111,18 @@ function loadDashboard() {
         return;
     }
     
-    // Safety check for userDisplay
-    const ud = document.getElementById('userDisplay');
-    if(ud) ud.innerText = user.email;
-    
+    document.getElementById('userDisplay').innerText = user.email;
     const orders = JSON.parse(localStorage.getItem('pixelOrders')) || [];
     
-    if(user.role === 'admin') {
-        const adminView = document.getElementById('adminView');
-        if(adminView) {
-            adminView.classList.remove('hidden');
-            renderAdmin(orders);
-        }
+    // Check Role (Case insensitive fix)
+    const role = user.role ? user.role.toLowerCase() : 'client';
+
+    if(role === 'admin') {
+        document.getElementById('adminView').classList.remove('hidden');
+        renderAdmin(orders);
     } else {
-        const clientView = document.getElementById('clientView');
-        if(clientView) {
-            clientView.classList.remove('hidden');
-            renderClient(orders, user.email);
-        }
+        document.getElementById('clientView').classList.remove('hidden');
+        renderClient(orders, user.email);
     }
 }
 
