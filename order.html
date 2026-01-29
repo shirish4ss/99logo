@@ -203,14 +203,14 @@
                             <label class="text-xs text-cyan-300 font-bold ml-1 mb-4 block uppercase tracking-wider">Premium Add-ons</label>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <label class="glass p-4 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-white/5 transition">
-                                    <input type="checkbox" name="addon" value="50" class="w-5 h-5 accent-indigo-500 addon-checkbox" onchange="updatePrice()">
+                                    <input type="checkbox" name="addon" value="50" class="w-5 h-5 accent-indigo-500 addon-checkbox" onchange="window.updatePrice()">
                                     <div>
                                         <p class="text-sm font-bold">Social Media Kit (+₹50)</p>
                                         <p class="text-[10px] text-gray-400">FB, IG, LI profile and cover sizes.</p>
                                     </div>
                                 </label>
                                 <label class="glass p-4 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-white/5 transition">
-                                    <input type="checkbox" name="addon" value="100" class="w-5 h-5 accent-indigo-500 addon-checkbox" onchange="updatePrice()">
+                                    <input type="checkbox" name="addon" value="100" class="w-5 h-5 accent-indigo-500 addon-checkbox" onchange="window.updatePrice()">
                                     <div>
                                         <p class="text-sm font-bold">Logo Animation (+₹100)</p>
                                         <p class="text-[10px] text-gray-400">High-end video intro for your logo.</p>
@@ -247,7 +247,7 @@
                     <div class="package-grid">
                         
                         <label class="package-option">
-                            <input type="radio" name="packageType" value="Basic" data-price="99" onchange="updatePrice()">
+                            <input type="radio" name="packageType" value="Basic" data-price="99" onchange="window.updatePrice()">
                             <div class="package-card hover:bg-white/5">
                                 <div class="check-icon"><i class="fas fa-check"></i></div>
                                 <h4 class="text-lg font-bold text-slate-300">Basic</h4>
@@ -261,7 +261,7 @@
                         </label>
 
                         <label class="package-option">
-                            <input type="radio" name="packageType" value="Standard" data-price="150" checked onchange="updatePrice()">
+                            <input type="radio" name="packageType" value="Standard" data-price="150" checked onchange="window.updatePrice()">
                             <div class="package-card">
                                 <div class="absolute -top-0 left-1/2 -translate-x-1/2 bg-indigo-600 text-[9px] font-bold px-3 py-1 rounded-b-lg uppercase tracking-wider shadow-lg shadow-indigo-500/20">Most Popular</div>
                                 <div class="check-icon"><i class="fas fa-check"></i></div>
@@ -276,7 +276,7 @@
                         </label>
 
                         <label class="package-option">
-                            <input type="radio" name="packageType" value="Premium" data-price="200" onchange="updatePrice()">
+                            <input type="radio" name="packageType" value="Premium" data-price="200" onchange="window.updatePrice()">
                             <div class="package-card hover:bg-white/5">
                                 <div class="check-icon"><i class="fas fa-check"></i></div>
                                 <h4 class="text-lg font-bold text-pink-300">Premium</h4>
@@ -344,53 +344,41 @@
         </div>
     </div>
 
-    <!-- SCRIPT.JS Inclusion (Important: If script.js exists, it might conflict, so we make this robust) -->
+    <!-- Import SCRIPT.JS - Ensure this is here so both scripts run -->
     <script src="script.js"></script>
 
     <script>
-        /* ----------------------------------------------------
-           1. CORE FUNCTIONS (Crash Proof - Define FIRST) 
-           ---------------------------------------------------- */
-        
-        // --- Live Pricing Logic ---
-        // We define this on the window object so it overrides any broken version from script.js
+        // --- 1. CONFIG ---
+        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
+        let supabase;
+        try { supabase = window.supabase.createClient(supabaseUrl, supabaseKey); } catch(e) { console.error(e); }
+
+        // --- 2. LOGIC ---
+        // GLOBAL FUNCTION: Accessible by HTML onchange=""
         window.updatePrice = function() {
             try {
-                // Get selected package
-                const selectedPackage = document.querySelector('input[name="packageType"]:checked');
-                // Default to 150/Standard if null to prevent visual glitch, but generally should be selected
-                if(!selectedPackage) return;
+                const pkg = document.querySelector('input[name="packageType"]:checked');
+                // If nothing selected yet, don't crash, just default to basic logic or return
+                if(!pkg) return; 
 
-                const basePrice = parseInt(selectedPackage.getAttribute('data-price')) || 0;
-                
-                // Get addons
-                let addonsPrice = 0;
-                document.querySelectorAll('input[name="addon"]:checked').forEach(addon => {
-                    addonsPrice += parseInt(addon.value) || 0;
-                });
+                const base = parseInt(pkg.getAttribute('data-price')) || 0;
+                let add = 0;
+                document.querySelectorAll('input[name="addon"]:checked').forEach(a => add += parseInt(a.value));
+                const total = base + add;
 
-                const total = basePrice + addonsPrice;
-
-                // Update DOM
                 const priceEl = document.getElementById('summaryPrice');
-                const amountEl = document.getElementById('payAmount');
+                const payEl = document.getElementById('payAmount');
                 const pkgEl = document.getElementById('summaryPackage');
                 const qrImg = document.getElementById('qrImage');
 
                 if(priceEl) priceEl.innerText = '₹' + total;
-                if(amountEl) amountEl.innerText = '₹' + total;
-                if(pkgEl) pkgEl.innerText = selectedPackage.value;
-                
-                // Update QR Code
-                if(qrImg) {
-                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=99logo&am=${total}`;
-                }
-            } catch (e) {
-                console.error("Pricing Error:", e);
-            }
-        }
+                if(payEl) payEl.innerText = '₹' + total;
+                if(pkgEl) pkgEl.innerText = pkg.value;
+                if(qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=99logo&am=${total}`;
+            } catch(e) { console.error(e); }
+        };
 
-        // --- File Upload Logic ---
         function updateFileName(input) {
             const display = document.getElementById('fileNameDisplay');
             if(input.files && input.files[0]) {
@@ -398,140 +386,88 @@
             }
         }
 
-        // --- Modal & Validation Logic ---
         function openPayment() {
             const form = document.getElementById('orderForm');
             if(form.checkValidity()) {
-                window.updatePrice(); // Ensure price is current before opening
+                window.updatePrice(); 
                 document.getElementById('paymentModal').classList.add('active');
             } else {
-                alert("Please fill in all required fields marked with *");
+                alert("Please fill all required fields!");
                 form.reportValidity();
             }
         }
-
-        function closeModal() {
-            document.getElementById('paymentModal').classList.remove('active');
-        }
-
-        /* ----------------------------------------------------
-           2. EVENT LISTENERS (Run on Load)
-           ---------------------------------------------------- */
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize Price
-            if(typeof window.updatePrice === 'function') window.updatePrice();
-            
-            // Re-attach listeners just in case
-            const inputs = document.querySelectorAll('input[name="packageType"], input[name="addon"]');
-            inputs.forEach(i => i.addEventListener('change', window.updatePrice));
-
-            // Character Counter
-            const ideasInput = document.getElementById('ideasInput');
-            const charCount = document.getElementById('charCount');
-            if(ideasInput && charCount) {
-                ideasInput.addEventListener('input', () => {
-                    charCount.innerText = `${ideasInput.value.length}/300`;
-                    if(ideasInput.value.length >= 300) charCount.classList.add('text-red-500');
-                    else charCount.classList.remove('text-red-500');
-                });
-            }
-        });
-
-        /* ----------------------------------------------------
-           3. DATABASE LOGIC (Supabase)
-           ---------------------------------------------------- */
-        
-        // Configuration
-        const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT';
-        
-        // Safe Client Creation
-        let supabase;
-        try {
-            supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        } catch(e) {
-            console.error("Supabase Init Error:", e);
-        }
+        function closeModal() { document.getElementById('paymentModal').classList.remove('active'); }
 
         async function confirmOrder() {
-            // Make sure Supabase is loaded
-            if (!supabase) { alert("System Error: Supabase not loaded."); return; }
-
+            if(!supabase) return alert("System Error: DB not connected");
             const txId = document.getElementById('userTxId').value;
-            if(!txId) { 
-                alert("Please enter Transaction ID"); 
-                document.getElementById('userTxId').focus();
-                return; 
-            }
+            if(!txId) return alert("Enter Transaction ID");
             
             const btn = document.querySelector('button[onclick="confirmOrder()"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Database...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             btn.disabled = true;
 
             const form = document.getElementById('orderForm');
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-
-            // Data Preparation
             const orderId = "#" + Math.floor(100 + Math.random() * 900);
-            
-            // Calculate total again for DB
-            let finalPrice = 0;
+
+            // Re-calculate price for DB record
+            let totalPrice = 0;
             const pkg = document.querySelector('input[name="packageType"]:checked');
-            if(pkg) finalPrice += parseInt(pkg.getAttribute('data-price'));
-            document.querySelectorAll('input[name="addon"]:checked').forEach(a => finalPrice += parseInt(a.value));
-            
-            const userData = {
-                email: data.userEmail.toLowerCase(), // Ensure lowercase for login match
-                password: data.userPass,
-                name: data.clientName,
-                role: 'client'
-            };
+            if(pkg) totalPrice += parseInt(pkg.getAttribute('data-price'));
+            document.querySelectorAll('input[name="addon"]:checked').forEach(a => totalPrice += parseInt(a.value));
 
-            const orderData = {
-                id: orderId,
-                txId: txId,
-                status: "Unconfirmed",
-                date: new Date().toLocaleDateString(),
-                timestamp: Date.now(),
-                clientName: data.clientName,
-                contact: data.contact,
-                userEmail: data.userEmail.toLowerCase(),
-                userPass: data.userPass,
-                brandName: data.brandName,
-                tagline: data.tagline,
-                niche: data.niche,
-                audience: data.audience,
-                colors: data.colors,
-                vibe: data.vibe,
-                ideas: data.ideas,
-                refLink: data.refLink,
-                packageType: data.packageType,
-                // Append price info to design notes for Admin visibility
-                designNotes: (data.ideas || "") + ` [Total: ₹${finalPrice}]`
-            };
-
-            // Database Operations
             try {
-                // 1. Save User (RLS Disabled allows this)
-                await supabase.from('users').insert([userData]);
+                // Save User
+                await supabase.from('users').insert([{
+                    email: data.userEmail.toLowerCase(),
+                    password: data.userPass,
+                    name: data.clientName,
+                    role: 'client'
+                }]);
+                
+                // Save Order
+                await supabase.from('orders').insert([{
+                    id: orderId,
+                    txId: txId,
+                    status: "Unconfirmed",
+                    date: new Date().toLocaleDateString(),
+                    timestamp: Date.now(),
+                    clientName: data.clientName,
+                    contact: data.contact,
+                    userEmail: data.userEmail.toLowerCase(),
+                    userPass: data.userPass,
+                    brandName: data.brandName,
+                    tagline: data.tagline,
+                    niche: data.niche,
+                    audience: data.audience,
+                    colors: data.colors,
+                    vibe: data.vibe,
+                    ideas: data.ideas,
+                    refLink: data.refLink,
+                    packageType: data.packageType,
+                    designNotes: (data.ideas || '') + ` [Total Paid: ₹${totalPrice}]`
+                }]);
 
-                // 2. Save Order
-                const { error: orderError } = await supabase.from('orders').insert([orderData]);
-
-                if (orderError) throw orderError;
-
-                alert("Order Placed Successfully! Your order will be visible in the dashboard after Admin confirms your payment.");
-                window.location.href = "login.html"; 
-
+                alert("Order Placed Successfully!");
+                window.location.href = "login.html";
             } catch (err) {
-                alert("Error saving order: " + err.message);
-                console.error(err);
-                btn.innerHTML = originalText;
+                alert("Error: " + err.message);
+                btn.innerHTML = "Confirm Payment";
                 btn.disabled = false;
             }
         }
+
+        // --- 3. INIT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Re-attach listeners just in case
+            const inputs = document.querySelectorAll('input[name="packageType"], input[name="addon"]');
+            inputs.forEach(i => i.addEventListener('change', window.updatePrice));
+            
+            // Initial Calc
+            window.updatePrice();
+        });
     </script>
 </body>
 </html>
