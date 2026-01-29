@@ -17,14 +17,8 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .glow-btn:hover {
-            box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
+        .glow-btn:hover { box-shadow: 0 0 20px rgba(79, 70, 229, 0.4); }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
         .shake { animation: shake 0.4s ease-in-out; }
     </style>
 </head>
@@ -49,7 +43,6 @@
                 </button>
             </div>
 
-            <!-- Changed to type="button" and explicit onclick to force JS execution -->
             <button type="button" id="loginBtn" onclick="handleLogin()" class="w-full py-3 bg-indigo-600 rounded-lg font-bold text-white hover:bg-indigo-700 transition-all glow-btn">
                 Login to Dashboard
             </button>
@@ -57,8 +50,7 @@
         
         <div class="mt-6 text-center text-xs text-gray-500 border-t border-gray-700 pt-4">
             <p class="mb-2">System Status:</p>
-            <!-- Visible Debug Log -->
-            <p id="debugStatus" class="text-yellow-400 font-mono bg-black/50 p-2 rounded break-all">Initializing...</p>
+            <p id="debugStatus" class="text-yellow-400 font-mono bg-black/50 p-2 rounded break-all text-[10px]">Initializing...</p>
         </div>
         
         <div class="mt-4 text-center">
@@ -66,13 +58,15 @@
         </div>
     </div>
 
-    <!-- Background Decoration -->
-    <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
-    </div>
-
     <script>
+        // --- GLOBAL ERROR CATCHER ---
+        window.onerror = function(msg, url, line) {
+            const el = document.getElementById('debugStatus');
+            el.innerHTML = `<span style="color:#ef4444">CRITICAL ERROR: ${msg} <br> Line: ${line}</span>`;
+            console.error(msg);
+            return false;
+        };
+
         // --- 1. SETUP LOGGING ---
         const statusEl = document.getElementById('debugStatus');
         function log(msg) {
@@ -82,41 +76,41 @@
 
         // --- 2. INIT SUPABASE ---
         const supabaseUrl = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT'; // Invalid key format usually, but assuming user provided correct one previously.
-        // NOTE: The key provided 'sb_publishable_...' looks weird. Usually it starts with 'eyJ...'. 
-        // I will use the variable provided, but this might be the issue.
+        const supabaseKey = 'sb_publishable_9iWWmGIxG2rhxRvTZKePtg_VL5AfkXT'; 
         
         let supabase;
 
-        try {
+        // Run Immediately
+        (function initSystem() {
+            log("1. Script Started. Checking Libraries...");
+            
             if (typeof window.supabase === 'undefined') {
-                log("CRITICAL ERROR: Supabase Library failed to load. Check AdBlocker.");
+                log("ERROR: Supabase Library NOT loaded. AdBlocker?");
                 document.getElementById('loginBtn').disabled = true;
-                document.getElementById('loginBtn').classList.add('bg-gray-600');
-            } else {
-                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-                log("System Ready. Database Client Initialized.");
+                document.getElementById('loginBtn').innerText = "Library Failed to Load";
+                return;
             }
-        } catch (e) {
-            log("Init Error: " + e.message);
-        }
+
+            try {
+                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                log("2. System Ready. Waiting for input.");
+            } catch (e) {
+                log("Init Failed: " + e.message);
+            }
+        })();
 
         // --- 3. UI FUNCTIONS ---
         function togglePassword() {
             const passInput = document.getElementById('password');
             const eye = document.getElementById('eyeIcon');
-            if (passInput.type === "password") {
-                passInput.type = "text";
-                eye.classList.replace('fa-eye', 'fa-eye-slash');
-            } else {
-                passInput.type = "password";
-                eye.classList.replace('fa-eye-slash', 'fa-eye');
-            }
+            passInput.type = passInput.type === "password" ? "text" : "password";
+            eye.classList.toggle('fa-eye');
+            eye.classList.toggle('fa-eye-slash');
         }
 
         // --- 4. LOGIN LOGIC ---
         async function handleLogin() {
-            log("Button Clicked. Starting login process...");
+            log("3. Button Clicked. Validating...");
             
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
@@ -129,48 +123,44 @@
                 return;
             }
 
-            btn.innerText = "Connecting to Database...";
+            btn.innerText = "Connecting...";
             btn.disabled = true;
 
             try {
-                // Step 1: Query DB
-                log(`Querying DB for: ${email}...`);
+                log(`4. Querying DB for: ${email}...`);
                 
+                // Use maybeSingle to prevent 406/JSON errors on 0 results
                 const { data, error } = await supabase
                     .from('users')
                     .select('*')
                     .eq('email', email)
                     .eq('password', password)
-                    .maybeSingle(); // Prevents crash on 0 results
+                    .maybeSingle();
 
-                // Step 2: Check Errors
                 if (error) {
-                    log("DB Error: " + error.message);
+                    log("DB Error: " + error.message + " (" + error.code + ")");
                     throw error;
                 }
 
-                // Step 3: Check Data
                 if (!data) {
-                    log("Result: User not found in database.");
+                    log("Result: No user found. Incorrect credentials.");
                     throw new Error("Invalid Email or Password");
                 }
 
-                log("Success! User found. Role: " + data.role);
+                log("5. Success! Role: " + data.role);
 
-                // Step 4: Normalize Role
+                // FIX: Normalize Role
                 if (data.role) data.role = data.role.toLowerCase();
+                else data.role = 'client';
                 
-                // Step 5: Save & Redirect
                 localStorage.setItem('currentUser', JSON.stringify(data));
-                log("Redirecting to dashboard...");
+                log("6. Redirecting...");
                 
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 500);
 
             } catch (err) {
-                // Error Handler
-                console.error(err);
                 btn.innerText = "Login to Dashboard";
                 btn.disabled = false;
                 
@@ -180,7 +170,7 @@
                 if (err.message.includes("Invalid Email")) {
                     alert("Incorrect Email or Password.");
                 } else {
-                    alert("System Error: " + err.message + "\n\nCheck the yellow text below for details.");
+                    alert("System Error: " + err.message);
                 }
             }
         }
