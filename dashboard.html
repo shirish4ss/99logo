@@ -442,15 +442,13 @@
 
     <!-- Load Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
 
     <script>
         // ============================================
-        // SUPABASE CONFIGURATION
+        // SUPABASE CONFIGURATION (Loaded from supabase-config.js)
         // ============================================
-        const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
-
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // supabase and supabaseClient are now available globally
 
         // ============================================
         // GLOBAL VARIABLES
