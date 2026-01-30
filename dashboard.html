@@ -408,16 +408,58 @@
             const day = date.getDay(); // 0 = Sunday, 6 = Saturday
             const hour = date.getHours();
             
-            // Monday to Friday (1-5), 10 AM to 6 PM
-            return day >= 1 && day <= 5 && hour >= 10 && hour < 18;
+            // Monday to Saturday (1-6), 10 AM to 6 PM (Sunday = 0 is OFF)
+            return day >= 1 && day <= 6 && hour >= 10 && hour < 18;
+        }
+
+        // CRITICAL FIX: Find next working hour start if order placed outside working hours
+        function getNextWorkingHourStart(timestamp) {
+            const date = new Date(timestamp);
+            
+            // If already in working hours, return as is
+            if (isWorkingHour(date)) {
+                return date;
+            }
+            
+            const day = date.getDay();
+            const hour = date.getHours();
+            
+            // If Sunday (0), move to Monday 10 AM
+            if (day === 0) {
+                date.setDate(date.getDate() + 1); // Move to Monday
+                date.setHours(10, 0, 0, 0);
+                return date;
+            }
+            
+            // If it's a weekday/Saturday but before 10 AM, set to 10 AM same day
+            if (hour < 10) {
+                date.setHours(10, 0, 0, 0);
+                return date;
+            }
+            
+            // If it's after 6 PM on weekday, move to next day 10 AM
+            if (hour >= 18) {
+                date.setDate(date.getDate() + 1);
+                
+                // If next day is Sunday, skip to Monday
+                if (date.getDay() === 0) {
+                    date.setDate(date.getDate() + 1);
+                }
+                
+                date.setHours(10, 0, 0, 0);
+                return date;
+            }
+            
+            return date;
         }
 
         function calculateWorkingHoursRemaining(startTimestamp, totalWorkingHours) {
-            const start = new Date(startTimestamp);
+            // CRITICAL FIX: Adjust start time to next working hour if placed outside working hours
+            const adjustedStart = getNextWorkingHourStart(startTimestamp);
             const now = new Date();
             
             let workingHoursElapsed = 0;
-            let currentTime = new Date(start);
+            let currentTime = new Date(adjustedStart);
             
             // Calculate elapsed working hours
             while (currentTime < now) {
@@ -962,10 +1004,10 @@
                     timerDisplay.textContent = formatTime(remaining);
                     
                     if (isWorkingHour(now)) {
-                        timerStatus.textContent = '🟢 Working hours - Timer active';
+                        timerStatus.textContent = '🟢 Working hours - Timer active (Mon-Sat, 10AM-6PM)';
                         timerStatus.className = 'text-xs text-green-400 mt-1';
                     } else {
-                        timerStatus.textContent = '🔴 Outside working hours - Timer paused (Mon-Fri, 10AM-6PM)';
+                        timerStatus.textContent = '🔴 Outside working hours - Timer paused (Resumes next: Mon-Sat, 10AM-6PM)';
                         timerStatus.className = 'text-xs text-red-400 mt-1';
                     }
                 }
