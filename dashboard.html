@@ -661,22 +661,39 @@
         // LOAD DASHBOARD
         // ============================================
         async function loadDashboard() {
-            const userStr = localStorage.getItem('currentUser');
-            if (!userStr) {
-                window.location.href = 'login.html';
-                return;
-            }
+            try {
+                // Check if Supabase is initialized
+                if (typeof window.supabase === 'undefined') {
+                    console.error('Supabase library not loaded');
+                    alert('Error: Database connection failed. Please refresh the page.');
+                    return;
+                }
+                
+                // Initialize Supabase if not already done
+                if (typeof initSupabase === 'function') {
+                    initSupabase();
+                }
+                
+                const userStr = localStorage.getItem('currentUser');
+                if (!userStr) {
+                    window.location.href = 'login.html';
+                    return;
+                }
 
-            const user = JSON.parse(userStr);
-            document.getElementById('userDisplay').innerText = user.name || user.email;
+                const user = JSON.parse(userStr);
+                document.getElementById('userDisplay').innerText = user.name || user.email;
 
-            if (user.role === 'admin') {
-                document.getElementById('adminView').classList.remove('hidden');
-                await loadAdminOrders();
-            } else {
-                document.getElementById('clientView').classList.remove('hidden');
-                await renderClientOrders(user.email);
-                startFlashMessages();
+                if (user.role === 'admin') {
+                    document.getElementById('adminView').classList.remove('hidden');
+                    await loadAdminOrders();
+                } else {
+                    document.getElementById('clientView').classList.remove('hidden');
+                    await renderClientOrders(user.email);
+                    startFlashMessages();
+                }
+            } catch (error) {
+                console.error('Error in loadDashboard:', error);
+                alert('Error loading dashboard: ' + error.message);
             }
         }
 
@@ -1516,9 +1533,14 @@
             }
         }
 
-        // Initialize
-        loadDashboard();
-        loadPortfolioList(); // Load portfolio items on dashboard load
+        // Initialize - Wait for all scripts to load
+        window.addEventListener('DOMContentLoaded', function() {
+            // Wait a moment for Supabase CDN to fully initialize
+            setTimeout(() => {
+                loadDashboard();
+                loadPortfolioList(); // Load portfolio items on dashboard load
+            }, 100);
+        });
 
     </script>
 </body>
