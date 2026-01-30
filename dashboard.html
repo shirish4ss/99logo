@@ -168,6 +168,22 @@
                         </div>
                     </div>
 
+                    <!-- Portfolio Management -->
+                    <div class="glass p-4 rounded-xl">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold flex items-center gap-2"><i class="fas fa-images text-purple-400"></i> Portfolio Manager</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <input type="url" id="portfolioUrl" placeholder="https://example.com/logo.jpg" class="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none">
+                            <button onclick="addPortfolioItem()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg text-sm font-bold transition">
+                                <i class="fas fa-plus-circle"></i> Add to Portfolio
+                            </button>
+                            <div id="portfolioItemsList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                                <!-- Portfolio items will be listed here -->
+                            </div>
+                        </div>
+                    </div>
+
                     <h3 class="text-xl font-bold flex items-center gap-2 mt-6"><i class="fas fa-fire text-orange-500"></i> Priority Queue</h3>
                     <div id="priorityList" class="space-y-3">
                         <!-- JS Injected -->
@@ -985,8 +1001,75 @@
             alert("Print invoice feature - to be implemented");
         }
 
+        // Portfolio Management Functions
+        function addPortfolioItem() {
+            const urlInput = document.getElementById('portfolioUrl');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                alert("⚠️ Please enter a valid image URL");
+                return;
+            }
+            
+            // Validate URL format
+            try {
+                new URL(url);
+            } catch {
+                alert("⚠️ Please enter a valid URL (must start with http:// or https://)");
+                return;
+            }
+            
+            // Get existing portfolio
+            const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
+            
+            // Add new item
+            portfolio.push(url);
+            localStorage.setItem('pixelPortfolio', JSON.stringify(portfolio));
+            
+            // Clear input
+            urlInput.value = '';
+            
+            // Refresh portfolio list
+            loadPortfolioList();
+            
+            alert("✅ Portfolio item added successfully!");
+        }
+
+        function loadPortfolioList() {
+            const container = document.getElementById('portfolioItemsList');
+            const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
+            
+            if (portfolio.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-500 text-center py-2">No portfolio items yet</p>';
+                return;
+            }
+            
+            container.innerHTML = portfolio.map((url, index) => `
+                <div class="flex items-center gap-2 bg-black/30 p-2 rounded border border-gray-700">
+                    <img src="${url}" class="w-12 h-12 object-cover rounded" alt="Portfolio ${index + 1}">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs text-gray-400 truncate">${url}</p>
+                    </div>
+                    <button onclick="removePortfolioItem(${index})" class="text-red-400 hover:text-red-300 text-xs px-2 py-1">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removePortfolioItem(index) {
+            if (!confirm('Remove this portfolio item?')) return;
+            
+            const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
+            portfolio.splice(index, 1);
+            localStorage.setItem('pixelPortfolio', JSON.stringify(portfolio));
+            
+            loadPortfolioList();
+        }
+
         // Initialize
         loadDashboard();
+        loadPortfolioList(); // Load portfolio items on dashboard load
     </script>
 </body>
 </html>
