@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | PixelPerfect</title>
+    <title>Dashboard | 99logo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -52,7 +52,7 @@
 
     <nav class="glass border-b border-gray-800 sticky top-0 z-50">
         <div class="max-w-[1600px] mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold">Pixel<span class="text-gradient">Dashboard</span></h1>
+            <h1 class="text-xl font-bold">99logo<span class="text-gradient">Dashboard</span></h1>
             
             <div class="flex items-center gap-4">
                 
@@ -65,13 +65,8 @@
                     <!-- Dropdown -->
                     <div class="absolute right-0 mt-2 w-64 glass rounded-xl hidden group-hover:block p-3 shadow-xl border border-gray-700">
                         <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Notifications</h4>
-                        <div class="space-y-2 text-xs" id="notifList">
-                            <div class="p-2 bg-white/5 rounded border-l-2 border-red-500">
-                                <p class="text-white">Order #102 deadline in 2 hours!</p>
-                            </div>
-                            <div class="p-2 bg-white/5 rounded border-l-2 border-green-500">
-                                <p class="text-white">Payment received: ₹5,000</p>
-                            </div>
+                        <div class="space-y-2 text-xs max-h-64 overflow-y-auto" id="notifList">
+                            <!-- Dynamic notifications will be inserted here -->
                         </div>
                     </div>
                 </div>
@@ -267,6 +262,9 @@
                     <p class="text-sm text-white mb-1"><strong class="accent-text">Niche:</strong> <span id="vNiche"></span></p>
                     <p class="text-sm text-white mb-1"><strong class="accent-text">Colors:</strong> <span id="vColors"></span></p>
                     <p class="text-sm text-white mb-1"><strong class="accent-text">Vibe:</strong> <span id="vVibe"></span></p>
+                    <p class="text-sm text-white mb-1"><strong class="accent-text">Package:</strong> <span id="vPackage"></span></p>
+                    <p class="text-sm text-white mb-1"><strong class="accent-text">Add-ons:</strong> <span id="vAddons"></span></p>
+                    <p class="text-sm text-white mb-1"><strong class="accent-text">Delivery:</strong> <span id="vDelivery"></span></p>
                     <div class="mt-2 text-sm bg-gray-800 p-2 rounded">
                         <strong class="block text-xs text-gray-500">Notes/Ideas:</strong>
                         <span id="vNotes"></span>
@@ -372,14 +370,50 @@
             const orders = JSON.parse(localStorage.getItem('pixel_orders') || '[]');
             const tableBody = document.getElementById('ordersTableBody');
             
+            // Sort orders: Express orders first, then by timestamp
+            const sortedOrders = orders.sort((a, b) => {
+                const aIsExpress = a.addons && a.addons.includes('Express');
+                const bIsExpress = b.addons && b.addons.includes('Express');
+                
+                if (aIsExpress && !bIsExpress) return -1;
+                if (!aIsExpress && bIsExpress) return 1;
+                return b.timestamp - a.timestamp;
+            });
+            
             // Stats Calculation
             document.getElementById('stat-total').innerText = orders.length;
             document.getElementById('stat-pending').innerText = orders.filter(o => o.status === 'In Progress').length;
             document.getElementById('stat-unpaid').innerText = orders.filter(o => o.status === 'Unconfirmed').length;
+            
+            // Calculate total earnings
+            let totalEarnings = 0;
+            orders.forEach(o => {
+                if (o.status !== 'Unconfirmed') {
+                    const packagePrices = { 'Basic': 99, 'Standard': 150, 'Premium': 200 };
+                    let price = packagePrices[o.packageType] || 150;
+                    
+                    // Add addons
+                    if (o.addons) {
+                        if (o.addons.includes('Social Media Kit')) price += 100;
+                        if (o.addons.includes('Visiting Card')) price += 50;
+                        if (o.addons.includes('Express')) price += 100;
+                    }
+                    totalEarnings += price;
+                }
+            });
+            document.getElementById('totalEarnings').innerText = `₹${totalEarnings.toLocaleString()}`;
+            
+            // Generate notifications
+            generateNotifications(orders);
 
-            tableBody.innerHTML = orders.map((o, index) => `
+            tableBody.innerHTML = sortedOrders.map((o, index) => {
+                // Find original index for viewOrder
+                const originalIndex = orders.findIndex(order => order.id === o.id);
+                const expressBadge = o.addons && o.addons.includes('Express') ? '<span class="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">⚡ EXPRESS</span>' : '';
+                
+                return `
                 <tr class="border-b border-gray-800 hover:bg-white/5 transition">
-                    <td class="px-4 py-3 font-bold text-gray-300">${o.id}</td>
+                    <td class="px-4 py-3 font-bold text-gray-300">${o.id}${expressBadge}</td>
                     <td class="px-4 py-3">${o.clientName}</td>
                     <td class="px-4 py-3 text-xs text-gray-500">${o.date}</td>
                     <td class="px-4 py-3">
@@ -388,10 +422,102 @@
                         </span>
                     </td>
                     <td class="px-4 py-3">
-                        <button onclick="viewOrder(${index})" class="accent-text text-sm hover:underline">Manage</button>
+                        <button onclick="viewOrder(${originalIndex})" class="accent-text text-sm hover:underline">Manage</button>
                     </td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
+            
+            // Render priority list
+            renderPriorityQueue(sortedOrders);
+        }
+        
+        function renderPriorityQueue(orders) {
+            const priorityOrders = orders.filter(o => o.status !== 'Completed' && o.status !== 'Unconfirmed').slice(0, 5);
+            const priorityList = document.getElementById('priorityList');
+            
+            if (priorityOrders.length === 0) {
+                priorityList.innerHTML = '<p class="text-sm text-gray-500">No active orders</p>';
+                return;
+            }
+            
+            priorityList.innerHTML = priorityOrders.map(o => {
+                const isExpress = o.addons && o.addons.includes('Express');
+                const workingHours = isExpress ? 5 : 48;
+                
+                let timeRemaining = 'Calculating...';
+                if (o.timestamp && o.status !== 'Unconfirmed') {
+                    const startTime = new Date(o.timestamp);
+                    const now = new Date();
+                    const hoursElapsed = (now - startTime) / (1000 * 60 * 60);
+                    const hoursRemaining = Math.max(0, workingHours - hoursElapsed);
+                    
+                    const days = Math.floor(hoursRemaining / 8);
+                    const hours = Math.ceil(hoursRemaining % 8);
+                    timeRemaining = `${days}d ${hours}h left`;
+                }
+                
+                return `
+                    <div class="glass p-3 rounded-lg border-l-4 ${isExpress ? 'border-yellow-500' : 'border-indigo-500'}">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="font-bold text-sm">${o.id}</span>
+                            ${isExpress ? '<span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">⚡</span>' : ''}
+                        </div>
+                        <p class="text-xs text-gray-400">${o.brandName}</p>
+                        <p class="text-xs text-gray-500 mt-1">⏱️ ${timeRemaining}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function generateNotifications(orders) {
+            const notifList = document.getElementById('notifList');
+            const notifications = [];
+            
+            orders.forEach(o => {
+                // Check for approaching deadlines
+                if (o.timestamp && o.status !== 'Completed' && o.status !== 'Unconfirmed') {
+                    const isExpress = o.addons && o.addons.includes('Express');
+                    const workingHours = isExpress ? 5 : 48;
+                    const startTime = new Date(o.timestamp);
+                    const now = new Date();
+                    const hoursElapsed = (now - startTime) / (1000 * 60 * 60);
+                    const hoursRemaining = Math.max(0, workingHours - hoursElapsed);
+                    
+                    if (hoursRemaining <= 2 && hoursRemaining > 0) {
+                        notifications.push({
+                            type: 'urgent',
+                            message: `Order ${o.id} deadline in ${Math.ceil(hoursRemaining)} hours!`,
+                            color: 'red'
+                        });
+                    } else if (hoursRemaining <= 8 && hoursRemaining > 2) {
+                        notifications.push({
+                            type: 'warning',
+                            message: `Order ${o.id} due soon (${Math.ceil(hoursRemaining)}h)`,
+                            color: 'yellow'
+                        });
+                    }
+                }
+                
+                // Check for unconfirmed payments
+                if (o.status === 'Unconfirmed') {
+                    notifications.push({
+                        type: 'info',
+                        message: `New order ${o.id} pending verification`,
+                        color: 'blue'
+                    });
+                }
+            });
+            
+            if (notifications.length === 0) {
+                notifList.innerHTML = '<p class="text-gray-500 text-center py-2">No new notifications</p>';
+            } else {
+                notifList.innerHTML = notifications.map(n => `
+                    <div class="p-3 bg-white/5 rounded-lg border-l-2 border-${n.color}-500">
+                        <p class="text-white text-sm">${n.message}</p>
+                    </div>
+                `).join('');
+            }
         }
 
         function viewOrder(index) {
@@ -404,6 +530,34 @@
             document.getElementById('vNiche').innerText = o.niche;
             document.getElementById('vColors').innerText = o.colors || 'Not specified';
             document.getElementById('vVibe').innerText = o.vibe;
+            document.getElementById('vPackage').innerText = o.packageType || 'Not specified';
+            document.getElementById('vAddons').innerText = o.addons || 'None';
+            
+            // Calculate delivery deadline
+            const isExpress = o.addons && o.addons.includes('Express');
+            const workingHours = isExpress ? 5 : 48;
+            const hoursPerDay = 8;
+            const deliveryDays = Math.ceil(workingHours / hoursPerDay);
+            
+            let deliveryText = isExpress ? '⚡ 5 Working Hours (Express)' : `48 Working Hours (~${deliveryDays} working days)`;
+            
+            // Calculate deadline from order timestamp
+            if (o.timestamp && o.status !== 'Unconfirmed') {
+                const startTime = new Date(o.timestamp);
+                const now = new Date();
+                const hoursElapsed = (now - startTime) / (1000 * 60 * 60);
+                const hoursRemaining = Math.max(0, workingHours - hoursElapsed);
+                
+                if (hoursRemaining > 0 && o.status !== 'Completed') {
+                    const daysRemaining = Math.floor(hoursRemaining / hoursPerDay);
+                    const remainingHours = Math.ceil(hoursRemaining % hoursPerDay);
+                    deliveryText += ` | ⏱️ ${daysRemaining}d ${remainingHours}h remaining`;
+                } else if (o.status === 'Completed') {
+                    deliveryText += ' | ✅ Delivered';
+                }
+            }
+            
+            document.getElementById('vDelivery').innerText = deliveryText;
             document.getElementById('vNotes').innerText = o.ideas || o.notes || 'None';
             document.getElementById('vTx').innerText = o.txId;
             document.getElementById('vPayStatus').innerText = o.status === 'Unconfirmed' ? 'Pending Verification' : 'Paid & Verified';
@@ -479,15 +633,21 @@
                             <p class="text-xs text-red-400 font-bold">Waiting for designer to verify payment ID: ${o.txId}</p>
                         </div>
                     ` : `
-                        <div class="flex gap-2">
-                             <div class="bg-white/5 p-3 rounded-xl flex-1 text-center">
-                                <p class="text-[10px] text-gray-500 uppercase">Selected Plan</p>
+                        <div class="grid grid-cols-2 gap-2">
+                             <div class="bg-white/5 p-3 rounded-xl text-center">
+                                <p class="text-[10px] text-gray-500 uppercase">Package</p>
                                 <p class="text-sm font-bold">${o.packageType || 'Standard'}</p>
                              </div>
-                             <div class="bg-white/5 p-3 rounded-xl flex-1 text-center">
-                                <p class="text-[10px] text-gray-500 uppercase">Delivery Window</p>
-                                <p class="text-sm font-bold">48 Working Hours</p>
+                             <div class="bg-white/5 p-3 rounded-xl text-center">
+                                <p class="text-[10px] text-gray-500 uppercase">Delivery</p>
+                                <p class="text-sm font-bold">${o.addons && o.addons.includes('Express') ? '⚡ 5 Hours' : '48 Hours'}</p>
                              </div>
+                             ${o.addons && o.addons !== 'None' ? `
+                             <div class="bg-white/5 p-3 rounded-xl col-span-2">
+                                <p class="text-[10px] text-gray-500 uppercase">Add-ons</p>
+                                <p class="text-xs font-bold">${o.addons}</p>
+                             </div>
+                             ` : ''}
                         </div>
                     `}
                 </div>
