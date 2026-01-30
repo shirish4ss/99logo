@@ -7,6 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <!-- Load Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    
     <!-- CSS for Glassmorphism and Transitions -->
     <style>
         .glass {
@@ -216,6 +220,34 @@
                         </div>
                     </div>
 
+                    <!-- NEW ADMIN FEATURE: Bulk Status Update -->
+                    <div class="glass p-4 rounded-xl border-2 border-blue-500/30">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold flex items-center gap-2"><i class="fas fa-tasks text-blue-400"></i> Bulk Actions</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs text-gray-400 block mb-1">Select Orders (comma separated)</label>
+                                <input type="text" id="bulkOrderNumbers" placeholder="e.g., 101,102,103" class="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400 block mb-1">Change Status To</label>
+                                <select id="bulkStatus" class="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+                                    <option value="Unconfirmed">Unconfirmed</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Sent for Approval">Sent for Approval</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                            </div>
+                            <button onclick="bulkUpdateStatus()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg text-sm font-bold transition">
+                                <i class="fas fa-sync-alt"></i> Update Selected Orders
+                            </button>
+                            <div id="bulkResult" class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-2 text-xs text-center hidden">
+                                <p id="bulkMessage" class="text-gray-300"></p>
+                            </div>
+                        </div>
+                    </div>
+
                     <h3 class="text-xl font-bold flex items-center gap-2 mt-6"><i class="fas fa-fire text-orange-500"></i> Priority Queue</h3>
                     <div id="priorityList" class="space-y-3">
                         <!-- JS Injected -->
@@ -355,6 +387,41 @@
                             <p class="font-bold text-sm">Completed</p>
                             <p class="text-xs text-gray-400">Files delivered successfully</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW CLIENT FEATURE: Design Feedback Form -->
+            <div class="glass p-6 rounded-xl border-2 border-pink-500/30 mb-6">
+                <h3 class="text-lg font-bold flex items-center gap-2 mb-4">
+                    <i class="fas fa-comment-dots text-pink-400"></i> Submit Design Feedback
+                </h3>
+                <p class="text-xs text-gray-400 mb-4">Have feedback or revision requests? Let us know what you'd like changed!</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Select Your Order</label>
+                        <select id="feedbackOrderSelect" class="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-pink-500 outline-none">
+                            <option value="">-- Select an Order --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Feedback Type</label>
+                        <select id="feedbackType" class="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-pink-500 outline-none">
+                            <option value="minor">Minor Changes (color, size, font)</option>
+                            <option value="revision">Revision Request</option>
+                            <option value="question">Question/Clarification</option>
+                            <option value="approval">Approve & Proceed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Your Feedback</label>
+                        <textarea id="feedbackMessage" rows="4" placeholder="Describe what you'd like to change or ask..." class="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-pink-500 outline-none resize-none"></textarea>
+                    </div>
+                    <button onclick="submitFeedback()" class="w-full bg-pink-600 hover:bg-pink-500 text-white py-3 rounded-lg font-bold transition">
+                        <i class="fas fa-paper-plane"></i> Send Feedback
+                    </button>
+                    <div id="feedbackResult" class="bg-pink-500/10 border border-pink-500/30 rounded-lg p-3 text-xs text-center hidden">
+                        <p id="feedbackResultText" class="text-gray-300"></p>
                     </div>
                 </div>
             </div>
@@ -1065,6 +1132,9 @@
                         `}
                     </div>
                 `).join('');
+                
+                // Populate feedback form dropdown
+                populateFeedbackOrders(orders);
             } catch (error) {
                 console.error('Error in renderClientOrders:', error);
             }
@@ -1263,6 +1333,143 @@
             document.getElementById('revenueAmount').textContent = '₹' + totalRevenue.toLocaleString('en-IN');
         }
         
+        // Bulk Status Update (Admin Feature)
+        async function bulkUpdateStatus() {
+            const orderNumbers = document.getElementById('bulkOrderNumbers').value.trim();
+            const newStatus = document.getElementById('bulkStatus').value;
+            const resultDiv = document.getElementById('bulkResult');
+            const messageDiv = document.getElementById('bulkMessage');
+            
+            if (!orderNumbers) {
+                alert('Please enter order numbers');
+                return;
+            }
+            
+            // Parse order numbers
+            const orderIds = orderNumbers.split(',').map(id => id.trim()).filter(id => id);
+            
+            if (orderIds.length === 0) {
+                alert('No valid order numbers provided');
+                return;
+            }
+            
+            try {
+                let successCount = 0;
+                let failCount = 0;
+                
+                for (const orderId of orderIds) {
+                    const result = await updateOrderByOrderNumber(orderId, { status: newStatus });
+                    if (result.success) {
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                }
+                
+                // Show result
+                resultDiv.classList.remove('hidden');
+                messageDiv.innerHTML = `✅ Updated ${successCount} order(s) to "${newStatus}"${failCount > 0 ? `<br>❌ Failed: ${failCount}` : ''}`;
+                
+                // Clear input
+                document.getElementById('bulkOrderNumbers').value = '';
+                
+                // Reload orders
+                setTimeout(() => {
+                    loadDashboard();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Bulk update error:', error);
+                resultDiv.classList.remove('hidden');
+                messageDiv.textContent = '❌ Error: ' + error.message;
+            }
+        }
+        
+        // Submit Design Feedback (Client Feature)
+        async function submitFeedback() {
+            const orderSelect = document.getElementById('feedbackOrderSelect');
+            const feedbackType = document.getElementById('feedbackType').value;
+            const feedbackMessage = document.getElementById('feedbackMessage').value.trim();
+            const resultDiv = document.getElementById('feedbackResult');
+            const resultText = document.getElementById('feedbackResultText');
+            
+            if (!orderSelect.value) {
+                alert('Please select an order');
+                return;
+            }
+            
+            if (!feedbackMessage) {
+                alert('Please enter your feedback');
+                return;
+            }
+            
+            try {
+                const orderNumber = orderSelect.value;
+                const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+                
+                // Create feedback entry
+                const feedbackEntry = `[${timestamp}] ${feedbackType.toUpperCase()}: ${feedbackMessage}`;
+                
+                // Get current order
+                const ordersResult = await getAllOrders();
+                const order = ordersResult.data.find(o => o.order_number === orderNumber);
+                
+                if (!order) {
+                    throw new Error('Order not found');
+                }
+                
+                // Append feedback to ideas/notes
+                const updatedNotes = (order.ideas || '') + '\n\n--- CLIENT FEEDBACK ---\n' + feedbackEntry;
+                
+                // Update order
+                const result = await updateOrderByOrderNumber(orderNumber, { 
+                    ideas: updatedNotes 
+                });
+                
+                if (result.success) {
+                    // Show success
+                    resultDiv.classList.remove('hidden');
+                    resultText.innerHTML = '✅ Feedback submitted successfully!<br>Our designer will respond shortly.';
+                    
+                    // Clear form
+                    document.getElementById('feedbackMessage').value = '';
+                    
+                    // If approval, suggest contacting designer
+                    if (feedbackType === 'approval') {
+                        setTimeout(() => {
+                            if (confirm('Design approved! Would you like to contact the designer on WhatsApp?')) {
+                                document.getElementById('whatsappDesigner').click();
+                            }
+                        }, 1000);
+                    }
+                } else {
+                    throw new Error(result.error || 'Failed to submit feedback');
+                }
+                
+            } catch (error) {
+                console.error('Feedback submission error:', error);
+                resultDiv.classList.remove('hidden');
+                resultText.textContent = '❌ Error: ' + error.message;
+            }
+        }
+        
+        // Populate feedback order dropdown for clients
+        function populateFeedbackOrders(orders) {
+            const select = document.getElementById('feedbackOrderSelect');
+            if (!select) return;
+            
+            // Clear existing options except first
+            select.innerHTML = '<option value="">-- Select an Order --</option>';
+            
+            // Add user's orders
+            orders.forEach(order => {
+                const option = document.createElement('option');
+                option.value = order.order_number;
+                option.textContent = `Order #${order.order_number} - ${order.brand_name} (${order.status})`;
+                select.appendChild(option);
+            });
+        }
+
         // Update Progress Tracker (Client Feature)
         function updateProgressTracker(status) {
             // Reset all steps
