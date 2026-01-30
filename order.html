@@ -274,18 +274,33 @@
 
                     <div>
                         <label class="text-xs text-cyan-300 font-bold ml-1 mb-3 block uppercase tracking-wider">Add-ons (Optional)</label>
-                        <div class="space-y-3">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="addon" value="100" class="w-5 h-5 accent-cyan-500">
-                                <span class="text-sm">Social Media Kit <span class="text-cyan-400 font-bold">+₹100</span></span>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <label class="package-option cursor-pointer">
+                                <input type="checkbox" name="addon" value="100" class="hidden">
+                                <div class="package-card !p-4 text-center">
+                                    <span class="check-icon"><i class="fas fa-check"></i></span>
+                                    <div class="text-2xl mb-2">📱</div>
+                                    <p class="font-bold text-sm">Social Media Kit</p>
+                                    <p class="text-xs text-cyan-400 font-bold mt-1">+₹100</p>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="addon" value="50" class="w-5 h-5 accent-cyan-500">
-                                <span class="text-sm">Visiting Card <span class="text-cyan-400 font-bold">+₹50</span></span>
+                            <label class="package-option cursor-pointer">
+                                <input type="checkbox" name="addon" value="50" class="hidden">
+                                <div class="package-card !p-4 text-center">
+                                    <span class="check-icon"><i class="fas fa-check"></i></span>
+                                    <div class="text-2xl mb-2">💳</div>
+                                    <p class="font-bold text-sm">Visiting Card</p>
+                                    <p class="text-xs text-cyan-400 font-bold mt-1">+₹50</p>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="addon" value="100" data-express="true" class="w-5 h-5 accent-cyan-500">
-                                <span class="text-sm">Express Delivery (5 Hours) <span class="text-cyan-400 font-bold">+₹100</span></span>
+                            <label class="package-option cursor-pointer">
+                                <input type="checkbox" name="addon" value="100" data-express="true" class="hidden">
+                                <div class="package-card !p-4 text-center">
+                                    <span class="check-icon"><i class="fas fa-check"></i></span>
+                                    <div class="text-2xl mb-2">⚡</div>
+                                    <p class="font-bold text-sm">Express (5 Hours)</p>
+                                    <p class="text-xs text-cyan-400 font-bold mt-1">+₹100</p>
+                                </div>
                             </label>
                         </div>
                     </div>
@@ -401,6 +416,25 @@
         document.querySelectorAll('input[name="packageType"], input[name="addon"]').forEach(el => {
             el.addEventListener('change', updatePrice);
         });
+
+        // Fix 7: Handle URL parameter for package selection
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const planFromUrl = urlParams.get('plan'); // e.g., ?plan=Standard
+            
+            if (planFromUrl) {
+                // Find and select the matching package radio button
+                const packageRadio = document.querySelector(`input[name="packageType"][value="${planFromUrl}"]`);
+                if (packageRadio) {
+                    packageRadio.checked = true;
+                    updatePrice(); // Update the price display
+                }
+            } else {
+                // If no URL param, ensure first package is selected
+                updatePrice();
+            }
+        });
+
 
         // Modal Logic
         function openPayment() {
