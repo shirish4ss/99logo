@@ -280,18 +280,41 @@
                 <p class="text-slate-400">Recent work delivered to happy clients.</p>
             </div>
 
-            <div id="portfolioGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Fallback content if no JS loads -->
-                <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500">
-                     <img src="https://images.unsplash.com/photo-1626785774573-4b799314346d?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
+            <!-- Portfolio Carousel Container -->
+            <div class="relative">
+                <!-- Left Arrow -->
+                <button onclick="scrollPortfolio('left')" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full glass flex items-center justify-center text-white hover:bg-white/10 transition-all">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                
+                <!-- Scrollable Container -->
+                <div id="portfolioContainer" class="overflow-x-auto scrollbar-hide scroll-smooth" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <div id="portfolioGrid" class="flex gap-6 px-12">
+                        <!-- Default fallback images -->
+                        <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1rem);">
+                             <img src="https://images.unsplash.com/photo-1626785774573-4b799314346d?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
+                        </div>
+                        <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1rem);">
+                             <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
+                        </div>
+                        <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1rem);">
+                             <img src="https://images.unsplash.com/photo-1572044162444-ad60f128bdea?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
+                        </div>
+                    </div>
                 </div>
-                <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500" style="transition-delay: 100ms">
-                     <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
-                </div>
-                <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500" style="transition-delay: 200ms">
-                     <img src="https://images.unsplash.com/photo-1572044162444-ad60f128bdea?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
-                </div>
+                
+                <!-- Right Arrow -->
+                <button onclick="scrollPortfolio('right')" class="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full glass flex items-center justify-center text-white hover:bg-white/10 transition-all">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
+            
+            <style>
+                .scrollbar-hide::-webkit-scrollbar { display: none; }
+                @media (max-width: 768px) {
+                    #portfolioGrid > div { width: 80% !important; }
+                }
+            </style>
         </div>
     </section>
 
@@ -304,8 +327,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="glass p-8 rounded-2xl feature-card reveal text-center hover:bg-white/5 transition duration-500">
                     <div class="w-16 h-16 mx-auto rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-2xl mb-6 shadow-[0_0_20px_rgba(99,102,241,0.3)]"><i class="fas fa-bolt"></i></div>
-                    <h3 class="text-xl font-bold text-white mb-2">48h Speed</h3>
-                    <p class="text-sm text-slate-400">First draft delivered within 2 working days.</p>
+                    <h3 class="text-xl font-bold text-white mb-2">48 Working Hours</h3>
+                    <p class="text-sm text-slate-400">First draft delivered within 48 working hours (8hrs/day, Mon-Sat).</p>
                 </div>
                 <div class="glass p-8 rounded-2xl feature-card reveal text-center hover:bg-white/5 transition duration-500" style="transition-delay: 100ms">
                     <div class="w-16 h-16 mx-auto rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 text-2xl mb-6 shadow-[0_0_20px_rgba(236,72,153,0.3)]"><i class="fas fa-infinity"></i></div>
@@ -367,7 +390,7 @@
                         <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-500"></i> AI, EPS, SVG, PDF, PNG & JPEG</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-500"></i> High-Resolution RGB Files</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-500"></i> 2 Minor Adjustments</li>
-                        <li class="flex items-center gap-2"><i class="fas fa-clock text-indigo-500"></i> 48h Delivery</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-clock text-indigo-500"></i> 48 Working Hours Delivery</li>
                     </ul>
                     <a href="order.html?plan=Basic" class="block w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-center font-bold text-white transition border border-white/10 hover:border-indigo-500">Select Basic</a>
                 </div>
@@ -381,7 +404,7 @@
                         <li class="flex items-center gap-2"><i class="fas fa-check-circle text-indigo-400"></i> AI, EPS, SVG, PDF, PNG & JPEG</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check-circle text-indigo-400"></i> High-Resolution RGB Files</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check-circle text-indigo-400"></i> 2 Minor Adjustments</li>
-                        <li class="flex items-center gap-2"><i class="fas fa-clock text-indigo-400"></i> 48h Working Hours</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-clock text-indigo-400"></i> 48 Working Hours</li>
                     </ul>
                     <a href="order.html?plan=Standard" class="block w-full py-4 rounded-xl btn-primary text-center font-bold transition shadow-lg">Select Standard</a>
                 </div>
@@ -394,7 +417,7 @@
                         <li class="flex items-center gap-2"><i class="fas fa-check text-pink-500"></i> AI, EPS, SVG, PDF, PNG <li class="flex items-center gap-2"><i class="fas fa-check text-pink-500"></i> All Source Files + PDF</li> JPEG</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check text-pink-500"></i> High-Resolution RGB Files</li>
                         <li class="flex items-center gap-2"><i class="fas fa-check text-pink-500"></i> 2 Minor Adjustments</li>
-                        <li class="flex items-center gap-2"><i class="fas fa-clock text-pink-500"></i> 48h Working Hours</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-clock text-pink-500"></i> 48 Working Hours</li>
                     </ul>
                     <a href="order.html?plan=Premium" class="block w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-center font-bold text-white transition border border-white/10 hover:border-pink-500">Select Premium</a>
                 </div>
@@ -466,7 +489,7 @@
     <footer class="creative-footer pt-24 pb-12 relative z-10">
         <!-- Decoration -->
         <div class="footer-glow-border"></div>
-        <div class="footer-watermark">PIXEL</div>
+        <div class="footer-watermark">99logo</div>
 
         <div class="max-w-7xl mx-auto px-6 relative z-10">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
@@ -528,13 +551,17 @@
             </div>
             <div class="modal-body custom-scrollbar">
                 
-                <h3>1. Payments & Pricing</h3>
+                <h3>1. Payments & Refund Policy</h3>
                 <ul>
-                    <li>100% full payment is required upfront. No work begins without verification.</li>
-                    <li>Payments are strictly non-refundable under any circumstances.</li>
-                    <li>Prices are fixed: 99 INR (2 options), 150 INR (4 options), 200 INR (8 options).</li>
-                    <li>"Rush Service" (5 hours) requires an additional 100 INR.</li>
-                    <li>No discounts for bulk/future orders.</li>
+                    <li><strong>100% payment required upfront</strong> before any work begins.</li>
+                    <li><strong>ABSOLUTELY NO REFUNDS</strong> under any circumstances once work starts.</li>
+                    <li><strong>NO REFUNDS</strong> if you dislike designs, change your mind, or for subjective reasons.</li>
+                    <li><strong>NO REFUNDS</strong> even if delivery is delayed beyond estimated time.</li>
+                    <li>Payment is non-refundable regardless of project status or your satisfaction.</li>
+                    <li>Canceling or abandoning the project means payment is forfeited—no exceptions.</li>
+                    <li>Prices: ₹99 (2 options), ₹150 (4 options), ₹200 (8 options).</li>
+                    <li>"Express Service" (5 hours) requires additional ₹100—also non-refundable.</li>
+                    <li>By paying, you automatically agree to these non-refundable terms.</li>
                 </ul>
 
                 <h3>2. No-Mockup & RGB Policy (Strict)</h3>
@@ -545,12 +572,18 @@
                     <li>We do not provide "Gold/Silver Foil" effects.</li>
                 </ul>
 
-                <h3>3. Timeline & Delivery</h3>
+                <h3>3. Timeline, Delivery & Delays</h3>
                 <ul>
-                    <li>Standard delivery time is <strong>48 working hours</strong>.</li>
-                    <li>Working hours exclude Sundays and National Holidays.</li>
-                    <li>The clock starts only after payment AND design brief are received.</li>
-                    <li>We are not liable for delays caused by internet/technical outages.</li>
+                    <li><strong>48 Working Hours</strong> = 6 working days (8 hours/day, Monday-Saturday).</li>
+                    <li><strong>Working hours: 10 AM - 6 PM IST</strong>. Sunday is OFF.</li>
+                    <li>Timeline is an <strong>ESTIMATE ONLY</strong>, not a guaranteed deadline.</li>
+                    <li><strong>Delays may occur</strong> due to workload, technical issues, illness, emergencies, power cuts, internet outages, or other unforeseen circumstances.</li>
+                    <li>We reserve the right to extend deadlines as needed <strong>without penalty or refund</strong>.</li>
+                    <li>If delivery is delayed for any reason, <strong>NO REFUND or compensation</strong> will be provided.</li>
+                    <li>Express delivery (5 hours) is also an estimate and may be delayed without refund.</li>
+                    <li>Clock starts only after payment verification AND complete design brief submission.</li>
+                    <li>Incomplete briefs, late responses, or mid-project edits will reset the timeline.</li>
+                    <li>By placing an order, you accept that delays may happen and waive any claims.</li>
                 </ul>
 
                 <h3>4. Revisions & Final Adjustments</h3>
@@ -662,6 +695,62 @@
         document.getElementById('termsModal').addEventListener('click', function(e) {
             if (e.target === this) closeTerms();
         });
+
+        // --- PORTFOLIO CAROUSEL ---
+        function scrollPortfolio(direction) {
+            const container = document.getElementById('portfolioContainer');
+            const scrollAmount = container.offsetWidth / 3; // Scroll by 1 item width
+            
+            if (direction === 'left') {
+                container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
+
+        // Auto-scroll portfolio slowly
+        let portfolioAutoScroll = setInterval(() => {
+            const container = document.getElementById('portfolioContainer');
+            if (container) {
+                container.scrollBy({ left: 2, behavior: 'auto' });
+                
+                // Reset to start when reaching end
+                if (container.scrollLeft >= container.scrollWidth - container.offsetWidth - 10) {
+                    container.scrollTo({ left: 0, behavior: 'smooth' });
+                }
+            }
+        }, 50); // Slow continuous scroll
+
+        // Pause auto-scroll on hover
+        document.getElementById('portfolioContainer')?.addEventListener('mouseenter', () => {
+            clearInterval(portfolioAutoScroll);
+        });
+        
+        document.getElementById('portfolioContainer')?.addEventListener('mouseleave', () => {
+            portfolioAutoScroll = setInterval(() => {
+                const container = document.getElementById('portfolioContainer');
+                if (container) {
+                    container.scrollBy({ left: 2, behavior: 'auto' });
+                    if (container.scrollLeft >= container.scrollWidth - container.offsetWidth - 10) {
+                        container.scrollTo({ left: 0, behavior: 'smooth' });
+                    }
+                }
+            }, 50);
+        });
+
+        // Load custom portfolio from localStorage
+        function loadPortfolio() {
+            const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
+            if (portfolio.length > 0) {
+                const container = document.getElementById('portfolioGrid');
+                container.innerHTML = portfolio.map(url => `
+                    <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1rem);">
+                        <img src="${url}" class="w-full h-72 object-cover rounded-xl" alt="Portfolio item">
+                    </div>
+                `).join('');
+            }
+        }
+        loadPortfolio();
 
         // --- PARTICLES ---
         function createParticles() {
