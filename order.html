@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Place Order | PixelPerfect</title>
+    <title>Place Order | 99logo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -148,7 +148,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="text-xs text-pink-300 font-bold ml-1 mb-2 block uppercase tracking-wider">Brand Name</label>
-                            <input type="text" name="brandName" required placeholder="PixelPerfect" class="input-field">
+                            <input type="text" name="brandName" required placeholder="99logo" class="input-field">
                         </div>
                         <div>
                             <label class="text-xs text-pink-300 font-bold ml-1 mb-2 block uppercase tracking-wider">Tagline (Optional)</label>
@@ -241,30 +241,33 @@
                     </div>
                     <div class="package-grid">
                         <label class="package-option">
-                            <input type="radio" name="packageType" value="Logo Only" data-price="150" required checked>
+                            <input type="radio" name="packageType" value="Basic" data-price="99" required checked>
                             <div class="package-card">
                                 <span class="check-icon"><i class="fas fa-check"></i></span>
-                                <div class="text-2xl mb-2">🎯</div>
-                                <p class="font-bold">Logo Only</p>
-                                <p class="text-xs text-green-400 mt-1">₹150</p>
+                                <div class="text-2xl mb-2">💎</div>
+                                <p class="font-bold">Basic</p>
+                                <p class="text-xs text-gray-400 mt-1">2 Options</p>
+                                <p class="text-xs text-green-400 font-bold mt-1">₹99</p>
                             </div>
                         </label>
                         <label class="package-option">
-                            <input type="radio" name="packageType" value="Social Media Kit" data-price="300">
+                            <input type="radio" name="packageType" value="Standard" data-price="150">
                             <div class="package-card">
                                 <span class="check-icon"><i class="fas fa-check"></i></span>
-                                <div class="text-2xl mb-2">📱</div>
-                                <p class="font-bold text-sm">Social Kit</p>
-                                <p class="text-xs text-green-400 mt-1">₹300</p>
+                                <div class="text-2xl mb-2">💎</div>
+                                <p class="font-bold text-sm">Standard</p>
+                                <p class="text-xs text-gray-400 mt-1">4 Options</p>
+                                <p class="text-xs text-green-400 font-bold mt-1">₹150</p>
                             </div>
                         </label>
                         <label class="package-option">
-                            <input type="radio" name="packageType" value="Complete Brand Identity" data-price="500">
+                            <input type="radio" name="packageType" value="Premium" data-price="200">
                             <div class="package-card">
                                 <span class="check-icon"><i class="fas fa-check"></i></span>
-                                <div class="text-2xl mb-2">🏆</div>
-                                <p class="font-bold text-sm">Full Brand</p>
-                                <p class="text-xs text-green-400 mt-1">₹500</p>
+                                <div class="text-2xl mb-2">💎</div>
+                                <p class="font-bold text-sm">Premium</p>
+                                <p class="text-xs text-gray-400 mt-1">8 Options</p>
+                                <p class="text-xs text-green-400 font-bold mt-1">₹200</p>
                             </div>
                         </label>
                     </div>
@@ -273,16 +276,16 @@
                         <label class="text-xs text-cyan-300 font-bold ml-1 mb-3 block uppercase tracking-wider">Add-ons (Optional)</label>
                         <div class="space-y-3">
                             <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="addon" value="50" class="w-5 h-5 accent-cyan-500">
-                                <span class="text-sm">Business Card Design <span class="text-cyan-400 font-bold">+₹50</span></span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" name="addon" value="100" class="w-5 h-5 accent-cyan-500">
-                                <span class="text-sm">3 Social Posts Designs <span class="text-cyan-400 font-bold">+₹100</span></span>
+                                <span class="text-sm">Social Media Kit <span class="text-cyan-400 font-bold">+₹100</span></span>
                             </label>
                             <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="addon" value="200" class="w-5 h-5 accent-cyan-500">
-                                <span class="text-sm">Website Mockup <span class="text-cyan-400 font-bold">+₹200</span></span>
+                                <input type="checkbox" name="addon" value="50" class="w-5 h-5 accent-cyan-500">
+                                <span class="text-sm">Visiting Card <span class="text-cyan-400 font-bold">+₹50</span></span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" name="addon" value="100" data-express="true" class="w-5 h-5 accent-cyan-500">
+                                <span class="text-sm">Express Delivery (5 Hours) <span class="text-cyan-400 font-bold">+₹100</span></span>
                             </label>
                         </div>
                     </div>
@@ -296,11 +299,11 @@
                     <div class="space-y-2">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-400">Selected Package:</span>
-                            <span id="summaryPackage" class="font-bold text-white">Logo Only</span>
+                            <span id="summaryPackage" class="font-bold text-white">Basic</span>
                         </div>
                         <hr class="border-white/10">
                         <p class="text-xs text-gray-400 uppercase">Total Payable</p>
-                        <p id="summaryPrice" class="text-2xl font-bold text-green-400">₹150</p>
+                        <p id="summaryPrice" class="text-2xl font-bold text-green-400">₹99</p>
                     </div>
                 </div>
 
@@ -328,7 +331,7 @@
             <p class="mb-6 text-sm text-slate-400">Scan via Any UPI App</p>
             
             <div class="bg-white p-3 rounded-2xl inline-block mb-4 shadow-lg mx-auto">
-                <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=PixelPerfect&am=150" class="w-40 h-40 object-contain">
+                <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=99logo&am=150" class="w-40 h-40 object-contain">
             </div>
             
             <div class="text-3xl font-bold text-white mb-6">
@@ -391,7 +394,7 @@
             
             // Update QR Code
             const qrImg = document.getElementById('qrImage');
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=PixelPerfect&am=${total}`;
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=99logo&am=${total}`;
         }
 
         // Listen for changes on Package and Addons
