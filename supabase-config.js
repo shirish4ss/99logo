@@ -9,8 +9,38 @@ const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
 
 // Initialize Supabase Client (Using CDN)
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const supabaseClient = supabase; // Alias for compatibility
+// Wait for Supabase library to load
+let supabase;
+let supabaseClient;
+
+function initSupabase() {
+    if (typeof window.supabase !== 'undefined' && !supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient = supabase; // Alias for compatibility
+        console.log('✅ Supabase initialized successfully');
+        return true;
+    }
+    return false;
+}
+
+// Try to initialize immediately
+if (typeof window.supabase !== 'undefined') {
+    initSupabase();
+} else {
+    // Wait for window load if not available yet
+    window.addEventListener('DOMContentLoaded', initSupabase);
+}
+
+// Helper to ensure Supabase is initialized
+function getSupabase() {
+    if (!supabase) {
+        initSupabase();
+    }
+    if (!supabase) {
+        throw new Error('Supabase not initialized. Make sure Supabase CDN is loaded.');
+    }
+    return supabase;
+}
 
 // ============================================
 // DATABASE HELPER FUNCTIONS
@@ -19,7 +49,7 @@ const supabaseClient = supabase; // Alias for compatibility
 // 1. SAVE ORDER TO SUPABASE
 async function saveOrderToSupabase(orderData) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('orders')
             .insert([orderData])
             .select();
@@ -36,7 +66,7 @@ async function saveOrderToSupabase(orderData) {
 async function saveUserToSupabase(userData) {
     try {
         // Check if user already exists
-        const { data: existingUser } = await supabase
+        const { data: existingUser } = await getSupabase()
             .from('users')
             .select('*')
             .eq('email', userData.email)
@@ -47,7 +77,7 @@ async function saveUserToSupabase(userData) {
         }
         
         // Insert new user
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('users')
             .insert([userData])
             .select();
@@ -63,7 +93,7 @@ async function saveUserToSupabase(userData) {
 // 3. GET ALL ORDERS
 async function getAllOrders() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('orders')
             .select('*')
             .order('timestamp', { ascending: false });
@@ -79,7 +109,7 @@ async function getAllOrders() {
 // 4. GET ORDERS BY USER EMAIL
 async function getOrdersByEmail(email) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('orders')
             .select('*')
             .eq('user_email', email)
@@ -96,7 +126,7 @@ async function getOrdersByEmail(email) {
 // 5. UPDATE ORDER STATUS
 async function updateOrderStatus(orderId, newStatus) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('orders')
             .update({ status: newStatus })
             .eq('id', orderId)
@@ -126,7 +156,7 @@ async function verifyUserLogin(email, password) {
         }
         
         // Check in database
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('users')
             .select('*')
             .eq('email', email)
@@ -148,10 +178,10 @@ async function verifyUserLogin(email, password) {
 async function hardResetDatabase() {
     try {
         // Delete all orders
-        await supabase.from('orders').delete().neq('id', '');
+        await getSupabase().from('orders').delete().neq('id', '');
         
         // Delete all users except admin
-        await supabase.from('users').delete().neq('email', 'admin@pixel.com');
+        await getSupabase().from('users').delete().neq('email', 'admin@pixel.com');
         
         return { success: true, message: 'Database reset complete' };
     } catch (error) {
@@ -163,7 +193,7 @@ async function hardResetDatabase() {
 // 8. UPDATE ORDER BY ORDER NUMBER
 async function updateOrderByOrderNumber(orderNumber, updates) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('orders')
             .update(updates)
             .eq('order_number', orderNumber)
@@ -184,7 +214,7 @@ async function updateOrderByOrderNumber(orderNumber, updates) {
 // 9. ADD PORTFOLIO ITEM TO SUPABASE
 async function addPortfolioItemToSupabase(imageUrl) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('portfolio')
             .insert([{ 
                 image_url: imageUrl,
@@ -203,7 +233,7 @@ async function addPortfolioItemToSupabase(imageUrl) {
 // 10. GET ALL PORTFOLIO ITEMS
 async function getAllPortfolioItems() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('portfolio')
             .select('*')
             .order('created_at', { ascending: false });
@@ -219,7 +249,7 @@ async function getAllPortfolioItems() {
 // 11. DELETE PORTFOLIO ITEM
 async function deletePortfolioItem(itemId) {
     try {
-        const { error } = await supabase
+        const { error } = await getSupabase()
             .from('portfolio')
             .delete()
             .eq('id', itemId);
