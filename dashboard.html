@@ -145,513 +145,493 @@
                                 <span class="text-[10px] text-gray-600">10 mins ago</span>
                             </div>
                             <div class="relative">
-                                <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-                                <p class="text-xs text-gray-400">New Order #105 from <span class="text-blue-400">John Doe</span></p>
+                                <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
+                                <p class="text-xs text-gray-400">New order received <span class="text-indigo-400">#105</span></p>
+                                <span class="text-[10px] text-gray-600">25 mins ago</span>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                                <p class="text-xs text-gray-400">Payment verified for <span class="text-yellow-400">#103</span></p>
                                 <span class="text-[10px] text-gray-600">1 hour ago</span>
                             </div>
                         </div>
                     </div>
-
-                    <div class="glass p-4 rounded-xl mt-4">
-                        <h4 class="font-bold mb-2 text-sm">Update Portfolio</h4>
-                        <input type="text" id="portfolioUrl" placeholder="Image URL (e.g. Imgur Link)" class="w-full bg-black/40 border border-gray-600 rounded p-2 text-xs mb-2">
-                        <button onclick="addPortfolioItem()" class="w-full accent-bg py-2 rounded text-xs font-bold hover:opacity-90">Add to Homepage</button>
-                    </div>
                 </div>
 
-                <!-- Main Content Area -->
-                <div class="xl:col-span-3">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold">Orders Management</h3>
-                        <div class="flex gap-2">
-                            <!-- NEW FEATURE 1: Kanban Toggle Button -->
-                            <div class="glass rounded-lg p-1 flex">
-                                <button onclick="toggleViewMode('table')" id="btn-table" class="px-3 py-1 rounded text-sm bg-white/10 text-white"><i class="fas fa-list"></i></button>
-                                <button onclick="toggleViewMode('kanban')" id="btn-kanban" class="px-3 py-1 rounded text-sm text-gray-400 hover:text-white"><i class="fas fa-columns"></i></button>
-                            </div>
-
-                            <input type="text" id="searchInput" placeholder="Search..." class="bg-black/40 border border-gray-700 rounded px-3 py-1 text-sm">
-                            <button onclick="exportData()" class="bg-green-600 px-3 py-1 rounded text-sm"><i class="fas fa-download"></i></button>
-                        </div>
+                <!-- Main Area -->
+                <div class="xl:col-span-3 space-y-6">
+                    
+                    <!-- NEW FEATURE 1: View Mode Toggle -->
+                    <div class="flex gap-2 justify-end mb-4">
+                        <button onclick="toggleViewMode('grid')" class="px-3 py-1 bg-white/10 rounded-lg text-xs hover:bg-white/20"><i class="fas fa-th"></i> Grid</button>
+                        <button onclick="toggleViewMode('list')" class="px-3 py-1 bg-white/10 rounded-lg text-xs hover:bg-white/20"><i class="fas fa-list"></i> List</button>
+                        <button onclick="toggleViewMode('kanban')" class="px-3 py-1 bg-white/10 rounded-lg text-xs hover:bg-white/20"><i class="fas fa-columns"></i> Kanban</button>
                     </div>
 
-                    <!-- Table View (Default) -->
-                    <div id="tableViewContainer" class="overflow-x-auto glass rounded-xl">
-                        <table class="w-full text-left text-sm text-gray-400">
-                            <thead class="bg-black/40 text-gray-200 text-xs uppercase">
-                                <tr>
-                                    <th class="px-4 py-3">ID</th>
-                                    <th class="px-4 py-3">Client</th>
-                                    <th class="px-4 py-3">Deadline</th>
-                                    <th class="px-4 py-3">Status</th>
-                                    <th class="px-4 py-3">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ordersTableBody"></tbody>
-                        </table>
+                    <!-- Orders Grid -->
+                    <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <!-- JS Injects Here -->
                     </div>
-
-                    <!-- NEW FEATURE 1: Kanban Board View (Hidden by default) -->
-                    <div id="kanbanViewContainer" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <!-- Kanban Column Logic handled via JS render -->
-                    </div>
-
                 </div>
             </div>
         </div>
 
         <!-- ================= CLIENT AREA ================= -->
-        <div id="clientView" class="hidden max-w-4xl mx-auto">
-            <h2 class="text-3xl font-bold mb-6">Your Orders</h2>
+        <div id="clientView" class="hidden">
             
-            <!-- NEW CLIENT FEATURE 1: Live Status Progress Bar -->
-            <div id="clientProgress" class="glass p-6 rounded-2xl mb-8 hidden">
-                 <p class="text-xs uppercase text-gray-500 mb-4 tracking-widest">Live Project Status</p>
-                 <div class="flex justify-between mb-2">
-                    <span id="progLabel" class="text-sm font-bold accent-text">Designing Concepts</span>
-                    <span id="progPercent" class="text-sm font-bold">40%</span>
-                 </div>
-                 <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                    <div id="progBar" class="accent-bg h-full transition-all duration-1000" style="width: 40%"></div>
-                 </div>
+            <!-- Progress Box -->
+            <div id="clientProgress" class="glass p-8 rounded-2xl mb-8 hidden">
+                <h3 class="text-xl font-bold mb-4 text-indigo-400">Project Progress</h3>
+                <div class="relative h-6 bg-black/50 rounded-full overflow-hidden mb-2">
+                    <div id="progBar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500" style="width: 10%;"></div>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span id="progLabel" class="text-gray-400">Payment Verification</span>
+                    <span id="progPercent" class="font-bold text-white">10%</span>
+                </div>
             </div>
 
-            <div id="clientOrdersContainer" class="space-y-6"></div>
-            
-            <!-- NEW CLIENT FEATURE 2: Support Quick Links -->
-            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <a id="whatsappDesigner" href="#" target="_blank" class="glass p-6 rounded-2xl flex items-center justify-between group hover:border-green-500 transition">
-                    <div>
-                        <h4 class="font-bold">Chat with Designer</h4>
-                        <p class="text-xs text-gray-400">Instant support via WhatsApp</p>
-                    </div>
-                    <i class="fab fa-whatsapp text-3xl text-green-500 group-hover:scale-110 transition"></i>
+            <!-- Contact Designer -->
+            <div class="flex justify-center mb-6">
+                <a id="whatsappDesigner" href="https://wa.me/919876543210?text=Hello, I need help with my project" target="_blank" class="flex items-center gap-2 bg-green-500/20 border border-green-500 text-green-400 px-6 py-3 rounded-full font-bold hover:bg-green-500/30 transition">
+                    <i class="fab fa-whatsapp text-xl"></i> Contact Your Designer
                 </a>
-                <div class="glass p-6 rounded-2xl flex items-center justify-between opacity-50">
-                    <div>
-                        <h4 class="font-bold">Project Files</h4>
-                        <p class="text-xs text-gray-400">Available after completion</p>
-                    </div>
-                    <i class="fas fa-cloud-download-alt text-3xl"></i>
-                </div>
+            </div>
+
+            <!-- Client Orders -->
+            <h2 class="text-2xl font-bold mb-6">My Orders</h2>
+            <div id="clientOrdersContainer" class="space-y-4">
+                <!-- JS Injected -->
             </div>
         </div>
-
     </div>
 
-    <!-- Admin View Modal -->
-    <div id="viewModal" class="modal-overlay z-[100]">
-        <div class="glass max-w-3xl w-full p-8 rounded-2xl m-4 relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeViewModal()" class="absolute top-4 right-4 text-2xl hover:text-red-400 transition">&times;</button>
+    <!-- ================= MODALS ================= -->
+
+    <!-- View Order Modal -->
+    <div id="viewModal" class="modal-overlay">
+        <div class="glass max-w-3xl w-full mx-4 p-8 rounded-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeViewModal()" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white">&times;</button>
             
-            <div class="flex justify-between items-start mb-6 border-b border-gray-700 pb-4">
-                <div>
-                    <h2 class="text-2xl font-bold text-white">Order <span id="vID" class="accent-text"></span></h2>
-                    <p id="vClient" class="text-gray-400"></p>
-                </div>
-                <div class="text-right">
-                    <span id="vStatus" class="px-3 py-1 rounded text-xs font-bold block mb-1"></span>
-                    <a id="vWa" href="#" target="_blank" class="text-green-400 text-sm hover:underline"><i class="fab fa-whatsapp"></i> Chat Client</a>
-                </div>
+            <h2 class="text-2xl font-bold mb-6">Order Details</h2>
+            
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><strong class="text-gray-400">Order #:</strong> <span id="vId"></span></div>
+                <div><strong class="text-gray-400">Client:</strong> <span id="vClient"></span></div>
+                <div><strong class="text-gray-400">Contact:</strong> <a id="vWa" target="_blank" class="text-indigo-400 hover:underline"><span id="vContact"></span></a></div>
+                <div><strong class="text-gray-400">Brand:</strong> <span id="vBrand"></span></div>
+                <div><strong class="text-gray-400">Tagline:</strong> <span id="vTagline"></span></div>
+                <div><strong class="text-gray-400">Niche:</strong> <span id="vNiche"></span></div>
+                <div><strong class="text-gray-400">Audience:</strong> <span id="vAudience"></span></div>
+                <div><strong class="text-gray-400">Colors:</strong> <span id="vColors"></span></div>
+                <div><strong class="text-gray-400">Vibe:</strong> <span id="vVibe"></span></div>
+                <div><strong class="text-gray-400">Package:</strong> <span id="vPackage"></span></div>
+                <div class="col-span-2"><strong class="text-gray-400">Delivery:</strong> <span id="vDelivery"></span></div>
+                <div class="col-span-2"><strong class="text-gray-400">Ideas/Notes:</strong> <p class="mt-1 bg-white/5 p-2 rounded" id="vNotes"></p></div>
+                <div class="col-span-2"><strong class="text-gray-400">TX ID:</strong> <code class="bg-black/50 px-2 py-1 rounded" id="vTx"></code></div>
+                <div><strong class="text-gray-400">Payment:</strong> <span id="vPayStatus"></span></div>
+                <div><strong class="text-gray-400">Status:</strong> <span id="vStatus"></span></div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div class="bg-black/30 p-4 rounded-lg">
-                    <h4 class="text-xs uppercase text-gray-500 font-bold mb-2">Design Brief</h4>
-                    <p class="text-sm text-white mb-1"><strong class="accent-text">Brand:</strong> <span id="vBrand"></span></p>
-                    <p class="text-sm text-white mb-1"><strong class="accent-text">Niche:</strong> <span id="vNiche"></span></p>
-                    <p class="text-sm text-white mb-1"><strong class="accent-text">Colors:</strong> <span id="vColors"></span></p>
-                    <p class="text-sm text-white mb-1"><strong class="accent-text">Vibe:</strong> <span id="vVibe"></span></p>
-                    <p class="text-sm text-white mb-1"><strong class="accent-text">Package:</strong> <span id="vPackage"></span></p>
-                    <p class="text-sm text-white mb-1"><strong class="accent-text">Add-ons:</strong> <span id="vAddons"></span></p>
-                    <p class="text-sm text-white mb-1"><strong class="accent-text">Delivery:</strong> <span id="vDelivery"></span></p>
-                    <div class="mt-2 text-sm bg-gray-800 p-2 rounded">
-                        <strong class="block text-xs text-gray-500">Notes/Ideas:</strong>
-                        <span id="vNotes"></span>
-                    </div>
-                </div>
-                
-                <div class="space-y-4">
-                    <div class="bg-black/30 p-4 rounded-lg">
-                        <h4 class="text-xs uppercase text-gray-500 font-bold mb-2">Workflow Actions</h4>
-                        <div class="space-y-2">
-                             <!-- ADMIN GATE: Verify Button -->
-                             <button id="verifyBtn" onclick="confirmOrderByAdmin()" class="hidden w-full bg-green-600 hover:bg-green-500 py-2 rounded font-bold text-sm mb-2"><i class="fas fa-check-circle"></i> Verify Payment & Start</button>
-
-                             <select id="updateStatusSelect" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm focus:border-indigo-500">
-                                <option value="Pending">⏳ Pending</option>
-                                <option value="In Progress">🎨 In Progress</option>
-                                <option value="Sent for Approval">📤 Sent for Approval</option>
-                                <option value="Completed">✅ Completed</option>
-                             </select>
-                             <div class="flex gap-2">
-                                <label class="flex items-center space-x-2 text-sm bg-gray-800 p-2 rounded w-full cursor-pointer hover:bg-gray-700">
-                                    <input type="checkbox" id="checkPng" class="accent-indigo-500"> <span>PNG Sent</span>
-                                </label>
-                                <label class="flex items-center space-x-2 text-sm bg-gray-800 p-2 rounded w-full cursor-pointer hover:bg-gray-700">
-                                    <input type="checkbox" id="checkSource" class="accent-indigo-500"> <span>Source Sent</span>
-                                </label>
-                             </div>
-                             <button onclick="saveAdminChanges()" class="w-full accent-bg hover:opacity-90 py-2 rounded font-bold text-sm transition">Update Status</button>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-black/30 p-4 rounded-lg">
-                        <h4 class="text-xs uppercase text-gray-500 font-bold mb-2">Payment</h4>
-                        <p class="text-sm">Status: <span id="vPayStatus" class="font-bold"></span></p>
-                        <p class="text-sm text-gray-400">Tx ID: <span id="vTx"></span></p>
-                    </div>
-                </div>
-            </div>
-            
-            <a id="vRefLink" href="#" target="_blank" class="block text-center w-full py-3 border border-gray-600 rounded-lg accent-text hover:bg-white/5 transition mb-4">🔗 Open Reference Link</a>
-            
             <input type="hidden" id="vIndex">
-            <button onclick="deleteOrder()" class="text-red-500 text-xs w-full text-center hover:text-red-400">Delete Order Permanently</button>
-        </div>
-    </div>
+            <input type="hidden" id="vOrderId">
 
-    <!-- Client Edit Modal -->
-    <div id="clientEditModal" class="modal-overlay z-[100]">
-        <div class="glass max-w-2xl w-full p-8 rounded-2xl m-4">
-            <h2 class="text-2xl font-bold mb-4">Update Order Details</h2>
-            <p class="text-sm text-yellow-400 mb-4">⚠️ Updating this form will reset your delivery timer.</p>
-            <form id="clientEditForm">
-                <input type="hidden" id="cEditIndex">
-                <textarea id="cEditNotes" class="w-full h-32 bg-black/40 border border-gray-600 rounded p-3 mb-4 focus:outline-none focus:border-indigo-500" placeholder="Update your requirements..."></textarea>
-                <div class="flex gap-4">
-                    <button type="button" onclick="submitClientEdit()" class="flex-1 bg-green-600 py-2 rounded font-bold hover:bg-green-500">Save & Recalculate Time</button>
-                    <button type="button" onclick="document.getElementById('clientEditModal').classList.remove('active')" class="px-4 bg-gray-700 rounded hover:bg-gray-600">Cancel</button>
+            <!-- ADMIN CONTROLS -->
+            <div class="mt-6 space-y-3 border-t border-gray-700 pt-6">
+                <button id="verifyBtn" onclick="confirmOrderByAdmin()" class="w-full bg-green-600 py-3 rounded-lg font-bold hidden">✓ Verify Payment & Start Project</button>
+                
+                <div class="flex gap-3">
+                    <select id="updateStatusSelect" class="flex-1 bg-black/50 border border-gray-700 rounded-lg p-3">
+                        <option value="Unconfirmed">Unconfirmed</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Sent for Approval">Sent for Approval</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                    <button onclick="saveAdminChanges()" class="bg-indigo-600 px-6 py-3 rounded-lg font-bold">Update</button>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- NEW FEATURE 4: Theme Settings Modal -->
-    <div id="settingsModal" class="modal-overlay z-[100]">
-        <div class="glass max-w-sm w-full p-6 rounded-2xl m-4 text-center">
-            <h2 class="text-xl font-bold mb-4">Dashboard Appearance</h2>
-            <p class="text-gray-400 text-sm mb-6">Select an accent color for your workspace.</p>
-            
-            <div class="flex justify-center gap-4 mb-6">
-                <button onclick="setTheme('default')" class="w-10 h-10 rounded-full bg-indigo-500 border-2 border-transparent hover:scale-110 transition ring-2 ring-offset-2 ring-offset-gray-900 ring-indigo-500"></button>
-                <button onclick="setTheme('pink')" class="w-10 h-10 rounded-full bg-pink-500 border-2 border-transparent hover:scale-110 transition"></button>
-                <button onclick="setTheme('blue')" class="w-10 h-10 rounded-full bg-blue-500 border-2 border-transparent hover:scale-110 transition"></button>
-                <button onclick="setTheme('green')" class="w-10 h-10 rounded-full bg-green-500 border-2 border-transparent hover:scale-110 transition"></button>
             </div>
-
-            <button onclick="toggleSettingsModal()" class="w-full bg-gray-700 py-2 rounded text-sm hover:bg-gray-600">Close</button>
         </div>
     </div>
 
-    <!-- SCRIPT LOGIC (FIXES & NEW FEATURES) -->
-    <script>
-        function loadDashboard() {
-            const user = JSON.parse(localStorage.getItem('currentUser'));
-            if (!user) { window.location.href = 'login.html'; return; }
+    <!-- Settings Modal (NEW FEATURE 4) -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="glass max-w-md w-full mx-4 p-8 rounded-2xl relative">
+            <button onclick="toggleSettingsModal()" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white">&times;</button>
+            <h2 class="text-2xl font-bold mb-6">⚙️ Settings</h2>
+            
+            <div class="space-y-4">
+                <h4 class="text-sm font-bold text-gray-400 uppercase">Theme Color</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setTheme('default')" class="py-3 rounded-lg bg-indigo-500 text-white font-bold">Indigo</button>
+                    <button onclick="setTheme('pink')" class="py-3 rounded-lg bg-pink-500 text-white font-bold">Pink</button>
+                    <button onclick="setTheme('blue')" class="py-3 rounded-lg bg-blue-500 text-white font-bold">Blue</button>
+                    <button onclick="setTheme('green')" class="py-3 rounded-lg bg-green-500 text-white font-bold">Green</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            document.getElementById('userDisplay').innerText = `Welcome, ${user.name || 'Admin'}`;
+    <!-- Load Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
+
+        // Initialize Supabase Client
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ============================================
+        // LOAD DASHBOARD FROM SUPABASE
+        // ============================================
+        async function loadDashboard() {
+            const userStr = localStorage.getItem('currentUser');
+            if (!userStr) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const user = JSON.parse(userStr);
+            document.getElementById('userDisplay').innerText = user.name || user.email;
 
             if (user.role === 'admin') {
                 document.getElementById('adminView').classList.remove('hidden');
-                document.getElementById('clientView').classList.add('hidden');
-                renderAdminOrders();
+                await loadAdminOrders();
             } else {
-                document.getElementById('adminView').classList.add('hidden');
                 document.getElementById('clientView').classList.remove('hidden');
-                // Security: Hide Admin Elements
-                document.getElementById('settingsBtn').classList.add('hidden');
-                document.getElementById('notificationCenter').classList.add('hidden');
-                renderClientOrders(user.email);
+                await renderClientOrders(user.email);
             }
         }
 
-        function renderAdminOrders() {
-            const orders = JSON.parse(localStorage.getItem('pixel_orders') || '[]');
-            const tableBody = document.getElementById('ordersTableBody');
-            
-            // Sort orders: Express orders first, then by timestamp
-            const sortedOrders = orders.sort((a, b) => {
-                const aIsExpress = a.addons && a.addons.includes('Express');
-                const bIsExpress = b.addons && b.addons.includes('Express');
-                
-                if (aIsExpress && !bIsExpress) return -1;
-                if (!aIsExpress && bIsExpress) return 1;
-                return b.timestamp - a.timestamp;
-            });
-            
-            // Stats Calculation
-            document.getElementById('stat-total').innerText = orders.length;
-            document.getElementById('stat-pending').innerText = orders.filter(o => o.status === 'In Progress').length;
-            document.getElementById('stat-unpaid').innerText = orders.filter(o => o.status === 'Unconfirmed').length;
-            
-            // Calculate total earnings
-            let totalEarnings = 0;
-            orders.forEach(o => {
-                if (o.status !== 'Unconfirmed') {
-                    const packagePrices = { 'Basic': 99, 'Standard': 150, 'Premium': 200 };
-                    let price = packagePrices[o.packageType] || 150;
-                    
-                    // Add addons
-                    if (o.addons) {
-                        if (o.addons.includes('Social Media Kit')) price += 100;
-                        if (o.addons.includes('Visiting Card')) price += 50;
-                        if (o.addons.includes('Express')) price += 100;
-                    }
-                    totalEarnings += price;
-                }
-            });
-            document.getElementById('totalEarnings').innerText = `₹${totalEarnings.toLocaleString()}`;
-            
-            // Generate notifications
-            generateNotifications(orders);
+        // ============================================
+        // LOAD ADMIN ORDERS FROM SUPABASE
+        // ============================================
+        async function loadAdminOrders() {
+            try {
+                // Fetch all orders from Supabase
+                const { data: orders, error } = await supabaseClient
+                    .from('orders')
+                    .select('*')
+                    .order('timestamp', { ascending: false });
 
-            tableBody.innerHTML = sortedOrders.map((o, index) => {
-                // Find original index for viewOrder
-                const originalIndex = orders.findIndex(order => order.id === o.id);
-                const expressBadge = o.addons && o.addons.includes('Express') ? '<span class="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">⚡ EXPRESS</span>' : '';
+                if (error) {
+                    console.error('Error fetching orders:', error);
+                    alert('Error loading orders from database');
+                    return;
+                }
+
+                console.log('Loaded orders from Supabase:', orders);
+
+                // Calculate stats
+                const total = orders.length;
+                const pending = orders.filter(o => o.status === 'In Progress').length;
+                const unpaid = orders.filter(o => o.status === 'Unconfirmed').length;
                 
-                return `
-                <tr class="border-b border-gray-800 hover:bg-white/5 transition">
-                    <td class="px-4 py-3 font-bold text-gray-300">${o.id}${expressBadge}</td>
-                    <td class="px-4 py-3">${o.clientName}</td>
-                    <td class="px-4 py-3 text-xs text-gray-500">${o.date}</td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-1 rounded text-[10px] font-bold ${o.status === 'Unconfirmed' ? 'bg-red-500/20 text-red-400' : 'bg-indigo-500/20 text-indigo-400'}">
-                            ${o.status}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3">
-                        <button onclick="viewOrder(${originalIndex})" class="accent-text text-sm hover:underline">Manage</button>
-                    </td>
-                </tr>
-            `;
-            }).join('');
-            
-            // Render priority list
-            renderPriorityQueue(sortedOrders);
+                const packages = { Essential: 1999, Professional: 2999, Premium: 4999 };
+                const earnings = orders.reduce((sum, o) => {
+                    let price = packages[o.package_type] || 0;
+                    if (o.addons && o.addons.includes('Express')) price += 500;
+                    if (o.addons && o.addons.includes('AI Mockup')) price += 299;
+                    if (o.addons && o.addons.includes('3D Mockup')) price += 599;
+                    if (o.addons && o.addons.includes('Color Palette')) price += 99;
+                    if (o.addons && o.addons.includes('Social Kit')) price += 499;
+                    return sum + price;
+                }, 0);
+
+                document.getElementById('stat-total').innerText = total;
+                document.getElementById('stat-pending').innerText = pending;
+                document.getElementById('stat-unpaid').innerText = unpaid;
+                document.getElementById('totalEarnings').innerText = '₹' + earnings.toLocaleString();
+
+                // Render orders
+                renderAdminOrders(orders);
+                renderPriorityQueue(orders);
+            } catch (error) {
+                console.error('Error in loadAdminOrders:', error);
+                alert('Error loading dashboard');
+            }
         }
-        
-        function renderPriorityQueue(orders) {
-            const priorityOrders = orders.filter(o => o.status !== 'Completed' && o.status !== 'Unconfirmed').slice(0, 5);
-            const priorityList = document.getElementById('priorityList');
+
+        function renderAdminOrders(orders) {
+            const container = document.getElementById('ordersGrid');
             
-            if (priorityOrders.length === 0) {
-                priorityList.innerHTML = '<p class="text-sm text-gray-500">No active orders</p>';
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-12">No orders yet</div>';
                 return;
             }
+
+            container.innerHTML = orders.map((o, idx) => {
+                const statusColors = {
+                    'Unconfirmed': 'bg-red-500/20 text-red-400 border-red-500',
+                    'In Progress': 'bg-yellow-500/20 text-yellow-400 border-yellow-500',
+                    'Sent for Approval': 'bg-blue-500/20 text-blue-400 border-blue-500',
+                    'Completed': 'bg-green-500/20 text-green-400 border-green-500'
+                };
+
+                return `
+                    <div class="glass p-5 rounded-xl border border-white/10 hover:border-white/30 transition cursor-pointer" onclick="viewOrder(${idx})">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg">${o.brand_name}</h3>
+                                <p class="text-xs text-gray-500">#${o.order_number}</p>
+                            </div>
+                            <span class="px-2 py-1 ${statusColors[o.status] || 'bg-gray-500/20 text-gray-400'} border rounded-full text-[10px] font-bold">${o.status}</span>
+                        </div>
+                        
+                        <div class="space-y-1 text-xs text-gray-400 mb-3">
+                            <p><i class="fas fa-user w-4"></i> ${o.client_name}</p>
+                            <p><i class="fas fa-tag w-4"></i> ${o.package_type}</p>
+                            <p><i class="fas fa-calendar w-4"></i> ${o.date}</p>
+                        </div>
+                        
+                        <div class="flex gap-2 mt-3">
+                            <a href="https://wa.me/${o.contact.replace(/\D/g,'')}" onclick="event.stopPropagation()" class="flex-1 bg-green-500/20 text-green-400 text-center py-2 rounded-lg text-xs font-bold hover:bg-green-500/30">
+                                <i class="fab fa-whatsapp"></i> Chat
+                            </a>
+                            <button onclick="event.stopPropagation(); viewOrder(${idx})" class="flex-1 bg-indigo-500/20 text-indigo-400 py-2 rounded-lg text-xs font-bold hover:bg-indigo-500/30">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPriorityQueue(orders) {
+            const priorityOrders = orders
+                .filter(o => o.status === 'Unconfirmed' || o.status === 'In Progress')
+                .slice(0, 5);
+
+            const container = document.getElementById('priorityList');
             
-            priorityList.innerHTML = priorityOrders.map(o => {
-                const isExpress = o.addons && o.addons.includes('Express');
-                const workingHours = isExpress ? 5 : 48;
+            if (priorityOrders.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">No urgent orders</p>';
+                return;
+            }
+
+            container.innerHTML = priorityOrders.map((o, idx) => `
+                <div class="glass p-3 rounded-xl border-l-4 ${o.status === 'Unconfirmed' ? 'border-red-500' : 'border-yellow-500'}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm">${o.brand_name}</h4>
+                            <p class="text-xs text-gray-500">${o.client_name}</p>
+                        </div>
+                        <span class="text-xs px-2 py-1 bg-white/10 rounded">${o.status === 'Unconfirmed' ? '⚠️ New' : '🔥 Active'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function viewOrder(index) {
+            try {
+                // Fetch all orders again to ensure we have latest data
+                const { data: orders, error } = await supabaseClient
+                    .from('orders')
+                    .select('*')
+                    .order('timestamp', { ascending: false });
+
+                if (error) throw error;
+
+                const o = orders[index];
+                if (!o) {
+                    alert('Order not found');
+                    return;
+                }
+
+                // Populate modal with order data
+                document.getElementById('vId').innerText = o.order_number;
+                document.getElementById('vClient').innerText = o.client_name;
+                document.getElementById('vContact').innerText = o.contact;
+                document.getElementById('vBrand').innerText = o.brand_name;
+                document.getElementById('vTagline').innerText = o.tagline || 'N/A';
+                document.getElementById('vNiche').innerText = o.niche;
+                document.getElementById('vAudience').innerText = o.audience || 'N/A';
+                document.getElementById('vColors').innerText = o.colors || 'N/A';
+                document.getElementById('vVibe').innerText = o.vibe;
+                document.getElementById('vPackage').innerText = o.package_type;
                 
-                let timeRemaining = 'Calculating...';
+                // Calculate delivery info
+                const isExpress = o.addons && o.addons.includes('Express');
+                const hoursPerDay = 8;
+                const workingHours = isExpress ? 5 : 48;
+                const deliveryDays = Math.ceil(workingHours / hoursPerDay);
+                
+                let deliveryText = isExpress ? '⚡ 5 Working Hours (Express)' : `48 Working Hours (~${deliveryDays} working days)`;
+                
                 if (o.timestamp && o.status !== 'Unconfirmed') {
                     const startTime = new Date(o.timestamp);
                     const now = new Date();
                     const hoursElapsed = (now - startTime) / (1000 * 60 * 60);
                     const hoursRemaining = Math.max(0, workingHours - hoursElapsed);
                     
-                    const days = Math.floor(hoursRemaining / 8);
-                    const hours = Math.ceil(hoursRemaining % 8);
-                    timeRemaining = `${days}d ${hours}h left`;
-                }
-                
-                return `
-                    <div class="glass p-3 rounded-lg border-l-4 ${isExpress ? 'border-yellow-500' : 'border-indigo-500'}">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="font-bold text-sm">${o.id}</span>
-                            ${isExpress ? '<span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">⚡</span>' : ''}
-                        </div>
-                        <p class="text-xs text-gray-400">${o.brandName}</p>
-                        <p class="text-xs text-gray-500 mt-1">⏱️ ${timeRemaining}</p>
-                    </div>
-                `;
-            }).join('');
-        }
-        
-        function generateNotifications(orders) {
-            const notifList = document.getElementById('notifList');
-            const notifications = [];
-            
-            orders.forEach(o => {
-                // Check for approaching deadlines
-                if (o.timestamp && o.status !== 'Completed' && o.status !== 'Unconfirmed') {
-                    const isExpress = o.addons && o.addons.includes('Express');
-                    const workingHours = isExpress ? 5 : 48;
-                    const startTime = new Date(o.timestamp);
-                    const now = new Date();
-                    const hoursElapsed = (now - startTime) / (1000 * 60 * 60);
-                    const hoursRemaining = Math.max(0, workingHours - hoursElapsed);
-                    
-                    if (hoursRemaining <= 2 && hoursRemaining > 0) {
-                        notifications.push({
-                            type: 'urgent',
-                            message: `Order ${o.id} deadline in ${Math.ceil(hoursRemaining)} hours!`,
-                            color: 'red'
-                        });
-                    } else if (hoursRemaining <= 8 && hoursRemaining > 2) {
-                        notifications.push({
-                            type: 'warning',
-                            message: `Order ${o.id} due soon (${Math.ceil(hoursRemaining)}h)`,
-                            color: 'yellow'
-                        });
+                    if (hoursRemaining > 0 && o.status !== 'Completed') {
+                        const daysRemaining = Math.floor(hoursRemaining / hoursPerDay);
+                        const remainingHours = Math.ceil(hoursRemaining % hoursPerDay);
+                        deliveryText += ` | ⏱️ ${daysRemaining}d ${remainingHours}h remaining`;
+                    } else if (o.status === 'Completed') {
+                        deliveryText += ' | ✅ Delivered';
                     }
                 }
                 
-                // Check for unconfirmed payments
+                document.getElementById('vDelivery').innerText = deliveryText;
+                document.getElementById('vNotes').innerText = o.ideas || 'None';
+                document.getElementById('vTx').innerText = o.tx_id;
+                document.getElementById('vPayStatus').innerText = o.status === 'Unconfirmed' ? 'Pending Verification' : 'Paid & Verified';
+                document.getElementById('vStatus').innerText = o.status;
+                document.getElementById('vIndex').value = index;
+                document.getElementById('vOrderId').value = o.id; // Store the database ID
+                document.getElementById('vWa').href = `https://wa.me/${o.contact.replace(/\D/g,'')}`;
+
+                // Admin Verification Gate
+                const vBtn = document.getElementById('verifyBtn');
                 if (o.status === 'Unconfirmed') {
-                    notifications.push({
-                        type: 'info',
-                        message: `New order ${o.id} pending verification`,
-                        color: 'blue'
-                    });
+                    vBtn.classList.remove('hidden');
+                } else {
+                    vBtn.classList.add('hidden');
                 }
-            });
+
+                // Set current status in dropdown
+                document.getElementById('updateStatusSelect').value = o.status;
+
+                document.getElementById('viewModal').classList.add('active');
+            } catch (error) {
+                console.error('Error viewing order:', error);
+                alert('Error loading order details');
+            }
+        }
+
+        async function confirmOrderByAdmin() {
+            const orderId = document.getElementById('vOrderId').value;
             
-            if (notifications.length === 0) {
-                notifList.innerHTML = '<p class="text-gray-500 text-center py-2">No new notifications</p>';
-            } else {
-                notifList.innerHTML = notifications.map(n => `
-                    <div class="p-3 bg-white/5 rounded-lg border-l-2 border-${n.color}-500">
-                        <p class="text-white text-sm">${n.message}</p>
+            try {
+                const { data, error } = await supabaseClient
+                    .from('orders')
+                    .update({ status: 'In Progress' })
+                    .eq('id', orderId)
+                    .select();
+
+                if (error) throw error;
+
+                alert('Order Verified! Client can now see progress.');
+                location.reload();
+            } catch (error) {
+                console.error('Error verifying order:', error);
+                alert('Error updating order: ' + error.message);
+            }
+        }
+
+        async function saveAdminChanges() {
+            const orderId = document.getElementById('vOrderId').value;
+            const newStatus = document.getElementById('updateStatusSelect').value;
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('orders')
+                    .update({ status: newStatus })
+                    .eq('id', orderId)
+                    .select();
+
+                if (error) throw error;
+
+                alert('Status Updated');
+                location.reload();
+            } catch (error) {
+                console.error('Error updating status:', error);
+                alert('Error updating order: ' + error.message);
+            }
+        }
+
+        async function renderClientOrders(email) {
+            try {
+                // Fetch orders for this client from Supabase
+                const { data: orders, error } = await supabaseClient
+                    .from('orders')
+                    .select('*')
+                    .eq('user_email', email)
+                    .order('timestamp', { ascending: false });
+
+                if (error) {
+                    console.error('Error fetching client orders:', error);
+                    return;
+                }
+
+                console.log('Client orders:', orders);
+
+                const container = document.getElementById('clientOrdersContainer');
+                
+                if (orders.length > 0) {
+                    const active = orders[0];
+                    document.getElementById('whatsappDesigner').href = `https://wa.me/919876543210?text=Hello, I need help with my project ${active.order_number}`;
+                    
+                    // Progress Bar Logic
+                    const progressBox = document.getElementById('clientProgress');
+                    progressBox.classList.remove('hidden');
+                    
+                    let percent = 10; 
+                    let label = "Payment Verification";
+                    if (active.status === 'In Progress') { 
+                        percent = 45; 
+                        label = "Designer is creating your concepts"; 
+                    }
+                    if (active.status === 'Sent for Approval') { 
+                        percent = 80; 
+                        label = "Concepts sent! Check WhatsApp/Email"; 
+                    }
+                    if (active.status === 'Completed') { 
+                        percent = 100; 
+                        label = "Project Finished!"; 
+                    }
+                    
+                    document.getElementById('progBar').style.width = percent + '%';
+                    document.getElementById('progPercent').innerText = percent + '%';
+                    document.getElementById('progLabel').innerText = label;
+                }
+
+                if (orders.length === 0) {
+                    container.innerHTML = '<div class="text-center text-gray-400 py-12">No orders yet</div>';
+                    return;
+                }
+
+                container.innerHTML = orders.map((o, idx) => `
+                    <div class="glass p-6 rounded-2xl border border-white/10 relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold">${o.brand_name} <span class="text-xs text-gray-500 font-normal">#${o.order_number}</span></h3>
+                                <p class="text-xs text-gray-400">Targeting: ${o.audience || 'General'}</p>
+                            </div>
+                            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-widest">${o.status}</span>
+                        </div>
+                        
+                        ${o.status === 'Unconfirmed' ? `
+                            <div class="bg-red-500/10 border border-red-500/30 p-4 rounded-xl text-center">
+                                <p class="text-xs text-red-400 font-bold">Waiting for designer to verify payment ID: ${o.tx_id}</p>
+                            </div>
+                        ` : `
+                            <div class="grid grid-cols-2 gap-2">
+                                 <div class="bg-white/5 p-3 rounded-xl text-center">
+                                    <p class="text-[10px] text-gray-500 uppercase">Package</p>
+                                    <p class="text-sm font-bold">${o.package_type || 'Standard'}</p>
+                                 </div>
+                                 <div class="bg-white/5 p-3 rounded-xl text-center">
+                                    <p class="text-[10px] text-gray-500 uppercase">Delivery</p>
+                                    <p class="text-sm font-bold">${o.addons && o.addons.includes('Express') ? '⚡ 5 Hours' : '48 Hours'}</p>
+                                 </div>
+                                 ${o.addons && o.addons !== 'None' ? `
+                                 <div class="bg-white/5 p-3 rounded-xl col-span-2">
+                                    <p class="text-[10px] text-gray-500 uppercase">Add-ons</p>
+                                    <p class="text-xs font-bold">${o.addons}</p>
+                                 </div>
+                                 ` : ''}
+                            </div>
+                        `}
                     </div>
                 `).join('');
+            } catch (error) {
+                console.error('Error in renderClientOrders:', error);
             }
-        }
-
-        function viewOrder(index) {
-            const orders = JSON.parse(localStorage.getItem('pixel_orders'));
-            const o = orders[index];
-            
-            document.getElementById('vID').innerText = o.id;
-            document.getElementById('vClient').innerText = o.clientName;
-            document.getElementById('vBrand').innerText = o.brandName;
-            document.getElementById('vNiche').innerText = o.niche;
-            document.getElementById('vColors').innerText = o.colors || 'Not specified';
-            document.getElementById('vVibe').innerText = o.vibe;
-            document.getElementById('vPackage').innerText = o.packageType || 'Not specified';
-            document.getElementById('vAddons').innerText = o.addons || 'None';
-            
-            // Calculate delivery deadline
-            const isExpress = o.addons && o.addons.includes('Express');
-            const workingHours = isExpress ? 5 : 48;
-            const hoursPerDay = 8;
-            const deliveryDays = Math.ceil(workingHours / hoursPerDay);
-            
-            let deliveryText = isExpress ? '⚡ 5 Working Hours (Express)' : `48 Working Hours (~${deliveryDays} working days)`;
-            
-            // Calculate deadline from order timestamp
-            if (o.timestamp && o.status !== 'Unconfirmed') {
-                const startTime = new Date(o.timestamp);
-                const now = new Date();
-                const hoursElapsed = (now - startTime) / (1000 * 60 * 60);
-                const hoursRemaining = Math.max(0, workingHours - hoursElapsed);
-                
-                if (hoursRemaining > 0 && o.status !== 'Completed') {
-                    const daysRemaining = Math.floor(hoursRemaining / hoursPerDay);
-                    const remainingHours = Math.ceil(hoursRemaining % hoursPerDay);
-                    deliveryText += ` | ⏱️ ${daysRemaining}d ${remainingHours}h remaining`;
-                } else if (o.status === 'Completed') {
-                    deliveryText += ' | ✅ Delivered';
-                }
-            }
-            
-            document.getElementById('vDelivery').innerText = deliveryText;
-            document.getElementById('vNotes').innerText = o.ideas || o.notes || 'None';
-            document.getElementById('vTx').innerText = o.txId;
-            document.getElementById('vPayStatus').innerText = o.status === 'Unconfirmed' ? 'Pending Verification' : 'Paid & Verified';
-            document.getElementById('vStatus').innerText = o.status;
-            document.getElementById('vIndex').value = index;
-            document.getElementById('vWa').href = `https://wa.me/${o.contact.replace(/\D/g,'')}`;
-
-            // Admin Verification Gate
-            const vBtn = document.getElementById('verifyBtn');
-            if(o.status === 'Unconfirmed') {
-                vBtn.classList.remove('hidden');
-            } else {
-                vBtn.classList.add('hidden');
-            }
-
-            document.getElementById('viewModal').classList.add('active');
-        }
-
-        function confirmOrderByAdmin() {
-            const index = document.getElementById('vIndex').value;
-            let orders = JSON.parse(localStorage.getItem('pixel_orders'));
-            orders[index].status = "In Progress";
-            localStorage.setItem('pixel_orders', JSON.stringify(orders));
-            alert("Order Verified! Client can now see progress.");
-            location.reload();
-        }
-
-        function saveAdminChanges() {
-            const index = document.getElementById('vIndex').value;
-            const newStatus = document.getElementById('updateStatusSelect').value;
-            let orders = JSON.parse(localStorage.getItem('pixel_orders'));
-            orders[index].status = newStatus;
-            localStorage.setItem('pixel_orders', JSON.stringify(orders));
-            alert("Status Updated");
-            location.reload();
-        }
-
-        function renderClientOrders(email) {
-            const orders = JSON.parse(localStorage.getItem('pixel_orders') || '[]');
-            const myOrders = orders.filter(o => o.userEmail === email);
-            const container = document.getElementById('clientOrdersContainer');
-            
-            if(myOrders.length > 0) {
-                const active = myOrders[0];
-                document.getElementById('whatsappDesigner').href = `https://wa.me/919876543210?text=Hello, I need help with my project ${active.id}`;
-                
-                // Progress Bar Logic
-                const progressBox = document.getElementById('clientProgress');
-                progressBox.classList.remove('hidden');
-                
-                let percent = 10; let label = "Payment Verification";
-                if(active.status === 'In Progress') { percent = 45; label = "Designer is creating your concepts"; }
-                if(active.status === 'Sent for Approval') { percent = 80; label = "Concepts sent! Check WhatsApp/Email"; }
-                if(active.status === 'Completed') { percent = 100; label = "Project Finished!"; }
-                
-                document.getElementById('progBar').style.width = percent + '%';
-                document.getElementById('progPercent').innerText = percent + '%';
-                document.getElementById('progLabel').innerText = label;
-            }
-
-            container.innerHTML = myOrders.map((o, idx) => `
-                <div class="glass p-6 rounded-2xl border border-white/10 relative overflow-hidden">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-xl font-bold">${o.brandName} <span class="text-xs text-gray-500 font-normal">#${o.id}</span></h3>
-                            <p class="text-xs text-gray-400">Targeting: ${o.audience || 'General'}</p>
-                        </div>
-                        <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-widest">${o.status}</span>
-                    </div>
-                    
-                    ${o.status === 'Unconfirmed' ? `
-                        <div class="bg-red-500/10 border border-red-500/30 p-4 rounded-xl text-center">
-                            <p class="text-xs text-red-400 font-bold">Waiting for designer to verify payment ID: ${o.txId}</p>
-                        </div>
-                    ` : `
-                        <div class="grid grid-cols-2 gap-2">
-                             <div class="bg-white/5 p-3 rounded-xl text-center">
-                                <p class="text-[10px] text-gray-500 uppercase">Package</p>
-                                <p class="text-sm font-bold">${o.packageType || 'Standard'}</p>
-                             </div>
-                             <div class="bg-white/5 p-3 rounded-xl text-center">
-                                <p class="text-[10px] text-gray-500 uppercase">Delivery</p>
-                                <p class="text-sm font-bold">${o.addons && o.addons.includes('Express') ? '⚡ 5 Hours' : '48 Hours'}</p>
-                             </div>
-                             ${o.addons && o.addons !== 'None' ? `
-                             <div class="bg-white/5 p-3 rounded-xl col-span-2">
-                                <p class="text-[10px] text-gray-500 uppercase">Add-ons</p>
-                                <p class="text-xs font-bold">${o.addons}</p>
-                             </div>
-                             ` : ''}
-                        </div>
-                    `}
-                </div>
-            `).join('');
         }
 
         function logout() {
@@ -663,7 +643,7 @@
         function toggleSettingsModal() { document.getElementById('settingsModal').classList.toggle('active'); }
         function setTheme(theme) { 
             document.body.classList.remove('theme-pink', 'theme-blue', 'theme-green');
-            if(theme !== 'default') document.body.classList.add('theme-' + theme);
+            if (theme !== 'default') document.body.classList.add('theme-' + theme);
             toggleSettingsModal();
         }
         
@@ -672,12 +652,17 @@
             const container = document.getElementById('stickyNotesContainer');
             const note = document.createElement('textarea');
             note.className = "w-full bg-yellow-500/10 border border-yellow-500/30 rounded p-2 text-xs text-yellow-100 placeholder-yellow-200/50 resize-none";
-            note.rows = 2; note.placeholder = "New note...";
+            note.rows = 2; 
+            note.placeholder = "New note...";
             container.prepend(note);
         }
 
         function toggleViewMode(mode) {
             alert("Switching view to " + mode);
+        }
+
+        function printInvoice() {
+            alert("Print invoice feature - to be implemented");
         }
 
         // Initialize
