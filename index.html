@@ -7,11 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Load Supabase CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
-    
     <style>
         /* --- CORE STYLES (Preserved) --- */
         ::-webkit-scrollbar { width: 8px; }
@@ -631,6 +626,40 @@
     <script src="supabase-config.js"></script>
 
     <script>
+        // ============================================
+        // PORTFOLIO FUNCTIONS (Inline fallback if supabase-config.js fails)
+        // ============================================
+        if (typeof getAllPortfolioItems === 'undefined') {
+            console.log('Loading inline portfolio functions...');
+            
+            const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
+            
+            let supabaseClientIndex;
+            if (typeof window.supabase !== 'undefined') {
+                supabaseClientIndex = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+            
+            window.getAllPortfolioItems = async function() {
+                try {
+                    if (!supabaseClientIndex) {
+                        throw new Error('Supabase client not initialized');
+                    }
+                    
+                    const { data, error } = await supabaseClientIndex
+                        .from('portfolio')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+                    
+                    if (error) throw error;
+                    return { success: true, data: data || [] };
+                } catch (error) {
+                    console.error('Error fetching portfolio:', error);
+                    return { success: false, error: error.message, data: [] };
+                }
+            };
+        }
+        
         // --- 3D PANEL TILT & MOUSE TRACKING ---
         const container = document.querySelector('.hero-card-container');
         if(container) {
