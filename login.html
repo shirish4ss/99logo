@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | PixelPerfect</title>
+    <title>Login | 99logo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -66,7 +66,7 @@
         </form>
         
         <div class="mt-6 text-center text-xs text-gray-500 border-t border-gray-700 pt-4">
-            <p class="mb-2">Admin: <span class="text-white">admin@pixel.com</span> / <span class="text-white">admin123</span></p>
+            <p class="mb-2">Admin: <span class="text-white"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="85e4e1e8ecebc5f5ecfde0e9abe6eae8">[email&#160;protected]</a></span> / <span class="text-white">admin123</span></p>
             <p class="mb-4">Clients: Use email/password set during Order.</p>
             
             <button onclick="hardReset()" class="text-red-500 hover:text-red-400 underline">System Error? Click here to Reset Data</button>
@@ -83,7 +83,7 @@
     </div>
 
     <!-- Load Supabase CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
         // ============================================
@@ -284,13 +284,4 @@
                         alert("✅ Database reset complete!");
                         location.reload();
                     } else {
-                        alert("Reset error: " + result.error);
-                    }
-                } catch (error) {
-                    alert("Error: " + error.message);
-                }
-            }
-        }
-    </script>
-</body>
-</html>
+                        alert
