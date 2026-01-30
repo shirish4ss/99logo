@@ -528,7 +528,7 @@
                 <div>
                     <h4 class="text-white font-bold mb-6 uppercase text-xs tracking-wider border-l-2 border-pink-500 pl-3">Legal & Support</h4>
                     <ul class="space-y-3 text-sm text-slate-400">
-                        <li><button onclick="openTerms()" class="footer-link-item hover:text-white text-left">Terms & Conditions</button></li>
+                        <li><a href="terms.html" class="footer-link-item hover:text-white">Terms & Conditions</a></li>
                         <li><a href="#" class="footer-link-item hover:text-white">Privacy Policy</a></li>
                         <li><a href="#faq" class="footer-link-item hover:text-white">Help Center</a></li>
                         <li><a href="#" class="footer-link-item hover:text-white">Brand Assets</a></li>
@@ -620,6 +620,10 @@
             </div>
         </div>
     </div>
+
+    <!-- Load Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
 
     <script>
         // --- 3D PANEL TILT & MOUSE TRACKING ---
@@ -766,22 +770,54 @@
             startPortfolioAutoScroll();
         });
 
-        // Load custom portfolio from localStorage
-        function loadPortfolio() {
-            const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
-            if (portfolio.length > 0) {
-                const container = document.getElementById('portfolioGrid');
-                container.innerHTML = portfolio.map(url => `
-                    <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1.5rem);">
-                        <img src="${url}" class="w-full h-72 object-cover rounded-xl" alt="Portfolio item">
-                    </div>
-                `).join('');
+        // Load custom portfolio from Supabase
+        async function loadPortfolio() {
+            try {
+                // Load from Supabase
+                const result = await getAllPortfolioItems();
+                
+                if (result.success && result.data.length > 0) {
+                    const container = document.getElementById('portfolioGrid');
+                    container.innerHTML = result.data.map(item => `
+                        <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1.5rem);">
+                            <img src="${item.image_url}" class="w-full h-72 object-cover rounded-xl" alt="Portfolio item">
+                        </div>
+                    `).join('');
+                } else {
+                    // Fallback to localStorage if no data in database
+                    const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
+                    if (portfolio.length > 0) {
+                        const container = document.getElementById('portfolioGrid');
+                        container.innerHTML = portfolio.map(url => `
+                            <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1.5rem);">
+                                <img src="${url}" class="w-full h-72 object-cover rounded-xl" alt="Portfolio item">
+                            </div>
+                        `).join('');
+                    }
+                }
+                
+                // Start auto-scroll after loading
+                setTimeout(() => {
+                    startPortfolioAutoScroll();
+                }, 1000);
+            } catch (error) {
+                console.error('Error loading portfolio:', error);
+                // Fallback to localStorage on error
+                const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
+                if (portfolio.length > 0) {
+                    const container = document.getElementById('portfolioGrid');
+                    container.innerHTML = portfolio.map(url => `
+                        <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1.5rem);">
+                            <img src="${url}" class="w-full h-72 object-cover rounded-xl" alt="Portfolio item">
+                        </div>
+                    `).join('');
+                }
+                
+                // Start auto-scroll after loading
+                setTimeout(() => {
+                    startPortfolioAutoScroll();
+                }, 1000);
             }
-            
-            // Start auto-scroll after loading
-            setTimeout(() => {
-                startPortfolioAutoScroll();
-            }, 1000);
         }
         loadPortfolio();
 
