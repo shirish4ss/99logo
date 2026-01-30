@@ -719,7 +719,7 @@
         // ============================================
         async function loadAdminOrders() {
             try {
-                const { data: orders, error } = await supabaseClient
+                const { data: orders, error } = await getSupabase()
                     .from('orders')
                     .select('*')
                     .order('timestamp', { ascending: false });
@@ -945,7 +945,7 @@
         // ============================================
         async function viewOrder(index) {
             try {
-                const { data: orders, error } = await supabaseClient
+                const { data: orders, error } = await getSupabase()
                     .from('orders')
                     .select('*')
                     .order('timestamp', { ascending: false });
@@ -1019,7 +1019,7 @@
             const orderId = document.getElementById('vOrderId').value;
             
             try {
-                const { data, error } = await supabaseClient
+                const { data, error } = await getSupabase()
                     .from('orders')
                     .update({ status: 'In Progress' })
                     .eq('id', orderId)
@@ -1040,7 +1040,7 @@
             const newStatus = document.getElementById('updateStatusSelect').value;
             
             try {
-                const { data, error } = await supabaseClient
+                const { data, error } = await getSupabase()
                     .from('orders')
                     .update({ status: newStatus })
                     .eq('id', orderId)
@@ -1061,7 +1061,7 @@
         // ============================================
         async function renderClientOrders(email) {
             try {
-                const { data: orders, error } = await supabaseClient
+                const { data: orders, error } = await getSupabase()
                     .from('orders')
                     .select('*')
                     .eq('user_email', email)
