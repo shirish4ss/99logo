@@ -30,7 +30,7 @@
         .modal-overlay.active { display: flex; }
         
         /* New Styles for Features */
-        :root { --accent-color: #6366f1; } /* Default Indigo */
+        :root { --accent-color: #6366f1; }
         .theme-pink { --accent-color: #ec4899; }
         .theme-blue { --accent-color: #3b82f6; }
         .theme-green { --accent-color: #22c55e; }
@@ -46,6 +46,48 @@
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
         .notification-dot { animation: pulse-red 2s infinite; }
+        
+        /* Flash Text Animation */
+        @keyframes flash-fade {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .flash-text {
+            animation: flash-fade 3s ease-in-out infinite;
+        }
+        
+        /* Express Priority Badge */
+        .express-badge {
+            animation: pulse-red 1.5s infinite;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        /* View Mode Styles */
+        .view-mode-btn.active {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        /* List View */
+        .list-view .order-card {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+        
+        /* Kanban View */
+        .kanban-view {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+        
+        .kanban-column {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 1rem;
+            padding: 1rem;
+            min-height: 400px;
+        }
     </style>
 </head>
 <body class="bg-[#0f172a] text-white transition-colors duration-300">
@@ -56,22 +98,20 @@
             
             <div class="flex items-center gap-4">
                 
-                <!-- NEW FEATURE 5: Notification Center -->
+                <!-- Notification Center -->
                 <div class="relative group" id="notificationCenter">
                     <button class="text-gray-400 hover:text-white relative">
                         <i class="fas fa-bell text-lg"></i>
                         <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full notification-dot"></span>
                     </button>
-                    <!-- Dropdown -->
                     <div class="absolute right-0 mt-2 w-64 glass rounded-xl hidden group-hover:block p-3 shadow-xl border border-gray-700">
                         <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Notifications</h4>
                         <div class="space-y-2 text-xs max-h-64 overflow-y-auto" id="notifList">
-                            <!-- Dynamic notifications will be inserted here -->
+                            <!-- Dynamic notifications -->
                         </div>
                     </div>
                 </div>
 
-                <!-- NEW FEATURE 4: Theme Settings Trigger -->
                 <button onclick="toggleSettingsModal()" class="text-gray-400 hover:text-white" id="settingsBtn">
                     <i class="fas fa-cog text-lg"></i>
                 </button>
@@ -117,28 +157,26 @@
                 <!-- Left Sidebar -->
                 <div class="xl:col-span-1 space-y-4">
                     
-                    <!-- NEW FEATURE 2: Admin Sticky Notes -->
+                    <!-- Admin Sticky Notes -->
                     <div class="glass p-4 rounded-xl">
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="text-sm font-bold flex items-center gap-2"><i class="fas fa-sticky-note text-yellow-400"></i> Sticky Notes</h3>
                             <button onclick="addStickyNote()" class="text-xs bg-white/10 px-2 py-1 rounded hover:bg-white/20">+</button>
                         </div>
                         <div id="stickyNotesContainer" class="space-y-2 max-h-40 overflow-y-auto">
-                            <!-- Default Note -->
                             <textarea class="w-full bg-yellow-500/10 border border-yellow-500/30 rounded p-2 text-xs text-yellow-100 placeholder-yellow-200/50 resize-none" rows="2" placeholder="Type a note..."></textarea>
                         </div>
                     </div>
 
                     <h3 class="text-xl font-bold flex items-center gap-2 mt-6"><i class="fas fa-fire text-orange-500"></i> Priority Queue</h3>
                     <div id="priorityList" class="space-y-3">
-                        <!-- Injected JS -->
+                        <!-- JS Injected -->
                     </div>
 
-                    <!-- NEW FEATURE 3: Recent Activity Log -->
+                    <!-- Recent Activity Log -->
                     <div class="glass p-4 rounded-xl mt-6">
                         <h4 class="font-bold mb-3 text-sm text-gray-300">Recent Activity</h4>
                         <div class="space-y-3 relative border-l border-gray-700 ml-2 pl-4">
-                            <!-- Mock Items -->
                             <div class="relative">
                                 <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-green-500"></div>
                                 <p class="text-xs text-gray-400">Order #104 marked as <span class="text-green-400">Completed</span></p>
@@ -161,16 +199,25 @@
                 <!-- Main Area -->
                 <div class="xl:col-span-3 space-y-6">
                     
-                    <!-- NEW FEATURE 1: View Mode Toggle -->
+                    <!-- View Mode Toggle -->
                     <div class="flex gap-2 justify-end mb-4">
-                        <button onclick="toggleViewMode('grid')" class="px-3 py-1 bg-white/10 rounded-lg text-xs hover:bg-white/20"><i class="fas fa-th"></i> Grid</button>
-                        <button onclick="toggleViewMode('list')" class="px-3 py-1 bg-white/10 rounded-lg text-xs hover:bg-white/20"><i class="fas fa-list"></i> List</button>
-                        <button onclick="toggleViewMode('kanban')" class="px-3 py-1 bg-white/10 rounded-lg text-xs hover:bg-white/20"><i class="fas fa-columns"></i> Kanban</button>
+                        <button onclick="setViewMode('grid')" class="view-mode-btn px-3 py-1 bg-white/10 rounded-lg text-xs hover:bg-white/20 active" id="gridBtn">
+                            <i class="fas fa-th"></i> Grid
+                        </button>
+                        <button onclick="setViewMode('list')" class="view-mode-btn px-3 py-1 bg-white/10 rounded-lg text-xs hover:bg-white/20" id="listBtn">
+                            <i class="fas fa-list"></i> List
+                        </button>
+                        <button onclick="setViewMode('kanban')" class="view-mode-btn px-3 py-1 bg-white/10 rounded-lg text-xs hover:bg-white/20" id="kanbanBtn">
+                            <i class="fas fa-columns"></i> Kanban
+                        </button>
                     </div>
 
-                    <!-- Orders Grid -->
-                    <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        <!-- JS Injects Here -->
+                    <!-- Orders Container -->
+                    <div id="ordersContainer">
+                        <!-- Grid View (Default) -->
+                        <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            <!-- JS Injects Here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -179,15 +226,39 @@
         <!-- ================= CLIENT AREA ================= -->
         <div id="clientView" class="hidden">
             
+            <!-- Flash Messages -->
+            <div class="glass p-6 rounded-2xl mb-6 border-l-4 border-indigo-500">
+                <div class="flex items-start gap-4">
+                    <i class="fas fa-info-circle text-2xl text-indigo-400 mt-1"></i>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-300 flash-text font-medium leading-relaxed" id="flashMessage">
+                            Please be patient while we create your perfect design. Our working hours are 10 AM - 6 PM (Monday-Friday). We'll notify you once your design is ready!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Progress Box -->
             <div id="clientProgress" class="glass p-8 rounded-2xl mb-8 hidden">
                 <h3 class="text-xl font-bold mb-4 text-indigo-400">Project Progress</h3>
                 <div class="relative h-6 bg-black/50 rounded-full overflow-hidden mb-2">
                     <div id="progBar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500" style="width: 10%;"></div>
                 </div>
-                <div class="flex justify-between items-center text-xs">
+                <div class="flex justify-between items-center text-xs mb-4">
                     <span id="progLabel" class="text-gray-400">Payment Verification</span>
                     <span id="progPercent" class="font-bold text-white">10%</span>
+                </div>
+                
+                <!-- Working Hours Timer -->
+                <div id="workingHoursTimer" class="mt-6 p-4 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-xl border border-purple-500/30">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-400 mb-1">Time Remaining (Working Hours)</p>
+                            <p class="text-2xl font-bold" id="timerDisplay">--:--:--</p>
+                            <p class="text-xs text-gray-500 mt-1" id="timerStatus">Calculating...</p>
+                        </div>
+                        <i class="fas fa-clock text-4xl text-purple-400 opacity-50"></i>
+                    </div>
                 </div>
             </div>
 
@@ -226,6 +297,7 @@
                 <div><strong class="text-gray-400">Colors:</strong> <span id="vColors"></span></div>
                 <div><strong class="text-gray-400">Vibe:</strong> <span id="vVibe"></span></div>
                 <div><strong class="text-gray-400">Package:</strong> <span id="vPackage"></span></div>
+                <div class="col-span-2"><strong class="text-gray-400">Add-ons:</strong> <span id="vAddons" class="text-white"></span></div>
                 <div class="col-span-2"><strong class="text-gray-400">Delivery:</strong> <span id="vDelivery"></span></div>
                 <div class="col-span-2"><strong class="text-gray-400">Ideas/Notes:</strong> <p class="mt-1 bg-white/5 p-2 rounded" id="vNotes"></p></div>
                 <div class="col-span-2"><strong class="text-gray-400">TX ID:</strong> <code class="bg-black/50 px-2 py-1 rounded" id="vTx"></code></div>
@@ -253,7 +325,7 @@
         </div>
     </div>
 
-    <!-- Settings Modal (NEW FEATURE 4) -->
+    <!-- Settings Modal -->
     <div id="settingsModal" class="modal-overlay">
         <div class="glass max-w-md w-full mx-4 p-8 rounded-2xl relative">
             <button onclick="toggleSettingsModal()" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white">&times;</button>
@@ -281,11 +353,108 @@
         const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
 
-        // Initialize Supabase Client
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ============================================
-        // LOAD DASHBOARD FROM SUPABASE
+        // GLOBAL VARIABLES
+        // ============================================
+        let currentViewMode = 'grid';
+        let allOrders = [];
+        let flashMessages = [
+            "Please be patient while we create your perfect design. Our working hours are 10 AM - 6 PM (Monday-Friday). We'll notify you once your design is ready!",
+            "Avoid sending multiple messages. We're working on your logo and will reach out once it's complete.",
+            "Working hours: 10 AM - 6 PM, Monday to Friday. Weekend orders will be processed on Monday.",
+            "Quality takes time! We'll deliver your design within the promised timeline. Thank you for your patience.",
+            "Our designers are crafting something amazing for you. We'll contact you as soon as it's ready!"
+        ];
+        let currentFlashIndex = 0;
+
+        // ============================================
+        // PACKAGE PRICING
+        // ============================================
+        const PACKAGE_PRICES = {
+            'Basic': 99,
+            'Standard': 150,
+            'Premium': 200
+        };
+
+        const ADDON_PRICES = {
+            'Social Media Kit': 100,
+            'Visiting Card': 50,
+            'Express Delivery (5 Hours)': 100,
+            'Express': 100
+        };
+
+        // ============================================
+        // WORKING HOURS CALCULATOR
+        // ============================================
+        function isWorkingHour(date) {
+            const day = date.getDay(); // 0 = Sunday, 6 = Saturday
+            const hour = date.getHours();
+            
+            // Monday to Friday (1-5), 10 AM to 6 PM
+            return day >= 1 && day <= 5 && hour >= 10 && hour < 18;
+        }
+
+        function calculateWorkingHoursRemaining(startTimestamp, totalWorkingHours) {
+            const start = new Date(startTimestamp);
+            const now = new Date();
+            
+            let workingHoursElapsed = 0;
+            let currentTime = new Date(start);
+            
+            // Calculate elapsed working hours
+            while (currentTime < now) {
+                if (isWorkingHour(currentTime)) {
+                    workingHoursElapsed += 1;
+                }
+                currentTime = new Date(currentTime.getTime() + 60 * 60 * 1000); // Add 1 hour
+            }
+            
+            const remaining = Math.max(0, totalWorkingHours - workingHoursElapsed);
+            return { remaining, elapsed: workingHoursElapsed };
+        }
+
+        function formatTime(hours) {
+            const days = Math.floor(hours / 8);
+            const remainingHours = Math.floor(hours % 8);
+            const minutes = Math.floor((hours % 1) * 60);
+            
+            if (days > 0) {
+                return `${days}d ${remainingHours}h ${minutes}m`;
+            }
+            return `${remainingHours}h ${minutes}m`;
+        }
+
+        // ============================================
+        // CALCULATE ORDER PRICE
+        // ============================================
+        function calculateOrderPrice(order) {
+            let price = PACKAGE_PRICES[order.package_type] || 0;
+            
+            if (order.addons && order.addons !== 'None') {
+                const addons = order.addons.split(',').map(a => a.trim());
+                addons.forEach(addon => {
+                    // Check for express
+                    if (addon.toLowerCase().includes('express')) {
+                        price += ADDON_PRICES['Express'];
+                    }
+                    // Check for social media kit
+                    else if (addon.toLowerCase().includes('social')) {
+                        price += ADDON_PRICES['Social Media Kit'];
+                    }
+                    // Check for visiting card
+                    else if (addon.toLowerCase().includes('visiting') || addon.toLowerCase().includes('card')) {
+                        price += ADDON_PRICES['Visiting Card'];
+                    }
+                });
+            }
+            
+            return price;
+        }
+
+        // ============================================
+        // LOAD DASHBOARD
         // ============================================
         async function loadDashboard() {
             const userStr = localStorage.getItem('currentUser');
@@ -303,15 +472,32 @@
             } else {
                 document.getElementById('clientView').classList.remove('hidden');
                 await renderClientOrders(user.email);
+                startFlashMessages();
             }
         }
 
         // ============================================
-        // LOAD ADMIN ORDERS FROM SUPABASE
+        // FLASH MESSAGES FOR CLIENTS
+        // ============================================
+        function startFlashMessages() {
+            setInterval(() => {
+                currentFlashIndex = (currentFlashIndex + 1) % flashMessages.length;
+                const msgEl = document.getElementById('flashMessage');
+                if (msgEl) {
+                    msgEl.style.opacity = '0';
+                    setTimeout(() => {
+                        msgEl.textContent = flashMessages[currentFlashIndex];
+                        msgEl.style.opacity = '1';
+                    }, 300);
+                }
+            }, 8000);
+        }
+
+        // ============================================
+        // LOAD ADMIN ORDERS
         // ============================================
         async function loadAdminOrders() {
             try {
-                // Fetch all orders from Supabase
                 const { data: orders, error } = await supabaseClient
                     .from('orders')
                     .select('*')
@@ -323,22 +509,17 @@
                     return;
                 }
 
-                console.log('Loaded orders from Supabase:', orders);
+                allOrders = orders || [];
+                console.log('Loaded orders:', allOrders);
 
                 // Calculate stats
-                const total = orders.length;
-                const pending = orders.filter(o => o.status === 'In Progress').length;
-                const unpaid = orders.filter(o => o.status === 'Unconfirmed').length;
+                const total = allOrders.length;
+                const pending = allOrders.filter(o => o.status === 'In Progress').length;
+                const unpaid = allOrders.filter(o => o.status === 'Unconfirmed').length;
                 
-                const packages = { Essential: 1999, Professional: 2999, Premium: 4999 };
-                const earnings = orders.reduce((sum, o) => {
-                    let price = packages[o.package_type] || 0;
-                    if (o.addons && o.addons.includes('Express')) price += 500;
-                    if (o.addons && o.addons.includes('AI Mockup')) price += 299;
-                    if (o.addons && o.addons.includes('3D Mockup')) price += 599;
-                    if (o.addons && o.addons.includes('Color Palette')) price += 99;
-                    if (o.addons && o.addons.includes('Social Kit')) price += 499;
-                    return sum + price;
+                // Calculate total earnings
+                const earnings = allOrders.reduce((sum, order) => {
+                    return sum + calculateOrderPrice(order);
                 }, 0);
 
                 document.getElementById('stat-total').innerText = total;
@@ -347,23 +528,108 @@
                 document.getElementById('totalEarnings').innerText = '₹' + earnings.toLocaleString();
 
                 // Render orders
-                renderAdminOrders(orders);
-                renderPriorityQueue(orders);
+                renderOrders();
+                renderPriorityQueue();
             } catch (error) {
                 console.error('Error in loadAdminOrders:', error);
                 alert('Error loading dashboard');
             }
         }
 
-        function renderAdminOrders(orders) {
-            const container = document.getElementById('ordersGrid');
+        // ============================================
+        // PRIORITY QUEUE (ISSUE #4 FIX)
+        // ============================================
+        function renderPriorityQueue() {
+            const now = new Date();
             
-            if (orders.length === 0) {
+            // Filter active orders (Unconfirmed or In Progress)
+            const activeOrders = allOrders.filter(o => 
+                o.status === 'Unconfirmed' || o.status === 'In Progress'
+            );
+
+            // Sort by priority:
+            // 1. Express orders first
+            // 2. Then by time remaining (oldest first)
+            const priorityOrders = activeOrders.sort((a, b) => {
+                const aIsExpress = a.addons && a.addons.toLowerCase().includes('express');
+                const bIsExpress = b.addons && b.addons.toLowerCase().includes('express');
+                
+                // Express orders go first
+                if (aIsExpress && !bIsExpress) return -1;
+                if (!aIsExpress && bIsExpress) return 1;
+                
+                // Then sort by timestamp (oldest first)
+                return a.timestamp - b.timestamp;
+            }).slice(0, 5);
+
+            const container = document.getElementById('priorityList');
+            
+            if (priorityOrders.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">No urgent orders</p>';
+                return;
+            }
+
+            container.innerHTML = priorityOrders.map((o, idx) => {
+                const isExpress = o.addons && o.addons.toLowerCase().includes('express');
+                const workingHours = isExpress ? 5 : 48;
+                const { remaining } = calculateWorkingHoursRemaining(o.timestamp, workingHours);
+                
+                return `
+                    <div class="glass p-3 rounded-xl border-l-4 ${o.status === 'Unconfirmed' ? 'border-red-500' : 'border-yellow-500'} ${isExpress ? 'express-badge' : ''} relative">
+                        ${isExpress ? '<div class="absolute top-2 right-2"><i class="fas fa-bolt text-yellow-300 text-xs"></i></div>' : ''}
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-sm">${o.brand_name}</h4>
+                                <p class="text-xs text-gray-500">${o.client_name}</p>
+                                <p class="text-xs text-gray-400 mt-1">${formatTime(remaining)} left</p>
+                            </div>
+                            <span class="text-xs px-2 py-1 bg-white/10 rounded">${o.status === 'Unconfirmed' ? '⚠️ New' : '🔥 Active'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // VIEW MODE SWITCHING (ISSUE #3 FIX)
+        // ============================================
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            
+            // Update button states
+            ['gridBtn', 'listBtn', 'kanbanBtn'].forEach(id => {
+                document.getElementById(id).classList.remove('active');
+            });
+            document.getElementById(mode + 'Btn').classList.add('active');
+            
+            renderOrders();
+        }
+
+        // ============================================
+        // RENDER ORDERS (ALL VIEW MODES)
+        // ============================================
+        function renderOrders() {
+            const container = document.getElementById('ordersContainer');
+            
+            if (allOrders.length === 0) {
                 container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-12">No orders yet</div>';
                 return;
             }
 
-            container.innerHTML = orders.map((o, idx) => {
+            if (currentViewMode === 'grid') {
+                renderGridView(container);
+            } else if (currentViewMode === 'list') {
+                renderListView(container);
+            } else if (currentViewMode === 'kanban') {
+                renderKanbanView(container);
+            }
+        }
+
+        function renderGridView(container) {
+            container.innerHTML = `<div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>`;
+            const grid = container.querySelector('#ordersGrid');
+            
+            grid.innerHTML = allOrders.map((o, idx) => {
                 const statusColors = {
                     'Unconfirmed': 'bg-red-500/20 text-red-400 border-red-500',
                     'In Progress': 'bg-yellow-500/20 text-yellow-400 border-yellow-500',
@@ -371,12 +637,15 @@
                     'Completed': 'bg-green-500/20 text-green-400 border-green-500'
                 };
 
+                const isExpress = o.addons && o.addons.toLowerCase().includes('express');
+
                 return `
-                    <div class="glass p-5 rounded-xl border border-white/10 hover:border-white/30 transition cursor-pointer" onclick="viewOrder(${idx})">
+                    <div class="glass p-5 rounded-xl border border-white/10 hover:border-white/30 transition cursor-pointer relative" onclick="viewOrder(${idx})">
+                        ${isExpress ? '<div class="absolute top-3 right-3"><i class="fas fa-bolt text-yellow-400 text-lg"></i></div>' : ''}
                         <div class="flex justify-between items-start mb-3">
                             <div>
                                 <h3 class="font-bold text-lg">${o.brand_name}</h3>
-                                <p class="text-xs text-gray-500">#${o.order_number}</p>
+                                <p class="text-xs text-gray-500">${o.order_number}</p>
                             </div>
                             <span class="px-2 py-1 ${statusColors[o.status] || 'bg-gray-500/20 text-gray-400'} border rounded-full text-[10px] font-bold">${o.status}</span>
                         </div>
@@ -400,34 +669,61 @@
             }).join('');
         }
 
-        function renderPriorityQueue(orders) {
-            const priorityOrders = orders
-                .filter(o => o.status === 'Unconfirmed' || o.status === 'In Progress')
-                .slice(0, 5);
-
-            const container = document.getElementById('priorityList');
+        function renderListView(container) {
+            container.innerHTML = '<div id="ordersList" class="space-y-3"></div>';
+            const list = container.querySelector('#ordersList');
             
-            if (priorityOrders.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-sm">No urgent orders</p>';
-                return;
-            }
-
-            container.innerHTML = priorityOrders.map((o, idx) => `
-                <div class="glass p-3 rounded-xl border-l-4 ${o.status === 'Unconfirmed' ? 'border-red-500' : 'border-yellow-500'}">
-                    <div class="flex justify-between items-start">
+            list.innerHTML = allOrders.map((o, idx) => {
+                const isExpress = o.addons && o.addons.toLowerCase().includes('express');
+                return `
+                    <div class="glass p-4 rounded-xl flex items-center gap-4 hover:border-white/30 border border-white/10 cursor-pointer" onclick="viewOrder(${idx})">
+                        ${isExpress ? '<i class="fas fa-bolt text-yellow-400 text-xl"></i>' : '<i class="fas fa-box text-gray-500"></i>'}
                         <div class="flex-1">
-                            <h4 class="font-bold text-sm">${o.brand_name}</h4>
-                            <p class="text-xs text-gray-500">${o.client_name}</p>
+                            <h3 class="font-bold">${o.brand_name} <span class="text-xs text-gray-500">${o.order_number}</span></h3>
+                            <p class="text-xs text-gray-400">${o.client_name} • ${o.package_type} • ${o.date}</p>
                         </div>
-                        <span class="text-xs px-2 py-1 bg-white/10 rounded">${o.status === 'Unconfirmed' ? '⚠️ New' : '🔥 Active'}</span>
+                        <span class="px-3 py-1 bg-white/10 rounded-full text-xs">${o.status}</span>
+                        <button class="px-4 py-2 bg-indigo-500/20 text-indigo-400 rounded-lg text-xs font-bold">View</button>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
+        function renderKanbanView(container) {
+            const statuses = ['Unconfirmed', 'In Progress', 'Sent for Approval', 'Completed'];
+            
+            container.innerHTML = '<div class="kanban-view"></div>';
+            const kanban = container.querySelector('.kanban-view');
+            
+            kanban.innerHTML = statuses.map(status => {
+                const statusOrders = allOrders.filter(o => o.status === status);
+                return `
+                    <div class="kanban-column">
+                        <h3 class="font-bold mb-4 text-sm uppercase tracking-wide">${status} (${statusOrders.length})</h3>
+                        <div class="space-y-3">
+                            ${statusOrders.map((o, idx) => {
+                                const globalIdx = allOrders.findIndex(order => order.id === o.id);
+                                const isExpress = o.addons && o.addons.toLowerCase().includes('express');
+                                return `
+                                    <div class="glass p-3 rounded-xl cursor-pointer hover:border-white/30 border border-white/10" onclick="viewOrder(${globalIdx})">
+                                        ${isExpress ? '<div class="text-right mb-1"><i class="fas fa-bolt text-yellow-400 text-xs"></i></div>' : ''}
+                                        <h4 class="font-bold text-sm">${o.brand_name}</h4>
+                                        <p class="text-xs text-gray-500">${o.client_name}</p>
+                                        <p class="text-xs text-gray-400 mt-1">${o.package_type}</p>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // VIEW ORDER MODAL (ISSUE #1 FIX - SHOW ADDONS)
+        // ============================================
         async function viewOrder(index) {
             try {
-                // Fetch all orders again to ensure we have latest data
                 const { data: orders, error } = await supabaseClient
                     .from('orders')
                     .select('*')
@@ -441,7 +737,7 @@
                     return;
                 }
 
-                // Populate modal with order data
+                // Populate modal
                 document.getElementById('vId').innerText = o.order_number;
                 document.getElementById('vClient').innerText = o.client_name;
                 document.getElementById('vContact').innerText = o.contact;
@@ -453,24 +749,21 @@
                 document.getElementById('vVibe').innerText = o.vibe;
                 document.getElementById('vPackage').innerText = o.package_type;
                 
-                // Calculate delivery info
-                const isExpress = o.addons && o.addons.includes('Express');
-                const hoursPerDay = 8;
-                const workingHours = isExpress ? 5 : 48;
-                const deliveryDays = Math.ceil(workingHours / hoursPerDay);
+                // FIX #1: Display add-ons properly
+                const addonsText = o.addons && o.addons !== 'None' ? o.addons : 'None selected';
+                document.getElementById('vAddons').innerText = addonsText;
                 
-                let deliveryText = isExpress ? '⚡ 5 Working Hours (Express)' : `48 Working Hours (~${deliveryDays} working days)`;
+                // Calculate delivery info
+                const isExpress = o.addons && o.addons.toLowerCase().includes('express');
+                const workingHours = isExpress ? 5 : 48;
+                
+                let deliveryText = isExpress ? '⚡ 5 Working Hours (Express)' : '48 Working Hours';
                 
                 if (o.timestamp && o.status !== 'Unconfirmed') {
-                    const startTime = new Date(o.timestamp);
-                    const now = new Date();
-                    const hoursElapsed = (now - startTime) / (1000 * 60 * 60);
-                    const hoursRemaining = Math.max(0, workingHours - hoursElapsed);
+                    const { remaining } = calculateWorkingHoursRemaining(o.timestamp, workingHours);
                     
-                    if (hoursRemaining > 0 && o.status !== 'Completed') {
-                        const daysRemaining = Math.floor(hoursRemaining / hoursPerDay);
-                        const remainingHours = Math.ceil(hoursRemaining % hoursPerDay);
-                        deliveryText += ` | ⏱️ ${daysRemaining}d ${remainingHours}h remaining`;
+                    if (remaining > 0 && o.status !== 'Completed') {
+                        deliveryText += ` | ⏱️ ${formatTime(remaining)} remaining`;
                     } else if (o.status === 'Completed') {
                         deliveryText += ' | ✅ Delivered';
                     }
@@ -482,7 +775,7 @@
                 document.getElementById('vPayStatus').innerText = o.status === 'Unconfirmed' ? 'Pending Verification' : 'Paid & Verified';
                 document.getElementById('vStatus').innerText = o.status;
                 document.getElementById('vIndex').value = index;
-                document.getElementById('vOrderId').value = o.id; // Store the database ID
+                document.getElementById('vOrderId').value = o.id;
                 document.getElementById('vWa').href = `https://wa.me/${o.contact.replace(/\D/g,'')}`;
 
                 // Admin Verification Gate
@@ -493,9 +786,7 @@
                     vBtn.classList.add('hidden');
                 }
 
-                // Set current status in dropdown
                 document.getElementById('updateStatusSelect').value = o.status;
-
                 document.getElementById('viewModal').classList.add('active');
             } catch (error) {
                 console.error('Error viewing order:', error);
@@ -544,9 +835,11 @@
             }
         }
 
+        // ============================================
+        // CLIENT DASHBOARD (ISSUE #6 & #7 FIX)
+        // ============================================
         async function renderClientOrders(email) {
             try {
-                // Fetch orders for this client from Supabase
                 const { data: orders, error } = await supabaseClient
                     .from('orders')
                     .select('*')
@@ -557,8 +850,6 @@
                     console.error('Error fetching client orders:', error);
                     return;
                 }
-
-                console.log('Client orders:', orders);
 
                 const container = document.getElementById('clientOrdersContainer');
                 
@@ -588,6 +879,11 @@
                     document.getElementById('progBar').style.width = percent + '%';
                     document.getElementById('progPercent').innerText = percent + '%';
                     document.getElementById('progLabel').innerText = label;
+
+                    // FIX #7: Working Hours Timer
+                    if (active.status !== 'Unconfirmed' && active.status !== 'Completed') {
+                        startWorkingHoursTimer(active);
+                    }
                 }
 
                 if (orders.length === 0) {
@@ -599,7 +895,7 @@
                     <div class="glass p-6 rounded-2xl border border-white/10 relative overflow-hidden">
                         <div class="flex justify-between items-start mb-4">
                             <div>
-                                <h3 class="text-xl font-bold">${o.brand_name} <span class="text-xs text-gray-500 font-normal">#${o.order_number}</span></h3>
+                                <h3 class="text-xl font-bold">${o.brand_name} <span class="text-xs text-gray-500 font-normal">${o.order_number}</span></h3>
                                 <p class="text-xs text-gray-400">Targeting: ${o.audience || 'General'}</p>
                             </div>
                             <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-widest">${o.status}</span>
@@ -617,7 +913,7 @@
                                  </div>
                                  <div class="bg-white/5 p-3 rounded-xl text-center">
                                     <p class="text-[10px] text-gray-500 uppercase">Delivery</p>
-                                    <p class="text-sm font-bold">${o.addons && o.addons.includes('Express') ? '⚡ 5 Hours' : '48 Hours'}</p>
+                                    <p class="text-sm font-bold">${o.addons && o.addons.toLowerCase().includes('express') ? '⚡ 5 Hours' : '48 Hours'}</p>
                                  </div>
                                  ${o.addons && o.addons !== 'None' ? `
                                  <div class="bg-white/5 p-3 rounded-xl col-span-2">
@@ -634,6 +930,35 @@
             }
         }
 
+        // FIX #7: Working Hours Timer
+        function startWorkingHoursTimer(order) {
+            const isExpress = order.addons && order.addons.toLowerCase().includes('express');
+            const totalHours = isExpress ? 5 : 48;
+            
+            function updateTimer() {
+                const now = new Date();
+                const { remaining } = calculateWorkingHoursRemaining(order.timestamp, totalHours);
+                
+                const timerDisplay = document.getElementById('timerDisplay');
+                const timerStatus = document.getElementById('timerStatus');
+                
+                if (timerDisplay) {
+                    timerDisplay.textContent = formatTime(remaining);
+                    
+                    if (isWorkingHour(now)) {
+                        timerStatus.textContent = '🟢 Working hours - Timer active';
+                        timerStatus.className = 'text-xs text-green-400 mt-1';
+                    } else {
+                        timerStatus.textContent = '🔴 Outside working hours - Timer paused (Mon-Fri, 10AM-6PM)';
+                        timerStatus.className = 'text-xs text-red-400 mt-1';
+                    }
+                }
+            }
+            
+            updateTimer();
+            setInterval(updateTimer, 60000); // Update every minute
+        }
+
         function logout() {
             localStorage.removeItem('currentUser');
             window.location.href = 'login.html';
@@ -647,7 +972,6 @@
             toggleSettingsModal();
         }
         
-        // Mock Admin Functions
         function addStickyNote() {
             const container = document.getElementById('stickyNotesContainer');
             const note = document.createElement('textarea');
@@ -655,10 +979,6 @@
             note.rows = 2; 
             note.placeholder = "New note...";
             container.prepend(note);
-        }
-
-        function toggleViewMode(mode) {
-            alert("Switching view to " + mode);
         }
 
         function printInvoice() {
