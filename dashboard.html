@@ -1058,8 +1058,8 @@
             alert("Print invoice feature - to be implemented");
         }
 
-        // Portfolio Management Functions
-        function addPortfolioItem() {
+        // Portfolio Management Functions (SUPABASE VERSION)
+        async function addPortfolioItem() {
             const urlInput = document.getElementById('portfolioUrl');
             const url = urlInput.value.trim();
             
@@ -1076,23 +1076,47 @@
                 return;
             }
             
-            // Get existing portfolio
-            const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
-            
-            // Add new item
-            portfolio.push(url);
-            localStorage.setItem('pixelPortfolio', JSON.stringify(portfolio));
-            
-            // Clear input
-            urlInput.value = '';
-            
-            // Refresh portfolio list
-            loadPortfolioList();
-            
-            alert("✅ Portfolio item added successfully!");
+            try {
+                // Check if supabase is initialized
+                if (!supabaseClient) {
+                    alert("❌ Database connection error. Please refresh the page.");
+                    return;
+                }
+                
+                // Insert into Supabase database
+                const { data, error } = await supabaseClient
+                    .from('portfolio')
+                    .insert([
+                        { 
+                            image_url: url,
+                            created_at: new Date().toISOString()
+                        }
+                    ])
+                    .select();
+                
+                if (error) {
+                    console.error('Error adding portfolio item:', error);
+                    alert("❌ Error adding portfolio item: " + error.message);
+                    return;
+                }
+                
+                console.log('Portfolio item added:', data);
+                
+                // Clear input
+                urlInput.value = '';
+                
+                // Refresh portfolio list
+                await loadPortfolioList();
+                
+                alert("✅ Portfolio item added successfully!");
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert("❌ Error: " + error.message);
+            }
         }
 
-        function loadPortfolioList() {
+        async function loadPortfolioList() {
             try {
                 const container = document.getElementById('portfolioItemsList');
                 if (!container) {
@@ -1100,37 +1124,80 @@
                     return;
                 }
                 
-                const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
+                // Check if supabase is initialized
+                if (!supabaseClient) {
+                    console.log('Supabase not initialized yet');
+                    container.innerHTML = '<p class="text-xs text-gray-500 text-center py-2">Loading...</p>';
+                    return;
+                }
                 
-                if (portfolio.length === 0) {
+                // Fetch from Supabase database
+                const { data: portfolio, error } = await supabaseClient
+                    .from('portfolio')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    console.error('Error loading portfolio:', error);
+                    container.innerHTML = '<p class="text-xs text-red-500 text-center py-2">Error loading portfolio</p>';
+                    return;
+                }
+                
+                if (!portfolio || portfolio.length === 0) {
                     container.innerHTML = '<p class="text-xs text-gray-500 text-center py-2">No portfolio items yet</p>';
                     return;
                 }
                 
-                container.innerHTML = portfolio.map((url, index) => `
+                container.innerHTML = portfolio.map((item) => `
                     <div class="flex items-center gap-2 bg-black/30 p-2 rounded border border-gray-700">
-                        <img src="${url}" class="w-12 h-12 object-cover rounded" alt="Portfolio ${index + 1}">
+                        <img src="${item.image_url}" class="w-12 h-12 object-cover rounded" alt="Portfolio" onerror="this.src='https://via.placeholder.com/48?text=Error'">
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs text-gray-400 truncate">${url}</p>
+                            <p class="text-xs text-gray-400 truncate">${item.image_url}</p>
                         </div>
-                        <button onclick="removePortfolioItem(${index})" class="text-red-400 hover:text-red-300 text-xs px-2 py-1">
+                        <button onclick="removePortfolioItem('${item.id}')" class="text-red-400 hover:text-red-300 text-xs px-2 py-1">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 `).join('');
+                
+                console.log('Portfolio loaded:', portfolio.length, 'items');
+                
             } catch (error) {
                 console.error('Error loading portfolio:', error);
             }
         }
 
-        function removePortfolioItem(index) {
+        async function removePortfolioItem(itemId) {
             if (!confirm('Remove this portfolio item?')) return;
             
-            const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
-            portfolio.splice(index, 1);
-            localStorage.setItem('pixelPortfolio', JSON.stringify(portfolio));
-            
-            loadPortfolioList();
+            try {
+                // Check if supabase is initialized
+                if (!supabaseClient) {
+                    alert("❌ Database connection error. Please refresh the page.");
+                    return;
+                }
+                
+                // Delete from Supabase database
+                const { error } = await supabaseClient
+                    .from('portfolio')
+                    .delete()
+                    .eq('id', itemId);
+                
+                if (error) {
+                    console.error('Error deleting portfolio item:', error);
+                    alert("❌ Error deleting item: " + error.message);
+                    return;
+                }
+                
+                console.log('Portfolio item deleted:', itemId);
+                
+                // Refresh portfolio list
+                await loadPortfolioList();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert("❌ Error: " + error.message);
+            }
         }
 
         // Initialize
