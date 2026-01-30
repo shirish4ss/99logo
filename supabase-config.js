@@ -177,6 +177,61 @@ async function updateOrderByOrderNumber(orderNumber, updates) {
 }
 
 // ============================================
+// PORTFOLIO MANAGEMENT FUNCTIONS
+// ============================================
+
+// 9. ADD PORTFOLIO ITEM TO SUPABASE
+async function addPortfolioItemToSupabase(imageUrl) {
+    try {
+        const { data, error } = await supabase
+            .from('portfolio')
+            .insert([{ 
+                image_url: imageUrl,
+                created_at: new Date().toISOString()
+            }])
+            .select();
+        
+        if (error) throw error;
+        return { success: true, data: data[0] };
+    } catch (error) {
+        console.error('Error adding portfolio item:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// 10. GET ALL PORTFOLIO ITEMS
+async function getAllPortfolioItems() {
+    try {
+        const { data, error } = await supabase
+            .from('portfolio')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return { success: true, data: data || [] };
+    } catch (error) {
+        console.error('Error fetching portfolio:', error);
+        return { success: false, error: error.message, data: [] };
+    }
+}
+
+// 11. DELETE PORTFOLIO ITEM
+async function deletePortfolioItem(itemId) {
+    try {
+        const { error } = await supabase
+            .from('portfolio')
+            .delete()
+            .eq('id', itemId);
+        
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting portfolio item:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// ============================================
 // MIGRATION HELPER (OPTIONAL)
 // ============================================
 // Use this to migrate existing localStorage data to Supabase
@@ -221,6 +276,15 @@ async function migrateLocalStorageToSupabase() {
                 });
             }
             console.log('Users migrated successfully');
+        }
+        
+        // Migrate Portfolio
+        const localPortfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
+        if (localPortfolio.length > 0) {
+            for (const url of localPortfolio) {
+                await addPortfolioItemToSupabase(url);
+            }
+            console.log('Portfolio migrated successfully');
         }
         
         return { success: true, message: 'Migration complete' };
