@@ -281,38 +281,39 @@
             </div>
 
             <!-- Portfolio Carousel Container -->
-            <div class="relative">
+            <div class="relative px-16">
                 <!-- Left Arrow -->
-                <button onclick="scrollPortfolio('left')" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full glass flex items-center justify-center text-white hover:bg-white/10 transition-all">
+                <button onclick="scrollPortfolio('left')" class="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full glass flex items-center justify-center text-white hover:bg-indigo-500 transition-all shadow-lg">
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 
                 <!-- Scrollable Container -->
-                <div id="portfolioContainer" class="overflow-x-auto scrollbar-hide scroll-smooth" style="scrollbar-width: none; -ms-overflow-style: none;">
-                    <div id="portfolioGrid" class="flex gap-6 px-12">
+                <div id="portfolioContainer" class="overflow-hidden" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <div id="portfolioGrid" class="flex gap-8 transition-transform duration-700 ease-in-out">
                         <!-- Default fallback images -->
-                        <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1rem);">
+                        <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1.5rem);">
                              <img src="https://images.unsplash.com/photo-1626785774573-4b799314346d?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
                         </div>
-                        <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1rem);">
+                        <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1.5rem);">
                              <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
                         </div>
-                        <div class="glass p-2 rounded-2xl reveal hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1rem);">
+                        <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1.5rem);">
                              <img src="https://images.unsplash.com/photo-1572044162444-ad60f128bdea?q=80&w=800&auto=format&fit=crop" class="w-full h-72 object-cover rounded-xl">
                         </div>
                     </div>
                 </div>
                 
                 <!-- Right Arrow -->
-                <button onclick="scrollPortfolio('right')" class="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full glass flex items-center justify-center text-white hover:bg-white/10 transition-all">
+                <button onclick="scrollPortfolio('right')" class="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full glass flex items-center justify-center text-white hover:bg-indigo-500 transition-all shadow-lg">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
             
             <style>
                 .scrollbar-hide::-webkit-scrollbar { display: none; }
+                #portfolioContainer::-webkit-scrollbar { display: none; }
                 @media (max-width: 768px) {
-                    #portfolioGrid > div { width: 80% !important; }
+                    #portfolioGrid > div { width: 90% !important; }
                 }
             </style>
         </div>
@@ -697,45 +698,72 @@
         });
 
         // --- PORTFOLIO CAROUSEL ---
+        let currentPortfolioIndex = 0;
+        let portfolioAutoScrollInterval = null;
+        let portfolioDirection = 1; // 1 for right, -1 for left
+        
         function scrollPortfolio(direction) {
-            const container = document.getElementById('portfolioContainer');
-            const scrollAmount = container.offsetWidth / 3; // Scroll by 1 item width
+            const grid = document.getElementById('portfolioGrid');
+            const items = grid.children;
+            const totalItems = items.length;
+            
+            if (totalItems === 0) return;
             
             if (direction === 'left') {
-                container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                currentPortfolioIndex = (currentPortfolioIndex - 1 + totalItems) % totalItems;
             } else {
-                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                currentPortfolioIndex = (currentPortfolioIndex + 1) % totalItems;
             }
+            
+            updatePortfolioPosition();
+        }
+        
+        function updatePortfolioPosition() {
+            const grid = document.getElementById('portfolioGrid');
+            const items = grid.children;
+            
+            if (items.length === 0) return;
+            
+            // Calculate translate amount (each item is 33.333% + gap)
+            const translatePercent = currentPortfolioIndex * -33.333;
+            const gapAdjustment = currentPortfolioIndex * -2; // Adjust for gap-8 (2rem)
+            
+            grid.style.transform = `translateX(calc(${translatePercent}% + ${gapAdjustment}rem))`;
         }
 
-        // Auto-scroll portfolio slowly
-        let portfolioAutoScroll = setInterval(() => {
-            const container = document.getElementById('portfolioContainer');
-            if (container) {
-                container.scrollBy({ left: 2, behavior: 'auto' });
+        // Slower bidirectional auto-scroll
+        function startPortfolioAutoScroll() {
+            portfolioAutoScrollInterval = setInterval(() => {
+                const grid = document.getElementById('portfolioGrid');
+                const items = grid.children;
+                const totalItems = items.length;
                 
-                // Reset to start when reaching end
-                if (container.scrollLeft >= container.scrollWidth - container.offsetWidth - 10) {
-                    container.scrollTo({ left: 0, behavior: 'smooth' });
+                if (totalItems <= 3) return; // Don't scroll if 3 or fewer items
+                
+                currentPortfolioIndex += portfolioDirection;
+                
+                // Change direction at boundaries
+                if (currentPortfolioIndex >= totalItems - 3) {
+                    portfolioDirection = -1;
+                    currentPortfolioIndex = totalItems - 3;
+                } else if (currentPortfolioIndex <= 0) {
+                    portfolioDirection = 1;
+                    currentPortfolioIndex = 0;
                 }
-            }
-        }, 50); // Slow continuous scroll
+                
+                updatePortfolioPosition();
+            }, 3000); // Move every 3 seconds (much slower)
+        }
 
         // Pause auto-scroll on hover
         document.getElementById('portfolioContainer')?.addEventListener('mouseenter', () => {
-            clearInterval(portfolioAutoScroll);
+            if (portfolioAutoScrollInterval) {
+                clearInterval(portfolioAutoScrollInterval);
+            }
         });
         
         document.getElementById('portfolioContainer')?.addEventListener('mouseleave', () => {
-            portfolioAutoScroll = setInterval(() => {
-                const container = document.getElementById('portfolioContainer');
-                if (container) {
-                    container.scrollBy({ left: 2, behavior: 'auto' });
-                    if (container.scrollLeft >= container.scrollWidth - container.offsetWidth - 10) {
-                        container.scrollTo({ left: 0, behavior: 'smooth' });
-                    }
-                }
-            }, 50);
+            startPortfolioAutoScroll();
         });
 
         // Load custom portfolio from localStorage
@@ -744,11 +772,16 @@
             if (portfolio.length > 0) {
                 const container = document.getElementById('portfolioGrid');
                 container.innerHTML = portfolio.map(url => `
-                    <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1rem);">
+                    <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1.5rem);">
                         <img src="${url}" class="w-full h-72 object-cover rounded-xl" alt="Portfolio item">
                     </div>
                 `).join('');
             }
+            
+            // Start auto-scroll after loading
+            setTimeout(() => {
+                startPortfolioAutoScroll();
+            }, 1000);
         }
         loadPortfolio();
 
