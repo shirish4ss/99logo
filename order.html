@@ -15,7 +15,7 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        
+
         .bg-mesh {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
             background: #0f172a;
@@ -26,7 +26,7 @@
         }
         .blob-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: #4f46e5; }
         .blob-2 { bottom: -10%; right: -10%; width: 500px; height: 500px; background: #ec4899; animation-delay: -5s; }
-        
+
         @keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, 50px); } }
 
         /* FIXED: New Input Field Styling */
@@ -82,7 +82,7 @@
             display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px);
         }
         .modal-overlay.active { display: flex; }
-        
+
         .text-gradient-primary {
             background: linear-gradient(to right, #818cf8, #c084fc);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -101,14 +101,14 @@
         <!-- Main Form Container -->
         <div class="glass max-w-5xl w-full p-8 md:p-12 rounded-3xl relative shadow-2xl">
             <a href="index.html" class="absolute top-6 right-6 text-gray-400 hover:text-white transition text-2xl z-10">&times;</a>
-            
+
             <div class="mb-10 text-center">
                 <h2 class="text-3xl md:text-5xl font-bold mb-3">Detailed <span class="text-gradient-primary">Design Brief</span></h2>
                 <p class="text-slate-400 text-sm md:text-base">Tell us about your vision. We'll handle the pixel perfection.</p>
             </div>
 
             <form id="orderForm" class="space-y-10">
-                
+
                 <!-- Section 1: Client Info -->
                 <div class="space-y-6">
                     <div class="flex items-center gap-3 text-indigo-400 mb-4 border-b border-white/10 pb-3">
@@ -276,7 +276,7 @@
                         <label class="text-xs text-cyan-300 font-bold ml-1 mb-3 block uppercase tracking-wider">Add-ons (Optional)</label>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <label class="package-option cursor-pointer">
-                                <input type="checkbox" name="addon" value="100" class="hidden">
+                                <input type="checkbox" name="addon" value="100" data-name="Social Media Kit" class="hidden">
                                 <div class="package-card !p-4 text-center">
                                     <span class="check-icon"><i class="fas fa-check"></i></span>
                                     <div class="text-2xl mb-2">📱</div>
@@ -286,7 +286,7 @@
                                 </div>
                             </label>
                             <label class="package-option cursor-pointer">
-                                <input type="checkbox" name="addon" value="50" class="hidden">
+                                <input type="checkbox" name="addon" value="50" data-name="Visiting Card" class="hidden">
                                 <div class="package-card !p-4 text-center">
                                     <span class="check-icon"><i class="fas fa-check"></i></span>
                                     <div class="text-2xl mb-2">💳</div>
@@ -296,7 +296,7 @@
                                 </div>
                             </label>
                             <label class="package-option cursor-pointer">
-                                <input type="checkbox" name="addon" value="100" data-express="true" class="hidden">
+                                <input type="checkbox" name="addon" value="100" data-name="Express Delivery" data-express="true" class="hidden">
                                 <div class="package-card !p-4 text-center">
                                     <span class="check-icon"><i class="fas fa-check"></i></span>
                                     <div class="text-2xl mb-2">⚡</div>
@@ -340,55 +340,41 @@
     <div class="modal-overlay" id="paymentModal">
         <div class="glass p-8 rounded-3xl text-center max-w-sm w-full relative m-4 border border-white/20">
             <button onclick="closeModal()" class="absolute top-4 right-5 text-gray-400 hover:text-white transition text-xl">&times;</button>
-            
+
             <div class="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-green-400 text-2xl border border-green-500/20">
                 <i class="fas fa-shield-alt"></i>
             </div>
-            
+
             <h3 class="text-2xl font-bold mb-1">Secure Checkout</h3>
             <p class="mb-6 text-sm text-slate-400">Scan via Any UPI App</p>
-            
+
             <div class="bg-white p-3 rounded-2xl inline-block mb-2 shadow-lg mx-auto">
-                <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=99logo&am=150" class="w-40 h-40 object-contain">
+                <img id="qrImage" src="" class="w-40 h-40 object-contain">
             </div>
-            
+
             <!-- T&C Notice -->
             <p class="text-xs text-yellow-400 mb-4 border border-yellow-500/30 bg-yellow-500/10 p-2 rounded-lg">
                 <i class="fas fa-exclamation-circle"></i> By completing payment, you automatically accept our <a href="terms.html" target="_blank" class="underline hover:text-yellow-300">Terms & Conditions</a>
             </p>
-            
+
             <div class="text-3xl font-bold text-white mb-6">
                 <span class="text-sm text-gray-400 align-middle">Total:</span> <span id="payAmount" class="text-green-400">₹150</span>
             </div>
-            
+
             <div class="text-left mb-6">
                 <label class="text-xs text-slate-400 uppercase font-bold ml-1">Paste Transaction ID (UTR)</label>
                 <input type="text" id="userTxId" placeholder="e.g. 403819XXXXXX" class="w-full bg-black/40 border border-gray-600 rounded-lg px-4 py-3 mt-2 text-white focus:border-green-500 outline-none">
             </div>
-            
-            <button onclick="confirmOrder()" class="w-full py-4 bg-green-600 hover:bg-green-500 rounded-xl font-bold transition shadow-lg shadow-green-900/50">Confirm Payment</button>
+
+            <button id="confirmOrderBtn" onclick="confirmOrder()" class="w-full py-4 bg-green-600 hover:bg-green-500 rounded-xl font-bold transition shadow-lg shadow-green-900/50">Confirm Payment</button>
         </div>
     </div>
 
-    <!-- Load Supabase CDN -->
+    <!-- Load Supabase & Shared Config -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+    <script src="supabase-config.js"></script>
+
     <script>
-        // ============================================
-        // SUPABASE CONFIGURATION
-        // ============================================
-        const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
-
-        let supabaseClient;
-
-        try {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('✅ Supabase initialized');
-        } catch (error) {
-            console.error('❌ Supabase init failed:', error);
-        }
-
         // FIXED: Character Counter Logic
         const ideasInput = document.getElementById('ideasInput');
         const charCount = document.getElementById('charCount');
@@ -401,8 +387,9 @@
         // FIXED: Live Pricing Logic (Includes Addons)
         function updatePrice() {
             const selectedPackage = document.querySelector('input[name="packageType"]:checked');
+            if (!selectedPackage) return;
             const basePrice = parseInt(selectedPackage.dataset.price);
-            
+
             let addonsPrice = 0;
             document.querySelectorAll('input[name="addon"]:checked').forEach(addon => {
                 addonsPrice += parseInt(addon.value);
@@ -414,10 +401,10 @@
             document.getElementById('summaryPrice').innerText = '₹' + total;
             document.getElementById('payAmount').innerText = '₹' + total;
             document.getElementById('summaryPackage').innerText = selectedPackage.value;
-            
-            // Update QR Code
+
+            // Update QR Code using centralized UPI_ID
             const qrImg = document.getElementById('qrImage');
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=yourupi@okaxis&pn=99logo&am=${total}`;
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${UPI_ID}&pn=99logo&am=${total}`;
         }
 
         // Listen for changes on Package and Addons
@@ -429,20 +416,15 @@
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const planFromUrl = urlParams.get('plan'); // e.g., ?plan=Standard
-            
+
             if (planFromUrl) {
-                // Find and select the matching package radio button
                 const packageRadio = document.querySelector(`input[name="packageType"][value="${planFromUrl}"]`);
                 if (packageRadio) {
                     packageRadio.checked = true;
-                    updatePrice(); // Update the price display
                 }
-            } else {
-                // If no URL param, ensure first package is selected
-                updatePrice();
             }
+            updatePrice();
         });
-
 
         // Modal Logic
         function openPayment() {
@@ -463,83 +445,73 @@
         // ============================================
         async function confirmOrder() {
             const txId = document.getElementById('userTxId').value.trim();
-            if(!txId) { 
-                alert("⚠️ Please enter Transaction ID"); 
+            if(!txId) {
+                alert("⚠️ Please enter Transaction ID");
                 document.getElementById('userTxId').focus();
-                return; 
+                return;
             }
-            
+
             const form = document.getElementById('orderForm');
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
 
             // Show loading
-            const btn = document.querySelector('button[onclick="confirmOrder()"]');
+            const btn = document.getElementById('confirmOrderBtn');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Database...';
 
             try {
-                // 1. Generate Order Number
-                const orderNumber = "#" + Math.floor(100 + Math.random() * 900);
+                if (typeof supabase === 'undefined') throw new Error('Supabase not initialized');
+
+                // 1. Generate Order Number (Better than just random)
+                const orderNumber = "#" + Date.now().toString().slice(-6);
                 const timestamp = Date.now();
 
-                // 2. SAVE USER TO SUPABASE (SO THEY CAN LOGIN!)
+                // 2. SAVE USER TO SUPABASE
                 console.log('Saving user to database...');
-                const userResult = await supabaseClient
-                    .from('users')
-                    .upsert([{
-                        email: data.userEmail,
-                        password: data.userPass,
-                        name: data.clientName,
-                        role: 'client'
-                    }], { 
-                        onConflict: 'email',
-                        ignoreDuplicates: false 
-                    })
-                    .select();
+                const userResult = await saveUserToSupabase({
+                    email: data.userEmail,
+                    password: data.userPass,
+                    name: data.clientName,
+                    role: 'client'
+                });
 
-                if (userResult.error) {
-                    console.error('User save error:', userResult.error);
-                    throw new Error('Failed to save user: ' + userResult.error.message);
-                }
+                if (!userResult.success) throw new Error(userResult.error);
                 console.log('✅ User saved successfully');
 
-                // 3. Get selected addons
-                const selectedAddons = [];
+                // 3. Get selected addons (CLEAN NAMES)
+                const selectedAddonsNames = [];
+                let totalPrice = parseInt(document.querySelector('input[name="packageType"]:checked').dataset.price);
+
                 document.querySelectorAll('input[name="addon"]:checked').forEach(addon => {
-                    const label = addon.parentElement.textContent.trim();
-                    selectedAddons.push(label);
+                    selectedAddonsNames.push(addon.dataset.name);
+                    totalPrice += parseInt(addon.value);
                 });
 
                 // 4. SAVE ORDER TO SUPABASE
                 console.log('Saving order to database...');
-                const orderResult = await supabaseClient
-                    .from('orders')
-                    .insert([{
-                        order_number: orderNumber,
-                        client_name: data.clientName,
-                        contact: data.contact,
-                        user_email: data.userEmail,
-                        brand_name: data.brandName,
-                        tagline: data.tagline || '',
-                        niche: data.niche,
-                        audience: data.audience || '',
-                        colors: data.colors || '',
-                        vibe: data.vibe,
-                        ideas: data.ideas || '',
-                        package_type: data.packageType,
-                        addons: selectedAddons.join(', '),
-                        tx_id: txId,
-                        status: 'Unconfirmed',
-                        date: new Date().toLocaleDateString(),
-                        timestamp: timestamp
-                    }])
-                    .select();
+                const orderResult = await saveOrderToSupabase({
+                    order_number: orderNumber,
+                    client_name: data.clientName,
+                    contact: data.contact,
+                    user_email: data.userEmail,
+                    brand_name: data.brandName,
+                    tagline: data.tagline || '',
+                    niche: data.niche,
+                    audience: data.audience || '',
+                    colors: data.colors || '',
+                    vibe: data.vibe,
+                    ideas: data.ideas || '',
+                    package_type: data.packageType,
+                    addons: selectedAddonsNames.join(', ') || 'None',
+                    total_price: totalPrice,
+                    tx_id: txId,
+                    status: 'Unconfirmed',
+                    date: new Date().toLocaleDateString(),
+                    timestamp: timestamp
+                });
 
-                if (orderResult.error) {
-                    console.error('Order save error:', orderResult.error);
-                    throw new Error('Failed to save order: ' + orderResult.error.message);
-                }
+                if (!orderResult.success) throw new Error(orderResult.error);
                 console.log('✅ Order saved successfully');
 
                 // 5. ALSO SAVE TO LOCALSTORAGE (BACKUP)
@@ -547,6 +519,7 @@
                     ...data,
                     id: orderNumber,
                     txId: txId,
+                    totalPrice: totalPrice,
                     status: "Unconfirmed",
                     date: new Date().toLocaleDateString(),
                     timestamp: timestamp
@@ -556,20 +529,9 @@
                 orders.push(newOrder);
                 localStorage.setItem('pixel_orders', JSON.stringify(orders));
 
-                let users = JSON.parse(localStorage.getItem('pixel_users') || '[]');
-                if(!users.find(u => u.email === data.userEmail)) {
-                    users.push({
-                        email: data.userEmail,
-                        password: data.userPass,
-                        name: data.clientName,
-                        role: 'client'
-                    });
-                    localStorage.setItem('pixel_users', JSON.stringify(users));
-                }
-
                 // Success!
                 setTimeout(() => {
-                    alert("✅ Order Placed Successfully!\n\n" + 
+                    alert("✅ Order Placed Successfully!\n\n" +
                           "🔑 Login Credentials:\n" +
                           "Email: " + data.userEmail + "\n" +
                           "Password: " + data.userPass + "\n\n" +
@@ -579,9 +541,7 @@
 
             } catch (error) {
                 console.error('❌ Error:', error);
-                alert("❌ Error: " + error.message + "\n\nPlease try again or contact support.");
-                
-                // Reset button
+                alert("❌ Error: " + error.message);
                 btn.disabled = false;
                 btn.innerHTML = 'Confirm Payment';
             }

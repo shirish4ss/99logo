@@ -24,12 +24,12 @@
         .btn-primary { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; transition: all 0.3s ease; }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.5); }
         .text-gradient-primary { background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
+
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
         /* --- HERO SECTION: NEW DESIGN PANEL STYLES --- */
         .hero-card-container { width: 340px; height: 420px; position: relative; perspective: 1000px; transform-style: preserve-3d; transition: transform 0.1s ease-out; }
-        
+
         .design-panel {
             width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.6);
@@ -48,24 +48,24 @@
 
         /* Central Canvas Area */
         .panel-canvas { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 20px 20px; }
-        
+
         /* The Logo Animation Container - ADJUSTED WIDTH FOR TEXT */
         .logo-stage { position: relative; width: 280px; height: 180px; display: flex; align-items: center; justify-content: center; }
-        
+
         /* Layers of the Logo */
         .logo-layer { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.5s ease; }
-        
+
         /* 1. Sketch (Outline) */
         .layer-sketch { color: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.1); border-radius: 12px; animation: sketchAnim 4s infinite; }
         .sketch-text { border: 1px dashed rgba(255,255,255,0.2); padding: 2px 10px; margin-top: 10px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; }
         .sketch-tag { font-size: 0.6rem; margin-top: 4px; border-bottom: 1px dashed rgba(255,255,255,0.1); }
-        
+
         /* 2. Vector (Path) */
         .layer-vector { color: transparent; opacity: 0; animation: vectorAnim 4s infinite; }
         .vector-icon { -webkit-text-stroke: 1px #6366f1; font-size: 3.5rem; }
         .vector-text { -webkit-text-stroke: 1px #6366f1; font-size: 1.5rem; font-weight: 800; margin-top: 10px; }
         .vector-tag { -webkit-text-stroke: 0.5px #6366f1; font-size: 0.7rem; margin-top: 2px; }
-        
+
         /* 3. Final (Filled) */
         .layer-final { opacity: 0; animation: finalAnim 4s infinite; transform: scale(0.8); }
         .final-icon { background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.5)); font-size: 4rem; }
@@ -79,11 +79,11 @@
         @keyframes sketchAnim { 0% { opacity: 1; } 30% { opacity: 1; } 35% { opacity: 0; } 95% { opacity: 0; } 100% { opacity: 1; } }
         @keyframes vectorAnim { 0% { opacity: 0; } 30% { opacity: 0; } 35% { opacity: 1; } 65% { opacity: 1; } 70% { opacity: 0; } 100% { opacity: 0; } }
         @keyframes finalAnim { 0% { opacity: 0; transform: scale(0.8); } 65% { opacity: 0; transform: scale(0.8); } 70% { opacity: 1; transform: scale(1.05); } 90% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.8); } }
-        @keyframes cursorMove { 
-            0% { top: 80%; left: 80%; opacity: 0; } 
+        @keyframes cursorMove {
+            0% { top: 80%; left: 80%; opacity: 0; }
             10% { opacity: 1; }
-            30% { top: 30%; left: 30%; } 
-            60% { top: 60%; left: 70%; transform: rotate(-10deg); } 
+            30% { top: 30%; left: 30%; }
+            60% { top: 60%; left: 70%; transform: rotate(-10deg); }
             80% { top: 90%; left: 90%; opacity: 0; }
             100% { opacity: 0; }
         }
@@ -158,7 +158,7 @@
             <a href="#" class="text-2xl font-bold tracking-tighter text-white flex items-center gap-2">
                 <i class="fas fa-cube text-indigo-500"></i> 99<span class="text-indigo-500">logo</span>
             </a>
-            
+
             <div class="hidden md:flex gap-8 text-sm font-medium">
                 <a href="#work" class="hover:text-white hover:tracking-wide transition-all">Work</a>
                 <a href="#process" class="hover:text-white hover:tracking-wide transition-all">Process</a>
@@ -176,7 +176,7 @@
     <!-- Supercharged Hero Section -->
     <section class="min-h-screen flex items-center pt-20 overflow-hidden relative z-10">
         <div class="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            
+
             <!-- Left: Text (Unchanged) -->
             <div class="z-10 relative">
                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-bold tracking-widest uppercase mb-8 animate-pulse">
@@ -187,7 +187,7 @@
                     We <span class="text-gradient-primary">Define Brands.</span>
                 </h1>
                 <p class="text-lg text-slate-400 mb-8 max-w-lg leading-relaxed">
-                    Transform your business with a logo that demands attention. 
+                    Transform your business with a logo that demands attention.
                     Professional, high-end design delivered in <span class="text-white font-bold border-b border-indigo-500">48 working hours</span>.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4">
@@ -203,7 +203,7 @@
             <!-- Right: NEW Sober & Elegant Interactive Visual -->
             <div class="hero-visual hidden md:flex justify-center items-center h-full" id="heroVisual">
                 <div class="hero-card-container">
-                    
+
                     <!-- Design Panel Interface -->
                     <div class="design-panel">
                         <!-- Header -->
@@ -216,7 +216,7 @@
 
                         <!-- Canvas -->
                         <div class="panel-canvas">
-                            
+
                             <!-- Central Logo Animation -->
                             <div class="logo-stage">
                                 <!-- 1. Sketch Phase -->
@@ -238,7 +238,7 @@
                                     <div class="final-tag">Designated For Success</div>
                                 </div>
                             </div>
-                            
+
                             <!-- Moving Cursor -->
                             <div class="cursor-tool">
                                 <i class="fas fa-mouse-pointer text-indigo-400"></i>
@@ -267,7 +267,7 @@
     <div class="py-8 border-y border-white/5 bg-black/20 backdrop-blur-sm relative z-20">
         <div class="marquee-container">
             <div class="marquee-content text-5xl font-bold text-transparent stroke-text uppercase tracking-tighter opacity-20" style="-webkit-text-stroke: 1px white;">
-                Minimalist <span class="text-indigo-500">•</span> Luxury <span class="text-indigo-500">•</span> Modern <span class="text-indigo-500">•</span> Abstract <span class="text-indigo-500">•</span> Typography <span class="text-indigo-500">•</span> Emblem <span class="text-indigo-500">•</span> Minimalist <span class="text-indigo-500">•</span> Luxury <span class="text-indigo-500">•</span> Modern <span class="text-indigo-500">•</span> 
+                Minimalist <span class="text-indigo-500">•</span> Luxury <span class="text-indigo-500">•</span> Modern <span class="text-indigo-500">•</span> Abstract <span class="text-indigo-500">•</span> Typography <span class="text-indigo-500">•</span> Emblem <span class="text-indigo-500">•</span> Minimalist <span class="text-indigo-500">•</span> Luxury <span class="text-indigo-500">•</span> Modern <span class="text-indigo-500">•</span>
             </div>
         </div>
     </div>
@@ -286,7 +286,7 @@
                 <button onclick="scrollPortfolio('left')" class="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full glass flex items-center justify-center text-white hover:bg-indigo-500 transition-all shadow-lg">
                     <i class="fas fa-chevron-left"></i>
                 </button>
-                
+
                 <!-- Scrollable Container -->
                 <div id="portfolioContainer" class="overflow-hidden" style="scrollbar-width: none; -ms-overflow-style: none;">
                     <div id="portfolioGrid" class="flex gap-8 transition-transform duration-700 ease-in-out">
@@ -302,13 +302,13 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Right Arrow -->
                 <button onclick="scrollPortfolio('right')" class="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full glass flex items-center justify-center text-white hover:bg-indigo-500 transition-all shadow-lg">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
-            
+
             <style>
                 .scrollbar-hide::-webkit-scrollbar { display: none; }
                 #portfolioContainer::-webkit-scrollbar { display: none; }
@@ -432,7 +432,7 @@
             <div class="text-center mb-12 reveal">
                 <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Frequently Asked <span class="text-gradient-primary">Questions</span></h2>
             </div>
-            
+
             <div class="glass rounded-3xl p-6 md:p-10 reveal">
                 <!-- FAQ Item 1 -->
                 <div class="accordion-item">
@@ -494,7 +494,7 @@
 
         <div class="max-w-7xl mx-auto px-6 relative z-10">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                
+
                 <div class="col-span-1 md:col-span-2">
                     <a href="#" class="text-3xl font-bold tracking-tighter text-white flex items-center gap-2 mb-4">
                         <i class="fas fa-cube text-indigo-500"></i> 99<span class="text-indigo-500">logo</span>
@@ -551,7 +551,7 @@
                 <button onclick="closeTerms()" class="text-2xl text-gray-400 hover:text-white transition">&times;</button>
             </div>
             <div class="modal-body custom-scrollbar">
-                
+
                 <h3>1. Payments & Refund Policy</h3>
                 <ul>
                     <li><strong>100% payment required upfront</strong> before any work begins.</li>
@@ -612,7 +612,7 @@
                     <li>Copyright transfers to client upon final delivery. Rejected concepts remain our property.</li>
                     <li>We reserve the right to display the logo in our portfolio.</li>
                 </ul>
-                
+
                 <p class="mt-6 text-xs text-center text-gray-500 border-t border-gray-700 pt-4">
                     By placing an order, you automatically accept these terms. <br>
                     Modification of terms can happen at any time.
@@ -621,45 +621,11 @@
         </div>
     </div>
 
-    <!-- Load Supabase CDN -->
+    <!-- Load Supabase & Shared Config -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
 
     <script>
-        // ============================================
-        // PORTFOLIO FUNCTIONS (Inline fallback if supabase-config.js fails)
-        // ============================================
-        if (typeof getAllPortfolioItems === 'undefined') {
-            console.log('Loading inline portfolio functions...');
-            
-            const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
-            
-            let supabaseClientIndex;
-            if (typeof window.supabase !== 'undefined') {
-                supabaseClientIndex = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            }
-            
-            window.getAllPortfolioItems = async function() {
-                try {
-                    if (!supabaseClientIndex) {
-                        throw new Error('Supabase client not initialized');
-                    }
-                    
-                    const { data, error } = await supabaseClientIndex
-                        .from('portfolio')
-                        .select('*')
-                        .order('created_at', { ascending: false });
-                    
-                    if (error) throw error;
-                    return { success: true, data: data || [] };
-                } catch (error) {
-                    console.error('Error fetching portfolio:', error);
-                    return { success: false, error: error.message, data: [] };
-                }
-            };
-        }
-        
         // --- 3D PANEL TILT & MOUSE TRACKING ---
         const container = document.querySelector('.hero-card-container');
         if(container) {
@@ -702,7 +668,7 @@
         function toggleAccordion(button) {
             const item = button.parentElement;
             const content = button.nextElementSibling;
-            
+
             // Close all others
             document.querySelectorAll('.accordion-item').forEach(other => {
                 if(other !== item) {
@@ -739,33 +705,33 @@
         let currentPortfolioIndex = 0;
         let portfolioAutoScrollInterval = null;
         let portfolioDirection = 1; // 1 for right, -1 for left
-        
+
         function scrollPortfolio(direction) {
             const grid = document.getElementById('portfolioGrid');
             const items = grid.children;
             const totalItems = items.length;
-            
+
             if (totalItems === 0) return;
-            
+
             if (direction === 'left') {
                 currentPortfolioIndex = (currentPortfolioIndex - 1 + totalItems) % totalItems;
             } else {
                 currentPortfolioIndex = (currentPortfolioIndex + 1) % totalItems;
             }
-            
+
             updatePortfolioPosition();
         }
-        
+
         function updatePortfolioPosition() {
             const grid = document.getElementById('portfolioGrid');
             const items = grid.children;
-            
+
             if (items.length === 0) return;
-            
+
             // Calculate translate amount (each item is 33.333% + gap)
             const translatePercent = currentPortfolioIndex * -33.333;
             const gapAdjustment = currentPortfolioIndex * -2; // Adjust for gap-8 (2rem)
-            
+
             grid.style.transform = `translateX(calc(${translatePercent}% + ${gapAdjustment}rem))`;
         }
 
@@ -775,11 +741,11 @@
                 const grid = document.getElementById('portfolioGrid');
                 const items = grid.children;
                 const totalItems = items.length;
-                
+
                 if (totalItems <= 3) return; // Don't scroll if 3 or fewer items
-                
+
                 currentPortfolioIndex += portfolioDirection;
-                
+
                 // Change direction at boundaries
                 if (currentPortfolioIndex >= totalItems - 3) {
                     portfolioDirection = -1;
@@ -788,7 +754,7 @@
                     portfolioDirection = 1;
                     currentPortfolioIndex = 0;
                 }
-                
+
                 updatePortfolioPosition();
             }, 3000); // Move every 3 seconds (much slower)
         }
@@ -799,7 +765,7 @@
                 clearInterval(portfolioAutoScrollInterval);
             }
         });
-        
+
         document.getElementById('portfolioContainer')?.addEventListener('mouseleave', () => {
             startPortfolioAutoScroll();
         });
@@ -807,9 +773,9 @@
         // Load custom portfolio from Supabase
         async function loadPortfolio() {
             try {
-                // Load from Supabase
+                // Load from Supabase using shared helper
                 const result = await getAllPortfolioItems();
-                
+
                 if (result.success && result.data.length > 0) {
                     const container = document.getElementById('portfolioGrid');
                     container.innerHTML = result.data.map(item => `
@@ -829,28 +795,13 @@
                         `).join('');
                     }
                 }
-                
+
                 // Start auto-scroll after loading
                 setTimeout(() => {
                     startPortfolioAutoScroll();
                 }, 1000);
             } catch (error) {
                 console.error('Error loading portfolio:', error);
-                // Fallback to localStorage on error
-                const portfolio = JSON.parse(localStorage.getItem('pixelPortfolio') || '[]');
-                if (portfolio.length > 0) {
-                    const container = document.getElementById('portfolioGrid');
-                    container.innerHTML = portfolio.map(url => `
-                        <div class="glass p-2 rounded-2xl hover:-translate-y-2 transition duration-500 flex-shrink-0" style="width: calc(33.333% - 1.5rem);">
-                            <img src="${url}" class="w-full h-72 object-cover rounded-xl" alt="Portfolio item">
-                        </div>
-                    `).join('');
-                }
-                
-                // Start auto-scroll after loading
-                setTimeout(() => {
-                    startPortfolioAutoScroll();
-                }, 1000);
             }
         }
         loadPortfolio();
@@ -863,14 +814,14 @@
             for(let i=0; i<particleCount; i++) {
                 const p = document.createElement('div');
                 p.classList.add('particle');
-                
+
                 const size = Math.random() * 3 + 1;
                 p.style.width = `${size}px`;
                 p.style.height = `${size}px`;
                 p.style.left = `${Math.random() * 100}vw`;
                 p.style.animationDuration = `${Math.random() * 10 + 10}s`;
                 p.style.animationDelay = `${Math.random() * 5}s`;
-                
+
                 container.appendChild(p);
             }
         }
