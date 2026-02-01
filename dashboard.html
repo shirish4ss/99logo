@@ -6,7 +6,7 @@
     <title>Dashboard | 99logo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <!-- CSS for Glassmorphism and Transitions -->
     <style>
         .glass {
@@ -26,15 +26,16 @@
             display: none;
             justify-content: center;
             align-items: center;
+            z-index: 1000;
         }
         .modal-overlay.active { display: flex; }
-        
+
         /* New Styles for Features */
         :root { --accent-color: #6366f1; }
         .theme-pink { --accent-color: #ec4899; }
         .theme-blue { --accent-color: #3b82f6; }
         .theme-green { --accent-color: #22c55e; }
-        
+
         .accent-bg { background-color: var(--accent-color); }
         .accent-text { color: var(--accent-color); }
         .accent-border { border-color: var(--accent-color); }
@@ -46,7 +47,7 @@
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
         .notification-dot { animation: pulse-red 2s infinite; }
-        
+
         /* Flash Text Animation */
         @keyframes flash-fade {
             0%, 100% { opacity: 1; }
@@ -55,38 +56,42 @@
         .flash-text {
             animation: flash-fade 3s ease-in-out infinite;
         }
-        
+
         /* Express Priority Badge */
         .express-badge {
             animation: pulse-red 1.5s infinite;
             background: linear-gradient(135deg, #ef4444, #dc2626);
         }
-        
+
         /* View Mode Styles */
         .view-mode-btn.active {
             background: var(--accent-color);
             color: white;
         }
-        
-        /* List View */
-        .list-view .order-card {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-        }
-        
+
         /* Kanban View */
         .kanban-view {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 1rem;
         }
-        
+
         .kanban-column {
             background: rgba(255, 255, 255, 0.02);
             border-radius: 1rem;
             padding: 1rem;
             min-height: 400px;
+        }
+
+        @media (max-width: 1024px) {
+            .kanban-view {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 640px) {
+            .kanban-view {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -95,9 +100,9 @@
     <nav class="glass border-b border-gray-800 sticky top-0 z-50">
         <div class="max-w-[1600px] mx-auto px-6 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold">99logo<span class="text-gradient">Dashboard</span></h1>
-            
+
             <div class="flex items-center gap-4">
-                
+
                 <!-- Notification Center -->
                 <div class="relative group" id="notificationCenter">
                     <button class="text-gray-400 hover:text-white relative">
@@ -107,7 +112,7 @@
                     <div class="absolute right-0 mt-2 w-64 glass rounded-xl hidden group-hover:block p-3 shadow-xl border border-gray-700">
                         <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Notifications</h4>
                         <div class="space-y-2 text-xs max-h-64 overflow-y-auto" id="notifList">
-                            <!-- Dynamic notifications -->
+                            <p class="text-gray-500 py-2 text-center">No new notifications</p>
                         </div>
                     </div>
                 </div>
@@ -123,10 +128,10 @@
     </nav>
 
     <div class="max-w-[1600px] mx-auto px-4 py-8">
-        
+
         <!-- ================= ADMIN AREA ================= -->
         <div id="adminView" class="hidden">
-            
+
             <!-- Stats -->
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
                 <div class="glass p-5 rounded-xl border-l-4 border-green-500">
@@ -145,18 +150,18 @@
                     <h3 class="text-gray-400 text-xs">Unpaid</h3>
                     <p class="text-2xl font-bold" id="stat-unpaid">0</p>
                 </div>
-                <button onclick="printInvoice()" class="glass p-5 rounded-xl border border-gray-700 hover:bg-white/5 flex flex-col justify-center items-center gap-2">
+                <button onclick="window.print()" class="glass p-5 rounded-xl border border-gray-700 hover:bg-white/5 flex flex-col justify-center items-center gap-2">
                     <i class="fas fa-file-invoice text-2xl text-purple-400"></i>
-                    <span class="text-xs font-bold">Print Invoice</span>
+                    <span class="text-xs font-bold">Print Page</span>
                 </button>
             </div>
 
             <!-- Layout -->
             <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
-                
+
                 <!-- Left Sidebar -->
                 <div class="xl:col-span-1 space-y-4">
-                    
+
                     <!-- Admin Sticky Notes -->
                     <div class="glass p-4 rounded-xl">
                         <div class="flex justify-between items-center mb-3">
@@ -175,7 +180,7 @@
                         </div>
                         <div class="space-y-3">
                             <input type="url" id="portfolioUrl" placeholder="https://example.com/logo.jpg" class="w-full bg-black/30 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none">
-                            <button onclick="addPortfolioItem()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg text-sm font-bold transition">
+                            <button onclick="addPortfolioItemBtn()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg text-sm font-bold transition">
                                 <i class="fas fa-plus-circle"></i> Add to Portfolio
                             </button>
                             <div id="portfolioItemsList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
@@ -188,33 +193,11 @@
                     <div id="priorityList" class="space-y-3">
                         <!-- JS Injected -->
                     </div>
-
-                    <!-- Recent Activity Log -->
-                    <div class="glass p-4 rounded-xl mt-6">
-                        <h4 class="font-bold mb-3 text-sm text-gray-300">Recent Activity</h4>
-                        <div class="space-y-3 relative border-l border-gray-700 ml-2 pl-4">
-                            <div class="relative">
-                                <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                                <p class="text-xs text-gray-400">Order #104 marked as <span class="text-green-400">Completed</span></p>
-                                <span class="text-[10px] text-gray-600">10 mins ago</span>
-                            </div>
-                            <div class="relative">
-                                <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
-                                <p class="text-xs text-gray-400">New order received <span class="text-indigo-400">#105</span></p>
-                                <span class="text-[10px] text-gray-600">25 mins ago</span>
-                            </div>
-                            <div class="relative">
-                                <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
-                                <p class="text-xs text-gray-400">Payment verified for <span class="text-yellow-400">#103</span></p>
-                                <span class="text-[10px] text-gray-600">1 hour ago</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Main Area -->
                 <div class="xl:col-span-3 space-y-6">
-                    
+
                     <!-- View Mode Toggle -->
                     <div class="flex gap-2 justify-end mb-4">
                         <button onclick="setViewMode('grid')" class="view-mode-btn px-3 py-1 bg-white/10 rounded-lg text-xs hover:bg-white/20 active" id="gridBtn">
@@ -230,10 +213,7 @@
 
                     <!-- Orders Container -->
                     <div id="ordersContainer">
-                        <!-- Grid View (Default) -->
-                        <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                            <!-- JS Injects Here -->
-                        </div>
+                        <!-- JS Injects View Here -->
                     </div>
                 </div>
             </div>
@@ -241,7 +221,7 @@
 
         <!-- ================= CLIENT AREA ================= -->
         <div id="clientView" class="hidden">
-            
+
             <!-- Flash Messages -->
             <div class="glass p-6 rounded-2xl mb-6 border-l-4 border-indigo-500">
                 <div class="flex items-start gap-4">
@@ -264,7 +244,7 @@
                     <span id="progLabel" class="text-gray-400">Payment Verification</span>
                     <span id="progPercent" class="font-bold text-white">10%</span>
                 </div>
-                
+
                 <!-- Working Hours Timer -->
                 <div id="workingHoursTimer" class="mt-6 p-4 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-xl border border-purple-500/30">
                     <div class="flex items-center justify-between">
@@ -280,7 +260,7 @@
 
             <!-- Contact Designer -->
             <div class="flex justify-center mb-6">
-                <a id="whatsappDesigner" href="https://wa.me/919876543210?text=Hello, I need help with my project" target="_blank" class="flex items-center gap-2 bg-green-500/20 border border-green-500 text-green-400 px-6 py-3 rounded-full font-bold hover:bg-green-500/30 transition">
+                <a id="whatsappDesigner" href="https://wa.me/919876543210" target="_blank" class="flex items-center gap-2 bg-green-500/20 border border-green-500 text-green-400 px-6 py-3 rounded-full font-bold hover:bg-green-500/30 transition">
                     <i class="fab fa-whatsapp text-xl"></i> Contact Your Designer
                 </a>
             </div>
@@ -299,9 +279,9 @@
     <div id="viewModal" class="modal-overlay">
         <div class="glass max-w-3xl w-full mx-4 p-8 rounded-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeViewModal()" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white">&times;</button>
-            
+
             <h2 class="text-2xl font-bold mb-6">Order Details</h2>
-            
+
             <div class="grid grid-cols-2 gap-4 text-sm">
                 <div><strong class="text-gray-400">Order #:</strong> <span id="vId"></span></div>
                 <div><strong class="text-gray-400">Client:</strong> <span id="vClient"></span></div>
@@ -317,17 +297,16 @@
                 <div class="col-span-2"><strong class="text-gray-400">Delivery:</strong> <span id="vDelivery"></span></div>
                 <div class="col-span-2"><strong class="text-gray-400">Ideas/Notes:</strong> <p class="mt-1 bg-white/5 p-2 rounded" id="vNotes"></p></div>
                 <div class="col-span-2"><strong class="text-gray-400">TX ID:</strong> <code class="bg-black/50 px-2 py-1 rounded" id="vTx"></code></div>
-                <div><strong class="text-gray-400">Payment:</strong> <span id="vPayStatus"></span></div>
+                <div><strong class="text-gray-400">Price:</strong> <span id="vPrice" class="text-green-400 font-bold"></span></div>
                 <div><strong class="text-gray-400">Status:</strong> <span id="vStatus"></span></div>
             </div>
 
-            <input type="hidden" id="vIndex">
             <input type="hidden" id="vOrderId">
 
             <!-- ADMIN CONTROLS -->
             <div class="mt-6 space-y-3 border-t border-gray-700 pt-6">
-                <button id="verifyBtn" onclick="confirmOrderByAdmin()" class="w-full bg-green-600 py-3 rounded-lg font-bold hidden">✓ Verify Payment & Start Project</button>
-                
+                <button id="verifyBtn" onclick="confirmOrderByAdmin()" class="w-full bg-green-600 py-3 rounded-lg font-bold hidden">✓ Verify Payment &amp; Start Project</button>
+
                 <div class="flex gap-3">
                     <select id="updateStatusSelect" class="flex-1 bg-black/50 border border-gray-700 rounded-lg p-3">
                         <option value="Unconfirmed">Unconfirmed</option>
@@ -346,7 +325,7 @@
         <div class="glass max-w-md w-full mx-4 p-8 rounded-2xl relative">
             <button onclick="toggleSettingsModal()" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white">&times;</button>
             <h2 class="text-2xl font-bold mb-6">⚙️ Settings</h2>
-            
+
             <div class="space-y-4">
                 <h4 class="text-sm font-bold text-gray-400 uppercase">Theme Color</h4>
                 <div class="grid grid-cols-2 gap-3">
@@ -359,27 +338,11 @@
         </div>
     </div>
 
-    <!-- Load Supabase CDN -->
+    <!-- Load Supabase &amp; Shared Config -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
 
     <script>
-        // ============================================
-        // SUPABASE CONFIGURATION
-        // ============================================
-        const SUPABASE_URL = 'https://xwqitpteemdvrycpcxgo.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3cWl0cHRlZW1kdnJ5Y3BjeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDAzMDgsImV4cCI6MjA4NTI3NjMwOH0.ZEn9riWkZn-WW0wtH01AiujJH5EJmfps90oHVsRVeBI';
-
-        // Initialize Supabase Client (use let instead of const to avoid redeclaration errors)
-        let supabaseClient;
-        
-        // Wait for supabase library to load
-        if (typeof window.supabase !== 'undefined') {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('✅ Supabase initialized in dashboard');
-        } else {
-            console.error('❌ Supabase library not loaded');
-        }
-
         // ============================================
         // GLOBAL VARIABLES
         // ============================================
@@ -393,132 +356,6 @@
             "Our designers are crafting something amazing for you. We'll contact you as soon as it's ready!"
         ];
         let currentFlashIndex = 0;
-
-        // ============================================
-        // PACKAGE PRICING
-        // ============================================
-        const PACKAGE_PRICES = {
-            'Basic': 99,
-            'Standard': 150,
-            'Premium': 200
-        };
-
-        const ADDON_PRICES = {
-            'Social Media Kit': 100,
-            'Visiting Card': 50,
-            'Express Delivery (5 Hours)': 100,
-            'Express': 100
-        };
-
-        // ============================================
-        // WORKING HOURS CALCULATOR
-        // ============================================
-        function isWorkingHour(date) {
-            const day = date.getDay(); // 0 = Sunday, 6 = Saturday
-            const hour = date.getHours();
-            
-            // Monday to Saturday (1-6), 10 AM to 6 PM (Sunday = 0 is OFF)
-            return day >= 1 && day <= 6 && hour >= 10 && hour < 18;
-        }
-
-        // CRITICAL FIX: Find next working hour start if order placed outside working hours
-        function getNextWorkingHourStart(timestamp) {
-            const date = new Date(timestamp);
-            
-            // If already in working hours, return as is
-            if (isWorkingHour(date)) {
-                return date;
-            }
-            
-            const day = date.getDay();
-            const hour = date.getHours();
-            
-            // If Sunday (0), move to Monday 10 AM
-            if (day === 0) {
-                date.setDate(date.getDate() + 1); // Move to Monday
-                date.setHours(10, 0, 0, 0);
-                return date;
-            }
-            
-            // If it's a weekday/Saturday but before 10 AM, set to 10 AM same day
-            if (hour < 10) {
-                date.setHours(10, 0, 0, 0);
-                return date;
-            }
-            
-            // If it's after 6 PM on weekday, move to next day 10 AM
-            if (hour >= 18) {
-                date.setDate(date.getDate() + 1);
-                
-                // If next day is Sunday, skip to Monday
-                if (date.getDay() === 0) {
-                    date.setDate(date.getDate() + 1);
-                }
-                
-                date.setHours(10, 0, 0, 0);
-                return date;
-            }
-            
-            return date;
-        }
-
-        function calculateWorkingHoursRemaining(startTimestamp, totalWorkingHours) {
-            // CRITICAL FIX: Adjust start time to next working hour if placed outside working hours
-            const adjustedStart = getNextWorkingHourStart(startTimestamp);
-            const now = new Date();
-            
-            let workingHoursElapsed = 0;
-            let currentTime = new Date(adjustedStart);
-            
-            // Calculate elapsed working hours
-            while (currentTime < now) {
-                if (isWorkingHour(currentTime)) {
-                    workingHoursElapsed += 1;
-                }
-                currentTime = new Date(currentTime.getTime() + 60 * 60 * 1000); // Add 1 hour
-            }
-            
-            const remaining = Math.max(0, totalWorkingHours - workingHoursElapsed);
-            return { remaining, elapsed: workingHoursElapsed };
-        }
-
-        function formatTime(hours) {
-            const days = Math.floor(hours / 8);
-            const remainingHours = Math.floor(hours % 8);
-            const minutes = Math.floor((hours % 1) * 60);
-            
-            if (days > 0) {
-                return `${days}d ${remainingHours}h ${minutes}m`;
-            }
-            return `${remainingHours}h ${minutes}m`;
-        }
-
-        // ============================================
-        // CALCULATE ORDER PRICE
-        // ============================================
-        function calculateOrderPrice(order) {
-            let price = PACKAGE_PRICES[order.package_type] || 0;
-            
-            if (order.addons && order.addons !== 'None') {
-                const addons = order.addons.split(',').map(a => a.trim());
-                addons.forEach(addon => {
-                    // Check for express
-                    if (addon.toLowerCase().includes('express')) {
-                        price += ADDON_PRICES['Express'];
-                    }
-                    // Check for social media kit
-                    else if (addon.toLowerCase().includes('social')) {
-                        price += ADDON_PRICES['Social Media Kit'];
-                    }
-                    // Check for visiting card
-                    else if (addon.toLowerCase().includes('visiting') || addon.toLowerCase().includes('card')) {
-                        price += ADDON_PRICES['Visiting Card'];
-                    }
-                });
-            }
-            
-            return price;
-        }
 
         // ============================================
         // LOAD DASHBOARD
@@ -536,6 +373,7 @@
             if (user.role === 'admin') {
                 document.getElementById('adminView').classList.remove('hidden');
                 await loadAdminOrders();
+                await loadPortfolioList();
             } else {
                 document.getElementById('clientView').classList.remove('hidden');
                 await renderClientOrders(user.email);
@@ -543,9 +381,6 @@
             }
         }
 
-        // ============================================
-        // FLASH MESSAGES FOR CLIENTS
-        // ============================================
         function startFlashMessages() {
             setInterval(() => {
                 currentFlashIndex = (currentFlashIndex + 1) % flashMessages.length;
@@ -561,102 +396,64 @@
         }
 
         // ============================================
-        // LOAD ADMIN ORDERS
+        // ADMIN: LOAD ORDERS
         // ============================================
         async function loadAdminOrders() {
             try {
-                if (!supabaseClient) {
-                    console.error('Supabase client not initialized');
-                    alert('Database connection error. Please refresh the page.');
-                    return;
-                }
-                
-                const { data: orders, error } = await supabaseClient
+                if (!supabase) throw new Error('Supabase not initialized');
+
+                const { data: orders, error } = await supabase
                     .from('orders')
                     .select('*')
                     .order('timestamp', { ascending: false });
 
-                if (error) {
-                    console.error('Error fetching orders:', error);
-                    alert('Error loading orders from database');
-                    return;
-                }
-
+                if (error) throw error;
                 allOrders = orders || [];
-                console.log('Loaded orders:', allOrders);
 
-                // Calculate stats
-                const total = allOrders.length;
-                const pending = allOrders.filter(o => o.status === 'In Progress').length;
-                const unpaid = allOrders.filter(o => o.status === 'Unconfirmed').length;
-                
-                // Calculate total earnings
-                const earnings = allOrders.reduce((sum, order) => {
-                    return sum + calculateOrderPrice(order);
-                }, 0);
+                // Stats
+                document.getElementById('stat-total').innerText = allOrders.length;
+                document.getElementById('stat-pending').innerText = allOrders.filter(o => o.status === 'In Progress').length;
+                document.getElementById('stat-unpaid').innerText = allOrders.filter(o => o.status === 'Unconfirmed').length;
 
-                document.getElementById('stat-total').innerText = total;
-                document.getElementById('stat-pending').innerText = pending;
-                document.getElementById('stat-unpaid').innerText = unpaid;
-                document.getElementById('totalEarnings').innerText = '₹' + earnings.toLocaleString();
+                const totalEarnings = allOrders.reduce((sum, o) => sum + (o.total_price || 0), 0);
+                document.getElementById('totalEarnings').innerText = '₹' + totalEarnings.toLocaleString();
 
-                // Render orders
                 renderOrders();
                 renderPriorityQueue();
             } catch (error) {
-                console.error('Error in loadAdminOrders:', error);
-                alert('Error loading dashboard');
+                console.error('Error loading orders:', error);
             }
         }
 
-        // ============================================
-        // PRIORITY QUEUE (ISSUE #4 FIX)
-        // ============================================
         function renderPriorityQueue() {
-            const now = new Date();
-            
-            // Filter active orders (Unconfirmed or In Progress)
-            const activeOrders = allOrders.filter(o => 
-                o.status === 'Unconfirmed' || o.status === 'In Progress'
-            );
-
-            // Sort by priority:
-            // 1. Express orders first
-            // 2. Then by time remaining (oldest first)
+            const activeOrders = allOrders.filter(o => o.status === 'Unconfirmed' || o.status === 'In Progress');
             const priorityOrders = activeOrders.sort((a, b) => {
-                const aIsExpress = a.addons && a.addons.toLowerCase().includes('express');
-                const bIsExpress = b.addons && b.addons.toLowerCase().includes('express');
-                
-                // Express orders go first
-                if (aIsExpress && !bIsExpress) return -1;
-                if (!aIsExpress && bIsExpress) return 1;
-                
-                // Then sort by timestamp (oldest first)
+                const aEx = a.addons && a.addons.toLowerCase().includes('express');
+                const bEx = b.addons && b.addons.toLowerCase().includes('express');
+                if (aEx && !bEx) return -1;
+                if (!aEx && bEx) return 1;
                 return a.timestamp - b.timestamp;
             }).slice(0, 5);
 
             const container = document.getElementById('priorityList');
-            
             if (priorityOrders.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-sm">No urgent orders</p>';
+                container.innerHTML = '<p class="text-gray-500 text-sm">No active orders</p>';
                 return;
             }
 
-            container.innerHTML = priorityOrders.map((o, idx) => {
+            container.innerHTML = priorityOrders.map(o => {
                 const isExpress = o.addons && o.addons.toLowerCase().includes('express');
-                const workingHours = isExpress ? 5 : 48;
-                const { remaining } = calculateWorkingHoursRemaining(o.timestamp, workingHours);
-                
+                const tat = isExpress ? TAT_HOURS_EXPRESS : TAT_HOURS_STANDARD;
+                const { remaining } = calculateWorkingHoursRemaining(o.timestamp, tat);
                 return `
                     <div class="glass p-3 rounded-xl border-l-4 ${o.status === 'Unconfirmed' ? 'border-red-500' : 'border-yellow-500'} ${isExpress ? 'express-badge' : ''} relative">
-                        ${isExpress ? '<div class="absolute top-2 right-2"><i class="fas fa-bolt text-yellow-300 text-xs"></i></div>' : ''}
                         <div class="flex justify-between items-start">
-                            <div class="flex-1">
+                            <div>
                                 <h4 class="font-bold text-sm">${o.brand_name}</h4>
-                                <p class="text-xs text-gray-500">${o.client_name}</p>
-                                <p class="text-xs text-gray-400 mt-1">${formatTime(remaining)} left</p>
+                                <p class="text-[10px] text-gray-500">${o.client_name}</p>
+                                <p class="text-xs text-gray-400 mt-1">${formatTimeRemaining(remaining)} left</p>
                             </div>
-                            <span class="text-xs px-2 py-1 bg-white/10 rounded">${o.status === 'Unconfirmed' ? '⚠️ New' : '🔥 Active'}</span>
+                            <span class="text-[10px] px-2 py-1 bg-white/10 rounded">${o.status === 'Unconfirmed' ? 'NEW' : 'ACTIVE'}</span>
                         </div>
                     </div>
                 `;
@@ -664,545 +461,232 @@
         }
 
         // ============================================
-        // VIEW MODE SWITCHING (ISSUE #3 FIX)
+        // ADMIN: RENDER VIEWS
         // ============================================
         function setViewMode(mode) {
             currentViewMode = mode;
-            
-            // Update button states
-            ['gridBtn', 'listBtn', 'kanbanBtn'].forEach(id => {
-                document.getElementById(id).classList.remove('active');
-            });
+            ['gridBtn', 'listBtn', 'kanbanBtn'].forEach(id => document.getElementById(id).classList.remove('active'));
             document.getElementById(mode + 'Btn').classList.add('active');
-            
             renderOrders();
         }
 
-        // ============================================
-        // RENDER ORDERS (ALL VIEW MODES)
-        // ============================================
         function renderOrders() {
             const container = document.getElementById('ordersContainer');
-            
             if (allOrders.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-12">No orders yet</div>';
+                container.innerHTML = '<div class="text-center text-gray-400 py-12">No orders found</div>';
                 return;
             }
 
             if (currentViewMode === 'grid') {
-                renderGridView(container);
-            } else if (currentViewMode === 'list') {
-                renderListView(container);
-            } else if (currentViewMode === 'kanban') {
-                renderKanbanView(container);
-            }
-        }
-
-        function renderGridView(container) {
-            container.innerHTML = `<div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>`;
-            const grid = container.querySelector('#ordersGrid');
-            
-            grid.innerHTML = allOrders.map((o, idx) => {
-                const statusColors = {
-                    'Unconfirmed': 'bg-red-500/20 text-red-400 border-red-500',
-                    'In Progress': 'bg-yellow-500/20 text-yellow-400 border-yellow-500',
-                    'Sent for Approval': 'bg-blue-500/20 text-blue-400 border-blue-500',
-                    'Completed': 'bg-green-500/20 text-green-400 border-green-500'
-                };
-
-                const isExpress = o.addons && o.addons.toLowerCase().includes('express');
-
-                return `
-                    <div class="glass p-5 rounded-xl border border-white/10 hover:border-white/30 transition cursor-pointer relative" onclick="viewOrder(${idx})">
-                        ${isExpress ? '<div class="absolute top-3 right-3"><i class="fas fa-bolt text-yellow-400 text-lg"></i></div>' : ''}
+                container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">${allOrders.map((o, idx) => `
+                    <div class="glass p-5 rounded-xl border border-white/10 hover:border-white/30 transition cursor-pointer" onclick="viewOrder(${idx})">
                         <div class="flex justify-between items-start mb-3">
                             <div>
                                 <h3 class="font-bold text-lg">${o.brand_name}</h3>
-                                <p class="text-xs text-gray-500">${o.order_number}</p>
+                                <p class="text-[10px] text-gray-500">${o.order_number}</p>
                             </div>
-                            <span class="px-2 py-1 ${statusColors[o.status] || 'bg-gray-500/20 text-gray-400'} border rounded-full text-[10px] font-bold">${o.status}</span>
+                            <span class="px-2 py-1 bg-white/10 rounded-full text-[10px] font-bold">${o.status}</span>
                         </div>
-                        
                         <div class="space-y-1 text-xs text-gray-400 mb-3">
                             <p><i class="fas fa-user w-4"></i> ${o.client_name}</p>
-                            <p><i class="fas fa-tag w-4"></i> ${o.package_type}</p>
-                            <p><i class="fas fa-calendar w-4"></i> ${o.date}</p>
+                            <p><i class="fas fa-tag w-4"></i> ${o.package_type} (₹${o.total_price || 0})</p>
                         </div>
-                        
-                        <div class="flex gap-2 mt-3">
-                            <a href="https://wa.me/${o.contact.replace(/\D/g,'')}" onclick="event.stopPropagation()" class="flex-1 bg-green-500/20 text-green-400 text-center py-2 rounded-lg text-xs font-bold hover:bg-green-500/30">
-                                <i class="fab fa-whatsapp"></i> Chat
-                            </a>
-                            <button onclick="event.stopPropagation(); viewOrder(${idx})" class="flex-1 bg-indigo-500/20 text-indigo-400 py-2 rounded-lg text-xs font-bold hover:bg-indigo-500/30">
-                                <i class="fas fa-eye"></i> View
-                            </button>
+                        <button class="w-full bg-indigo-500/20 text-indigo-400 py-2 rounded-lg text-xs font-bold hover:bg-indigo-500/30">View Details</button>
+                    </div>
+                `).join('')}</div>`;
+            } else if (currentViewMode === 'list') {
+                container.innerHTML = `<div class="space-y-2">${allOrders.map((o, idx) => `
+                    <div class="glass p-3 rounded-xl flex items-center justify-between hover:bg-white/5 cursor-pointer" onclick="viewOrder(${idx})">
+                        <div class="flex items-center gap-4">
+                            <span class="text-xs font-bold text-gray-500">${o.order_number}</span>
+                            <div>
+                                <h4 class="font-bold text-sm">${o.brand_name}</h4>
+                                <p class="text-[10px] text-gray-500">${o.client_name}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <span class="text-xs text-gray-400">${o.date}</span>
+                            <span class="px-2 py-1 bg-white/10 rounded text-[10px]">${o.status}</span>
+                            <i class="fas fa-chevron-right text-gray-600"></i>
                         </div>
                     </div>
-                `;
-            }).join('');
-        }
-
-        function renderListView(container) {
-            container.innerHTML = '<div id="ordersList" class="space-y-3"></div>';
-            const list = container.querySelector('#ordersList');
-            
-            list.innerHTML = allOrders.map((o, idx) => {
-                const isExpress = o.addons && o.addons.toLowerCase().includes('express');
-                return `
-                    <div class="glass p-4 rounded-xl flex items-center gap-4 hover:border-white/30 border border-white/10 cursor-pointer" onclick="viewOrder(${idx})">
-                        ${isExpress ? '<i class="fas fa-bolt text-yellow-400 text-xl"></i>' : '<i class="fas fa-box text-gray-500"></i>'}
-                        <div class="flex-1">
-                            <h3 class="font-bold">${o.brand_name} <span class="text-xs text-gray-500">${o.order_number}</span></h3>
-                            <p class="text-xs text-gray-400">${o.client_name} • ${o.package_type} • ${o.date}</p>
-                        </div>
-                        <span class="px-3 py-1 bg-white/10 rounded-full text-xs">${o.status}</span>
-                        <button class="px-4 py-2 bg-indigo-500/20 text-indigo-400 rounded-lg text-xs font-bold">View</button>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderKanbanView(container) {
-            const statuses = ['Unconfirmed', 'In Progress', 'Sent for Approval', 'Completed'];
-            
-            container.innerHTML = '<div class="kanban-view"></div>';
-            const kanban = container.querySelector('.kanban-view');
-            
-            kanban.innerHTML = statuses.map(status => {
-                const statusOrders = allOrders.filter(o => o.status === status);
-                return `
+                `).join('')}</div>`;
+            } else if (currentViewMode === 'kanban') {
+                const statuses = ['Unconfirmed', 'In Progress', 'Sent for Approval', 'Completed'];
+                container.innerHTML = `<div class="kanban-view">${statuses.map(s => `
                     <div class="kanban-column">
-                        <h3 class="font-bold mb-4 text-sm uppercase tracking-wide">${status} (${statusOrders.length})</h3>
-                        <div class="space-y-3">
-                            ${statusOrders.map((o, idx) => {
-                                const globalIdx = allOrders.findIndex(order => order.id === o.id);
-                                const isExpress = o.addons && o.addons.toLowerCase().includes('express');
-                                return `
-                                    <div class="glass p-3 rounded-xl cursor-pointer hover:border-white/30 border border-white/10" onclick="viewOrder(${globalIdx})">
-                                        ${isExpress ? '<div class="text-right mb-1"><i class="fas fa-bolt text-yellow-400 text-xs"></i></div>' : ''}
-                                        <h4 class="font-bold text-sm">${o.brand_name}</h4>
-                                        <p class="text-xs text-gray-500">${o.client_name}</p>
-                                        <p class="text-xs text-gray-400 mt-1">${o.package_type}</p>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
+                        <h3 class="font-bold mb-4 text-xs uppercase text-gray-500">${s}</h3>
+                        <div class="space-y-3">${allOrders.filter(o => o.status === s).map(o => `
+                            <div class="glass p-3 rounded-xl cursor-pointer hover:border-white/30" onclick="viewOrder(${allOrders.indexOf(o)})">
+                                <h4 class="font-bold text-sm">${o.brand_name}</h4>
+                                <p class="text-[10px] text-gray-500">${o.client_name}</p>
+                            </div>
+                        `).join('')}</div>
                     </div>
-                `;
-            }).join('');
+                `).join('')}</div>`;
+            }
         }
 
         // ============================================
-        // VIEW ORDER MODAL (ISSUE #1 FIX - SHOW ADDONS)
+        // ADMIN: ORDER DETAILS
         // ============================================
-        async function viewOrder(index) {
-            try {
-                const { data: orders, error } = await supabaseClient
-                    .from('orders')
-                    .select('*')
-                    .order('timestamp', { ascending: false });
+        function viewOrder(index) {
+            const o = allOrders[index];
+            if (!o) return;
 
-                if (error) throw error;
+            document.getElementById('vId').innerText = o.order_number;
+            document.getElementById('vClient').innerText = o.client_name;
+            document.getElementById('vContact').innerText = o.contact;
+            document.getElementById('vBrand').innerText = o.brand_name;
+            document.getElementById('vTagline').innerText = o.tagline || 'N/A';
+            document.getElementById('vNiche').innerText = o.niche;
+            document.getElementById('vAudience').innerText = o.audience || 'N/A';
+            document.getElementById('vColors').innerText = o.colors || 'N/A';
+            document.getElementById('vVibe').innerText = o.vibe;
+            document.getElementById('vPackage').innerText = o.package_type;
+            document.getElementById('vAddons').innerText = o.addons || 'None';
 
-                const o = orders[index];
-                if (!o) {
-                    alert('Order not found');
-                    return;
-                }
+            const isExpress = o.addons && o.addons.toLowerCase().includes('express');
+            const tat = isExpress ? TAT_HOURS_EXPRESS : TAT_HOURS_STANDARD;
+            const { remaining } = calculateWorkingHoursRemaining(o.timestamp, tat);
+            document.getElementById('vDelivery').innerText = isExpress ? `EXPRESS (5h) - ${formatTimeRemaining(remaining)} left` : `STANDARD (48h) - ${formatTimeRemaining(remaining)} left`;
 
-                // Populate modal
-                document.getElementById('vId').innerText = o.order_number;
-                document.getElementById('vClient').innerText = o.client_name;
-                document.getElementById('vContact').innerText = o.contact;
-                document.getElementById('vBrand').innerText = o.brand_name;
-                document.getElementById('vTagline').innerText = o.tagline || 'N/A';
-                document.getElementById('vNiche').innerText = o.niche;
-                document.getElementById('vAudience').innerText = o.audience || 'N/A';
-                document.getElementById('vColors').innerText = o.colors || 'N/A';
-                document.getElementById('vVibe').innerText = o.vibe;
-                document.getElementById('vPackage').innerText = o.package_type;
-                
-                // FIX #1: Display add-ons properly
-                const addonsText = o.addons && o.addons !== 'None' ? o.addons : 'None selected';
-                document.getElementById('vAddons').innerText = addonsText;
-                
-                // Calculate delivery info
-                const isExpress = o.addons && o.addons.toLowerCase().includes('express');
-                const workingHours = isExpress ? 5 : 48;
-                
-                let deliveryText = isExpress ? '⚡ 5 Working Hours (Express)' : '48 Working Hours';
-                
-                if (o.timestamp && o.status !== 'Unconfirmed') {
-                    const { remaining } = calculateWorkingHoursRemaining(o.timestamp, workingHours);
-                    
-                    if (remaining > 0 && o.status !== 'Completed') {
-                        deliveryText += ` | ⏱️ ${formatTime(remaining)} remaining`;
-                    } else if (o.status === 'Completed') {
-                        deliveryText += ' | ✅ Delivered';
-                    }
-                }
-                
-                document.getElementById('vDelivery').innerText = deliveryText;
-                document.getElementById('vNotes').innerText = o.ideas || 'None';
-                document.getElementById('vTx').innerText = o.tx_id;
-                document.getElementById('vPayStatus').innerText = o.status === 'Unconfirmed' ? 'Pending Verification' : 'Paid & Verified';
-                document.getElementById('vStatus').innerText = o.status;
-                document.getElementById('vIndex').value = index;
-                document.getElementById('vOrderId').value = o.id;
-                document.getElementById('vWa').href = `https://wa.me/${o.contact.replace(/\D/g,'')}`;
+            document.getElementById('vNotes').innerText = o.ideas || 'None';
+            document.getElementById('vTx').innerText = o.tx_id;
+            document.getElementById('vPrice').innerText = '₹' + (o.total_price || 0);
+            document.getElementById('vStatus').innerText = o.status;
+            document.getElementById('vOrderId').value = o.id;
+            document.getElementById('vWa').href = `https://wa.me/${o.contact.replace(/\D/g,'')}`;
 
-                // Admin Verification Gate
-                const vBtn = document.getElementById('verifyBtn');
-                if (o.status === 'Unconfirmed') {
-                    vBtn.classList.remove('hidden');
-                } else {
-                    vBtn.classList.add('hidden');
-                }
-
-                document.getElementById('updateStatusSelect').value = o.status;
-                document.getElementById('viewModal').classList.add('active');
-            } catch (error) {
-                console.error('Error viewing order:', error);
-                alert('Error loading order details');
-            }
+            document.getElementById('verifyBtn').classList.toggle('hidden', o.status !== 'Unconfirmed');
+            document.getElementById('updateStatusSelect').value = o.status;
+            document.getElementById('viewModal').classList.add('active');
         }
 
         async function confirmOrderByAdmin() {
-            const orderId = document.getElementById('vOrderId').value;
-            
+            const id = document.getElementById('vOrderId').value;
             try {
-                const { data, error } = await supabaseClient
-                    .from('orders')
-                    .update({ status: 'In Progress' })
-                    .eq('id', orderId)
-                    .select();
-
+                const { error } = await supabase.from('orders').update({ status: 'In Progress' }).eq('id', id);
                 if (error) throw error;
-
-                alert('Order Verified! Client can now see progress.');
+                alert('Order confirmed!');
                 location.reload();
-            } catch (error) {
-                console.error('Error verifying order:', error);
-                alert('Error updating order: ' + error.message);
-            }
+            } catch (error) { alert(error.message); }
         }
 
         async function saveAdminChanges() {
-            const orderId = document.getElementById('vOrderId').value;
-            const newStatus = document.getElementById('updateStatusSelect').value;
-            
+            const id = document.getElementById('vOrderId').value;
+            const status = document.getElementById('updateStatusSelect').value;
             try {
-                const { data, error } = await supabaseClient
-                    .from('orders')
-                    .update({ status: newStatus })
-                    .eq('id', orderId)
-                    .select();
-
+                const { error } = await supabase.from('orders').update({ status }).eq('id', id);
                 if (error) throw error;
-
-                alert('Status Updated');
+                alert('Status updated!');
                 location.reload();
-            } catch (error) {
-                console.error('Error updating status:', error);
-                alert('Error updating order: ' + error.message);
-            }
+            } catch (error) { alert(error.message); }
         }
 
         // ============================================
-        // CLIENT DASHBOARD (ISSUE #6 & #7 FIX)
+        // CLIENT VIEW
         // ============================================
         async function renderClientOrders(email) {
             try {
-                const { data: orders, error } = await supabaseClient
-                    .from('orders')
-                    .select('*')
-                    .eq('user_email', email)
-                    .order('timestamp', { ascending: false });
-
-                if (error) {
-                    console.error('Error fetching client orders:', error);
-                    return;
-                }
+                const { data: orders, error } = await supabase.from('orders').select('*').eq('user_email', email).order('timestamp', { ascending: false });
+                if (error) throw error;
 
                 const container = document.getElementById('clientOrdersContainer');
-                
-                if (orders.length > 0) {
-                    const active = orders[0];
-                    document.getElementById('whatsappDesigner').href = `https://wa.me/919876543210?text=Hello, I need help with my project ${active.order_number}`;
-                    
-                    // Progress Bar Logic
-                    const progressBox = document.getElementById('clientProgress');
-                    progressBox.classList.remove('hidden');
-                    
-                    let percent = 10; 
-                    let label = "Payment Verification";
-                    if (active.status === 'In Progress') { 
-                        percent = 45; 
-                        label = "Designer is creating your concepts"; 
-                    }
-                    if (active.status === 'Sent for Approval') { 
-                        percent = 80; 
-                        label = "Concepts sent! Check WhatsApp/Email"; 
-                    }
-                    if (active.status === 'Completed') { 
-                        percent = 100; 
-                        label = "Project Finished!"; 
-                    }
-                    
-                    document.getElementById('progBar').style.width = percent + '%';
-                    document.getElementById('progPercent').innerText = percent + '%';
-                    document.getElementById('progLabel').innerText = label;
-
-                    // FIX #7: Working Hours Timer
-                    if (active.status !== 'Unconfirmed' && active.status !== 'Completed') {
-                        startWorkingHoursTimer(active);
-                    }
-                }
-
-                if (orders.length === 0) {
-                    container.innerHTML = '<div class="text-center text-gray-400 py-12">No orders yet</div>';
+                if (!orders || orders.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-500 py-12">You have no orders yet</p>';
                     return;
                 }
 
-                container.innerHTML = orders.map((o, idx) => `
-                    <div class="glass p-6 rounded-2xl border border-white/10 relative overflow-hidden">
+                const active = orders[0];
+                document.getElementById('clientProgress').classList.remove('hidden');
+                let p = 10, l = "Payment verification";
+                if (active.status === 'In Progress') { p = 45; l = "Designer is working"; }
+                else if (active.status === 'Sent for Approval') { p = 80; l = "Check your WhatsApp/Email"; }
+                else if (active.status === 'Completed') { p = 100; l = "Project completed!"; }
+
+                document.getElementById('progBar').style.width = p + '%';
+                document.getElementById('progPercent').innerText = p + '%';
+                document.getElementById('progLabel').innerText = l;
+
+                if (active.status === 'In Progress') startClientTimer(active);
+
+                container.innerHTML = orders.map(o => `
+                    <div class="glass p-6 rounded-2xl border border-white/10">
                         <div class="flex justify-between items-start mb-4">
                             <div>
                                 <h3 class="text-xl font-bold">${o.brand_name} <span class="text-xs text-gray-500 font-normal">${o.order_number}</span></h3>
-                                <p class="text-xs text-gray-400">Targeting: ${o.audience || 'General'}</p>
+                                <p class="text-xs text-gray-400">${o.package_type} - ₹${o.total_price || 0}</p>
                             </div>
-                            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-widest">${o.status}</span>
+                            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-bold uppercase">${o.status}</span>
                         </div>
-                        
-                        ${o.status === 'Unconfirmed' ? `
-                            <div class="bg-red-500/10 border border-red-500/30 p-4 rounded-xl text-center">
-                                <p class="text-xs text-red-400 font-bold">Waiting for designer to verify payment ID: ${o.tx_id}</p>
-                            </div>
-                        ` : `
-                            <div class="grid grid-cols-2 gap-2">
-                                 <div class="bg-white/5 p-3 rounded-xl text-center">
-                                    <p class="text-[10px] text-gray-500 uppercase">Package</p>
-                                    <p class="text-sm font-bold">${o.package_type || 'Standard'}</p>
-                                 </div>
-                                 <div class="bg-white/5 p-3 rounded-xl text-center">
-                                    <p class="text-[10px] text-gray-500 uppercase">Delivery</p>
-                                    <p class="text-sm font-bold">${o.addons && o.addons.toLowerCase().includes('express') ? '⚡ 5 Hours' : '48 Hours'}</p>
-                                 </div>
-                                 ${o.addons && o.addons !== 'None' ? `
-                                 <div class="bg-white/5 p-3 rounded-xl col-span-2">
-                                    <p class="text-[10px] text-gray-500 uppercase">Add-ons</p>
-                                    <p class="text-xs font-bold">${o.addons}</p>
-                                 </div>
-                                 ` : ''}
-                            </div>
-                        `}
+                        ${o.status === 'Unconfirmed' ? `<p class="text-xs text-red-400">Waiting for payment verification (TX: ${o.tx_id})</p>` : ''}
                     </div>
                 `).join('');
-            } catch (error) {
-                console.error('Error in renderClientOrders:', error);
+            } catch (error) { console.error(error); }
+        }
+
+        function startClientTimer(order) {
+            const isEx = order.addons && order.addons.toLowerCase().includes('express');
+            const tat = isEx ? TAT_HOURS_EXPRESS : TAT_HOURS_STANDARD;
+            const update = () => {
+                const { remaining } = calculateWorkingHoursRemaining(order.timestamp, tat);
+                document.getElementById('timerDisplay').innerText = formatTimeRemaining(remaining);
+                const isWork = isWorkingHour(new Date());
+                document.getElementById('timerStatus').innerText = isWork ? "🟢 Timer active (Working Hours)" : "🔴 Timer paused (Outside Working Hours)";
+            };
+            update(); setInterval(update, 60000);
+        }
+
+        // ============================================
+        // PORTFOLIO &amp; UI
+        // ============================================
+        async function loadPortfolioList() {
+            const result = await getAllPortfolioItems();
+            const container = document.getElementById('portfolioItemsList');
+            if (result.success) {
+                container.innerHTML = result.data.map(item => `
+                    <div class="flex items-center gap-2 bg-black/30 p-2 rounded border border-gray-700">
+                        <img src="${item.image_url}" class="w-10 h-10 object-cover rounded">
+                        <p class="text-[10px] text-gray-500 flex-1 truncate">${item.image_url}</p>
+                        <button onclick="deletePortfolioItemBtn('${item.id}')" class="text-red-400 px-2"><i class="fas fa-trash"></i></button>
+                    </div>
+                `).join('');
             }
         }
 
-        // FIX #7: Working Hours Timer
-        function startWorkingHoursTimer(order) {
-            const isExpress = order.addons && order.addons.toLowerCase().includes('express');
-            const totalHours = isExpress ? 5 : 48;
-            
-            function updateTimer() {
-                const now = new Date();
-                const { remaining } = calculateWorkingHoursRemaining(order.timestamp, totalHours);
-                
-                const timerDisplay = document.getElementById('timerDisplay');
-                const timerStatus = document.getElementById('timerStatus');
-                
-                if (timerDisplay) {
-                    timerDisplay.textContent = formatTime(remaining);
-                    
-                    if (isWorkingHour(now)) {
-                        timerStatus.textContent = '🟢 Working hours - Timer active (Mon-Sat, 10AM-6PM)';
-                        timerStatus.className = 'text-xs text-green-400 mt-1';
-                    } else {
-                        timerStatus.textContent = '🔴 Outside working hours - Timer paused (Resumes next: Mon-Sat, 10AM-6PM)';
-                        timerStatus.className = 'text-xs text-red-400 mt-1';
-                    }
-                }
-            }
-            
-            updateTimer();
-            setInterval(updateTimer, 60000); // Update every minute
+        async function addPortfolioItemBtn() {
+            const url = document.getElementById('portfolioUrl').value;
+            if (!url) return;
+            try {
+                const { error } = await supabase.from('portfolio').insert([{ image_url: url, created_at: new Date().toISOString() }]);
+                if (error) throw error;
+                document.getElementById('portfolioUrl').value = '';
+                loadPortfolioList();
+            } catch (error) { alert(error.message); }
         }
 
-        function logout() {
-            localStorage.removeItem('currentUser');
-            window.location.href = 'login.html';
+        async function deletePortfolioItemBtn(id) {
+            if (!confirm('Delete?')) return;
+            try {
+                const { error } = await supabase.from('portfolio').delete().eq('id', id);
+                if (error) throw error;
+                loadPortfolioList();
+            } catch (error) { alert(error.message); }
         }
 
+        function logout() { localStorage.removeItem('currentUser'); window.location.href = 'login.html'; }
         function closeViewModal() { document.getElementById('viewModal').classList.remove('active'); }
         function toggleSettingsModal() { document.getElementById('settingsModal').classList.toggle('active'); }
-        function setTheme(theme) { 
-            document.body.classList.remove('theme-pink', 'theme-blue', 'theme-green');
-            if (theme !== 'default') document.body.classList.add('theme-' + theme);
-            toggleSettingsModal();
-        }
-        
+        function setTheme(t) { document.body.className = t === 'default' ? 'bg-[#0f172a] text-white transition-colors duration-300' : `theme-${t} bg-[#0f172a] text-white transition-colors duration-300`; toggleSettingsModal(); }
         function addStickyNote() {
-            const container = document.getElementById('stickyNotesContainer');
-            const note = document.createElement('textarea');
-            note.className = "w-full bg-yellow-500/10 border border-yellow-500/30 rounded p-2 text-xs text-yellow-100 placeholder-yellow-200/50 resize-none";
-            note.rows = 2; 
-            note.placeholder = "New note...";
-            container.prepend(note);
+            const ta = document.createElement('textarea');
+            ta.className = "w-full bg-yellow-500/10 border border-yellow-500/30 rounded p-2 text-xs text-yellow-100 resize-none";
+            ta.rows = 2; ta.placeholder = "New note...";
+            document.getElementById('stickyNotesContainer').prepend(ta);
         }
 
-        function printInvoice() {
-            alert("Print invoice feature - to be implemented");
-        }
-
-        // Portfolio Management Functions (SUPABASE VERSION)
-        async function addPortfolioItem() {
-            const urlInput = document.getElementById('portfolioUrl');
-            const url = urlInput.value.trim();
-            
-            if (!url) {
-                alert("⚠️ Please enter a valid image URL");
-                return;
-            }
-            
-            // Validate URL format
-            try {
-                new URL(url);
-            } catch {
-                alert("⚠️ Please enter a valid URL (must start with http:// or https://)");
-                return;
-            }
-            
-            try {
-                // Check if supabase is initialized
-                if (!supabaseClient) {
-                    alert("❌ Database connection error. Please refresh the page.");
-                    return;
-                }
-                
-                // Insert into Supabase database
-                const { data, error } = await supabaseClient
-                    .from('portfolio')
-                    .insert([
-                        { 
-                            image_url: url,
-                            created_at: new Date().toISOString()
-                        }
-                    ])
-                    .select();
-                
-                if (error) {
-                    console.error('Error adding portfolio item:', error);
-                    alert("❌ Error adding portfolio item: " + error.message);
-                    return;
-                }
-                
-                console.log('Portfolio item added:', data);
-                
-                // Clear input
-                urlInput.value = '';
-                
-                // Refresh portfolio list
-                await loadPortfolioList();
-                
-                alert("✅ Portfolio item added successfully!");
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert("❌ Error: " + error.message);
-            }
-        }
-
-        async function loadPortfolioList() {
-            try {
-                const container = document.getElementById('portfolioItemsList');
-                if (!container) {
-                    console.log('Portfolio container not found');
-                    return;
-                }
-                
-                // Check if supabase is initialized
-                if (!supabaseClient) {
-                    console.log('Supabase not initialized yet');
-                    container.innerHTML = '<p class="text-xs text-gray-500 text-center py-2">Loading...</p>';
-                    return;
-                }
-                
-                // Fetch from Supabase database
-                const { data: portfolio, error } = await supabaseClient
-                    .from('portfolio')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-                
-                if (error) {
-                    console.error('Error loading portfolio:', error);
-                    container.innerHTML = '<p class="text-xs text-red-500 text-center py-2">Error loading portfolio</p>';
-                    return;
-                }
-                
-                if (!portfolio || portfolio.length === 0) {
-                    container.innerHTML = '<p class="text-xs text-gray-500 text-center py-2">No portfolio items yet</p>';
-                    return;
-                }
-                
-                container.innerHTML = portfolio.map((item) => `
-                    <div class="flex items-center gap-2 bg-black/30 p-2 rounded border border-gray-700">
-                        <img src="${item.image_url}" class="w-12 h-12 object-cover rounded" alt="Portfolio" onerror="this.src='https://via.placeholder.com/48?text=Error'">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs text-gray-400 truncate">${item.image_url}</p>
-                        </div>
-                        <button onclick="removePortfolioItem('${item.id}')" class="text-red-400 hover:text-red-300 text-xs px-2 py-1">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `).join('');
-                
-                console.log('Portfolio loaded:', portfolio.length, 'items');
-                
-            } catch (error) {
-                console.error('Error loading portfolio:', error);
-            }
-        }
-
-        async function removePortfolioItem(itemId) {
-            if (!confirm('Remove this portfolio item?')) return;
-            
-            try {
-                // Check if supabase is initialized
-                if (!supabaseClient) {
-                    alert("❌ Database connection error. Please refresh the page.");
-                    return;
-                }
-                
-                // Delete from Supabase database
-                const { error } = await supabaseClient
-                    .from('portfolio')
-                    .delete()
-                    .eq('id', itemId);
-                
-                if (error) {
-                    console.error('Error deleting portfolio item:', error);
-                    alert("❌ Error deleting item: " + error.message);
-                    return;
-                }
-                
-                console.log('Portfolio item deleted:', itemId);
-                
-                // Refresh portfolio list
-                await loadPortfolioList();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert("❌ Error: " + error.message);
-            }
-        }
-
-        // Initialize
         loadDashboard();
-        loadPortfolioList(); // Load portfolio items on dashboard load
     </script>
 </body>
 </html>

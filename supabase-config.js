@@ -22,7 +22,7 @@ async function saveOrderToSupabase(orderData) {
             .from('orders')
             .insert([orderData])
             .select();
-        
+
         if (error) throw error;
         return { success: true, data: data[0] };
     } catch (error) {
@@ -40,17 +40,17 @@ async function saveUserToSupabase(userData) {
             .select('*')
             .eq('email', userData.email)
             .single();
-        
+
         if (existingUser) {
             return { success: true, data: existingUser, message: 'User already exists' };
         }
-        
+
         // Insert new user
         const { data, error } = await supabase
             .from('users')
             .insert([userData])
             .select();
-        
+
         if (error) throw error;
         return { success: true, data: data[0] };
     } catch (error) {
@@ -66,7 +66,7 @@ async function getAllOrders() {
             .from('orders')
             .select('*')
             .order('timestamp', { ascending: false });
-        
+
         if (error) throw error;
         return { success: true, data: data || [] };
     } catch (error) {
@@ -83,7 +83,7 @@ async function getOrdersByEmail(email) {
             .select('*')
             .eq('user_email', email)
             .order('timestamp', { ascending: false });
-        
+
         if (error) throw error;
         return { success: true, data: data || [] };
     } catch (error) {
@@ -100,7 +100,7 @@ async function updateOrderStatus(orderId, newStatus) {
             .update({ status: newStatus })
             .eq('id', orderId)
             .select();
-        
+
         if (error) throw error;
         return { success: true, data: data[0] };
     } catch (error) {
@@ -135,7 +135,7 @@ async function verifyUserLogin(email, password) {
         if (error || !data) {
             return { success: false, error: 'Invalid credentials' };
         }
-        
+
         return { success: true, data };
     } catch (error) {
         console.error('Error verifying login:', error);
@@ -148,10 +148,10 @@ async function hardResetDatabase() {
     try {
         // Delete all orders
         await supabase.from('orders').delete().neq('id', '');
-        
+
         // Delete all users except admin
         await supabase.from('users').delete().neq('email', 'admin@pixel.com');
-        
+
         return { success: true, message: 'Database reset complete' };
     } catch (error) {
         console.error('Error resetting database:', error);
@@ -167,7 +167,7 @@ async function updateOrderByOrderNumber(orderNumber, updates) {
             .update(updates)
             .eq('order_number', orderNumber)
             .select();
-        
+
         if (error) throw error;
         return { success: true, data: data[0] };
     } catch (error) {
@@ -187,7 +187,7 @@ async function getAllPortfolioItems() {
             .from('portfolio')
             .select('*')
             .order('created_at', { ascending: false });
-        
+
         if (error) throw error;
         return { success: true, data: data || [] };
     } catch (error) {
@@ -208,7 +208,7 @@ async function addPortfolioItem(imageUrl) {
                 }
             ])
             .select();
-        
+
         if (error) throw error;
         return { success: true, data: data[0] };
     } catch (error) {
@@ -224,7 +224,7 @@ async function deletePortfolioItem(itemId) {
             .from('portfolio')
             .delete()
             .eq('id', itemId);
-        
+
         if (error) throw error;
         return { success: true };
     } catch (error) {
@@ -265,7 +265,7 @@ async function migrateLocalStorageToSupabase() {
             }
             console.log('Orders migrated successfully');
         }
-        
+
         // Migrate Users
         const localUsers = JSON.parse(localStorage.getItem('pixel_users') || '[]');
         if (localUsers.length > 0) {
@@ -279,10 +279,61 @@ async function migrateLocalStorageToSupabase() {
             }
             console.log('Users migrated successfully');
         }
-        
+
         return { success: true, message: 'Migration complete' };
     } catch (error) {
         console.error('Migration error:', error);
         return { success: false, error: error.message };
     }
+}
+
+// NEW HELPER FUNCTIONS
+const WORK_START_HOUR_NEW = 10;
+const WORK_END_HOUR_NEW = 18;
+const TAT_HOURS_STANDARD = 48;
+const TAT_HOURS_EXPRESS = 5;
+
+function isWorkingHour(date) {
+    const day = date.getDay();
+    const hour = date.getHours();
+    return day >= 1 && day <= 6 && hour >= 10 && hour < 18;
+}
+
+function getNextWorkingHourStart(timestamp) {
+    const date = new Date(timestamp);
+    if (isWorkingHour(date)) return date;
+    const day = date.getDay();
+    const hour = date.getHours();
+    if (day === 0) {
+        date.setDate(date.getDate() + 1);
+        date.setHours(10, 0, 0, 0);
+    } else if (hour < 10) {
+        date.setHours(10, 0, 0, 0);
+    } else if (hour >= 18) {
+        date.setDate(date.getDate() + 1);
+        if (date.getDay() === 0) date.setDate(date.getDate() + 1);
+        date.setHours(10, 0, 0, 0);
+    }
+    return date;
+}
+
+function calculateWorkingHoursRemaining(startTimestamp, totalWorkingHours) {
+    const adjustedStart = getNextWorkingHourStart(startTimestamp);
+    const now = new Date();
+    let workingHoursElapsed = 0;
+    let currentTime = new Date(adjustedStart);
+    while (currentTime < now) {
+        if (isWorkingHour(currentTime)) workingHoursElapsed += 1;
+        currentTime = new Date(currentTime.getTime() + 60 * 60 * 1000);
+    }
+    const remaining = Math.max(0, totalWorkingHours - workingHoursElapsed);
+    return { remaining, elapsed: workingHoursElapsed };
+}
+
+function formatTimeRemaining(hours) {
+    const days = Math.floor(hours / 8);
+    const remainingHours = Math.floor(hours % 8);
+    const minutes = Math.floor((hours % 1) * 60);
+    if (days > 0) return `${days}d ${remainingHours}h ${minutes}m`;
+    return `${remainingHours}h ${minutes}m`;
 }

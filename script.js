@@ -1,5 +1,5 @@
 // ================= CONFIGURATION =================
-const UPI_ID = "yourname@okaxis"; 
+const UPI_ID = "yourname@okaxis";
 const ADMIN_EMAIL = "admin@pixel.com";
 const ADMIN_PASS = "admin123";
 const WORK_START_HOUR = 10; // 10 AM
@@ -28,14 +28,14 @@ if (loginForm) {
             localStorage.setItem('currentUser', JSON.stringify({ role: 'admin', email: email }));
             window.location.href = 'dashboard.html';
             return;
-        } 
+        }
 
         // 2. Check Clients
         const orders = JSON.parse(localStorage.getItem('pixelOrders')) || [];
-        
+
         // Find if user exists
         const userFound = orders.find(o => o.userEmail === email);
-        
+
         if (!userFound) {
             alert("No account found with this email. Please place an order first.");
             return;
@@ -58,21 +58,21 @@ if (orderForm) {
         e.preventDefault();
         const fd = new FormData(orderForm);
         const data = Object.fromEntries(fd.entries());
-        
+
         // Get Price from Dropdown
         const pkgSelect = document.getElementById('packageSelect');
         const selectedOption = pkgSelect.options[pkgSelect.selectedIndex];
-        
+
         data.packageType = pkgSelect.value;
         data.totalPrice = parseInt(selectedOption.getAttribute('data-price'));
         data.dateOfInquiry = new Date().toISOString();
         data.status = 'Pending';
         data.paymentStatus = 'Unpaid'; // Default
-        data.revisionsLeft = 2; 
+        data.revisionsLeft = 2;
 
         // Save to Session for Payment Modal
         sessionStorage.setItem('tempOrder', JSON.stringify(data));
-        
+
         // Show Payment Modal
         document.getElementById('payAmount').innerText = `₹${data.totalPrice}`;
         document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${UPI_ID}&pn=PixelPerfect&am=${data.totalPrice}`;
@@ -87,20 +87,20 @@ function closeModal() {
 function confirmOrder() {
     const tx = document.getElementById('userTxId').value;
     if(!tx) return alert("Please enter Transaction ID");
-    
+
     const data = JSON.parse(sessionStorage.getItem('tempOrder'));
     if(!data) return alert("Session expired. Please fill form again.");
 
     const orders = JSON.parse(localStorage.getItem('pixelOrders')) || [];
-    
+
     data.id = generateId(orders);
     data.transactionId = tx;
     data.paymentStatus = 'Paid'; // Assuming user paid
-    
+
     orders.push(data);
     localStorage.setItem('pixelOrders', JSON.stringify(orders));
     sessionStorage.removeItem('tempOrder');
-    
+
     alert("Order Placed Successfully! Login to track.");
     window.location.href = 'login.html';
 }
@@ -113,10 +113,10 @@ function loadDashboard() {
         window.location.href = 'login.html';
         return;
     }
-    
+
     document.getElementById('userDisplay').innerText = user.email;
     const orders = JSON.parse(localStorage.getItem('pixelOrders')) || [];
-    
+
     if(user.role === 'admin') {
         document.getElementById('adminView').classList.remove('hidden');
         renderAdmin(orders);
@@ -130,7 +130,7 @@ function loadDashboard() {
 function getDeadline(startDateStr) {
     let current = new Date(startDateStr);
     let minutesToAdd = TAT_HOURS * 60; // 2880 mins
-    
+
     // Recursive function to advance time within working hours
     function advanceTime() {
         // 1. Handle Sunday
@@ -160,9 +160,9 @@ function getDeadline(startDateStr) {
     while (minutesToAdd > 0) {
         let endOfDay = new Date(current);
         endOfDay.setHours(WORK_END_HOUR, 0, 0, 0);
-        
+
         let minsLeftToday = (endOfDay - current) / 60000;
-        
+
         if (minsLeftToday > minutesToAdd) {
             current = new Date(current.getTime() + minutesToAdd * 60000);
             minutesToAdd = 0;
@@ -181,17 +181,17 @@ function getTimeData(isoDate) {
     const deadline = getDeadline(isoDate);
     const now = new Date();
     const msLeft = deadline - now;
-    
+
     const hours = Math.floor(msLeft / (1000 * 60 * 60));
     const mins = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     // Calculate total duration for progress bar percentage
     const totalDurationMs = TAT_HOURS * 60 * 60 * 1000; // This is abstract duration
     // Actually, visual progress is better calculated by: 100 - (TimeLeft / TotalTime * 100)
-    
+
     let percent = 100;
     if (msLeft > 0) {
-        percent = 100 - ((msLeft / (48 * 3600 * 1000)) * 100); 
+        percent = 100 - ((msLeft / (48 * 3600 * 1000)) * 100);
         // Note: Divisor is approximate for visual bar, not exact calendar time
     }
 
@@ -273,11 +273,11 @@ function viewOrder(id) {
 function saveAdminChanges() {
     const idx = document.getElementById('vIndex').value;
     const orders = JSON.parse(localStorage.getItem('pixelOrders'));
-    
+
     orders[idx].status = document.getElementById('updateStatusSelect').value;
     orders[idx].pngSent = document.getElementById('checkPng').checked;
     orders[idx].sourceSent = document.getElementById('checkSource').checked;
-    
+
     if(orders[idx].pngSent && orders[idx].sourceSent) {
         orders[idx].status = 'Completed';
     }
@@ -302,7 +302,7 @@ function deleteOrder() {
 function renderClient(orders, email) {
     const myOrders = orders.filter(o => o.userEmail === email);
     const container = document.getElementById('clientOrdersContainer');
-    
+
     container.innerHTML = myOrders.map((o, idx) => {
         const t = getTimeData(o.dateOfInquiry);
         const globalIdx = orders.findIndex(x => x.id === o.id);
@@ -349,7 +349,7 @@ function submitClientEdit() {
     const idx = document.getElementById('cEditIndex').value;
     const val = document.getElementById('cEditNotes').value;
     const orders = JSON.parse(localStorage.getItem('pixelOrders'));
-    
+
     orders[idx].designNotes = val;
     orders[idx].dateOfInquiry = new Date().toISOString(); // Reset Timer
     localStorage.setItem('pixelOrders', JSON.stringify(orders));
@@ -360,12 +360,12 @@ function submitClientEdit() {
 function requestRev(index) {
     const reason = prompt("What changes do you need? (Color/Font only)");
     if(!reason) return;
-    
+
     const orders = JSON.parse(localStorage.getItem('pixelOrders'));
     orders[index].status = 'Revisions';
     orders[index].revisionsLeft--;
     orders[index].designNotes += `\n[REV]: ${reason}`;
-    
+
     localStorage.setItem('pixelOrders', JSON.stringify(orders));
     loadDashboard();
 }
