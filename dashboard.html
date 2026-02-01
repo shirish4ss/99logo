@@ -305,7 +305,7 @@
 
             <!-- ADMIN CONTROLS -->
             <div class="mt-6 space-y-3 border-t border-gray-700 pt-6">
-                <button id="verifyBtn" onclick="confirmOrderByAdmin()" class="w-full bg-green-600 py-3 rounded-lg font-bold hidden">✓ Verify Payment & Start Project</button>
+                <button id="verifyBtn" onclick="confirmOrderByAdmin()" class="w-full bg-green-600 py-3 rounded-lg font-bold hidden">✓ Verify Payment &amp; Start Project</button>
 
                 <div class="flex gap-3">
                     <select id="updateStatusSelect" class="flex-1 bg-black/50 border border-gray-700 rounded-lg p-3">
@@ -338,7 +338,7 @@
         </div>
     </div>
 
-    <!-- Load Supabase & Shared Config -->
+    <!-- Load Supabase &amp; Shared Config -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
 
@@ -639,7 +639,7 @@
         }
 
         // ============================================
-        // PORTFOLIO & UI
+        // PORTFOLIO &amp; UI
         // ============================================
         async function loadPortfolioList() {
             const result = await getAllPortfolioItems();
